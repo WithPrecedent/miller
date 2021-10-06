@@ -74,13 +74,15 @@ ToDo:
 """
 from __future__ import annotations
 from collections.abc import (
-    Collection, Container, Hashable, Iterable, Mapping, Sequence, Set)
+    Collection, Container, Hashable, Iterable, Mapping, MutableSequence, 
+    Sequence, Set)
 import functools
 import inspect
 import types
-from typing import Any, MutableMapping, MutableSequence, Optional, Type, Union
+from typing import Any, Optional, Type, Union
 
 from . import utilities
+
 
 @functools.singledispatch
 def contains(
@@ -97,17 +99,18 @@ def contains(
         bool: whether 'item' holds the types in 'contents'.
         
     """
-    if isinstance(item, Container):
-        if isinstance(item, MutableMapping):
-            return contains_dict(item = item, contents = contents)
-        elif isinstance(item, tuple):
-            return contains_tuple(item = item, contents = contents)
-        else:
-            return contains_serial(item = item, contents = contents)
-    else:
-        return False
+    raise TypeError(f'item {item} is not supported by {__name__}')
+    # if isinstance(item, Container):
+    #     if isinstance(item, MutableMapping):
+    #         return contains_dict(item = item, contents = contents)
+    #     elif isinstance(item, tuple):
+    #         return contains_tuple(item = item, contents = contents)
+    #     else:
+    #         return contains_serial(item = item, contents = contents)
+    # else:
+    #     return False
 
-@contains.register       
+@contains.register(Mapping)    
 def contains_dict(
     item: Mapping[Hashable, Any], 
     contents: tuple[Union[Type[Any], tuple[Type[Any], ...]],
@@ -127,7 +130,7 @@ def contains_dict(
         contains_serial(item = item.keys(), contents = contents[0])
         and contains_serial(item = item.values(), contents = contents[1]))
 
-@contains.register       
+@contains.register(MutableSequence)   
 def contains_list(
     item: MutableSequence[Any],
     contents: Union[Type[Any], tuple[Type[Any], ...]]) -> bool:
@@ -144,7 +147,7 @@ def contains_list(
     """
     return contains_serial(item = item, contents = contents)
 
-@contains.register    
+@contains.register(Set)   
 def contains_set(
     item: Set[Any],
     contents: Union[Type[Any], tuple[Type[Any], ...]]) -> bool:
@@ -161,7 +164,7 @@ def contains_set(
     """
     return contains_serial(item = item, contents = contents)
 
-@contains.register    
+@contains.register(tuple)   
 def contains_tuple(
     item: tuple[Any, ...],
     contents: Union[Type[Any], tuple[Type[Any], ...]]) -> bool:
@@ -182,7 +185,7 @@ def contains_tuple(
         technique = contains_serial
     return technique(item = item, contents = contents)
 
-@contains.register      
+@contains.register(Sequence)   
 def contains_parallel(
     item: Sequence[Any],
     contents: tuple[Type[Any], ...]) -> bool:
@@ -199,7 +202,7 @@ def contains_parallel(
     """
     return all(isinstance(item[i], contents[i]) for i in enumerate(item))
 
-@contains.register       
+@contains.register(Collection)       
 def contains_serial(
     item: Collection[Any],
     contents: Union[Type[Any], tuple[Type[Any], ...]]) -> bool:
@@ -393,7 +396,7 @@ def has_methods(
         
     """
     methods = list(utilities.iterify(methods))
-    return all(traits.is_method(item = item, attribute = m) for m in methods)
+    return all(is_method(item = item, attribute = m) for m in methods)
 
 def has_properties(
     item: Union[object, Type[Any]], 
@@ -483,12 +486,9 @@ def has_types(item: object) -> Optional[Union[
             in 'item'. Returns None if 'item' is not a container.
         
     """
-    if isinstance(item, Container):
-        return tuple(Any)
-    else:
-        return None
+    raise TypeError(f'item {item} is not supported by {__name__}')
 
-@has_types.register  
+@has_types.register(Mapping)  
 def has_types_dict(
     item: Mapping[Hashable, Any]) -> Optional[
         tuple[tuple[Type[Any], ...], tuple[Type[Any], ...]]]:
@@ -509,7 +509,7 @@ def has_types_dict(
     else:
         return None
 
-@has_types.register  
+@has_types.register(MutableSequence)  
 def has_types_list(item: list[Any]) -> Optional[tuple[Type[Any], ...]]:
     """Returns types contained in 'item'.
 
@@ -528,7 +528,7 @@ def has_types_list(item: list[Any]) -> Optional[tuple[Type[Any], ...]]:
     else:
         return None
 
-@has_types.register      
+@has_types.register(Sequence)    
 def has_types_sequence(item: Sequence[Any]) -> Optional[tuple[Type[Any], ...]]:
     """Returns types contained in 'item'.
 
