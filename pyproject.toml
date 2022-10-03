@@ -1,11 +1,12 @@
 [tool.poetry]
 name = "miller"
-version = "0.1.0"
-description = ""
-authors = ["corey rayburn yung <coreyrayburnyung@gmail.com>"]
+version = "0.1.2"
+description = "introspection tools using consistent, accessible syntax"
+authors = ["Corey Rayburn Yung <coreyrayburnyung@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.9"
+amos = "^0.1.6"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"

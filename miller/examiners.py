@@ -1,7 +1,7 @@
 """
-core: classes for easy introspection
+examiners: wrapper classes for object-oriented introspection
 Corey Rayburn Yung <coreyrayburnyung@gmail.com>
-Copyright 2021, Corey Rayburn Yung
+Copyright 2020-2022, Corey Rayburn Yung
 License: Apache-2.0
 
     Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,11 +17,15 @@ License: Apache-2.0
     limitations under the License.
 
 Contents:   
-    Inspector (object):
-    ClassInspector (Inspector):
-    InstanceInspector (Inspector):
-    ModuleInspector (Inspector):
-    PackageInspector (Inspector):
+    Inspector (object): Base class factory for inspecting an arbitrary object.
+        When instanced, it will return an instance of the appropriate subclass
+        based on passed 'item'. Inspector and its subclasses have properties
+        describing the wrapped 'item' that are appropriate to the type of 
+        'item'.
+    ClassInspector (Inspector): inspector for classes.
+    InstanceInspector (Inspector): inspector for class instances (objects).
+    ModuleInspector (Inspector): inspector for modules.
+    PackageInspector (Inspector): inspector for packages (file folders).
   
 ToDo:
 
@@ -34,10 +38,9 @@ import pathlib
 import types
 from typing import Any, Optional, Type, Union
 
-from . import module
-from . import package
-from . import traits
-from . import utilities
+import amos
+
+from . import report
 
 
 @dataclasses.dataclass
@@ -55,13 +58,13 @@ class Inspector(object):
     def __new__(cls, item: Any, *args: Any, **kwargs: Any) -> None:
         """Returns Inspector subclass based on type of 'item'."""
         if isinstance(item, types.ModuleType):
-            return ModuleInspector(module = item, *args, **kwargs)
+            return ModuleInspector(item, *args, **kwargs)
         elif isinstance(item, (pathlib.Path, str)):
-            return PackageInspector(folder = item, *args, **kwargs)
+            return PackageInspector(item, *args, **kwargs)
         elif inspect.isclass(item):
-            return ClassInspector(item = item, *args, **kwargs)
+            return ClassInspector(item, *args, **kwargs)
         elif isinstance(item, object):
-            return InstanceInspector(item = item, *args, **kwargs)
+            return InstanceInspector(item, *args, **kwargs)
         else:
             raise TypeError(f'item must be a module, path, class, or object')
     
@@ -76,7 +79,7 @@ class Inspector(object):
                 values.
             
         """
-        return traits.get_attributes(
+        return report.get_attributes(
             item = self.item, 
             include_private = self.include_private)
         
@@ -92,7 +95,7 @@ class Inspector(object):
                 in 'item'. Returns None if 'item' is not a container.
             
         """
-        return traits.has_types(item = self.item)
+        return report.has_types(item = self.item)
                 
     @property
     def name(self) -> Optional[str]:
@@ -102,7 +105,7 @@ class Inspector(object):
             str: inferred name of the stored 'item'.
             
         """
-        return traits.get_name(item = self.item) 
+        return amos.namify(item = self.item) 
         
     @property
     def type(self) -> Type[Any]:
@@ -125,10 +128,19 @@ class Inspector(object):
                 values.
             
         """
-        return traits.get_variables(
+        return report.get_variables(
             item = self.item, 
             include_private = self.include_private)                  
 
+    """ Dunder Methods """
+    
+    def __str__(self) -> str:
+        """Returns all properties and their contents in a readable str."""
+        representation = ""
+        for name, content in report.get_properties(item = self).items():
+            representation += name + ': ' + content + '\n'
+        return representation
+            
 
 @dataclasses.dataclass
 class ClassInspector(Inspector):
@@ -154,7 +166,7 @@ class ClassInspector(Inspector):
                 are type hints.
             
         """
-        return traits.get_annotations(
+        return report.get_annotations(
             item = self.item, 
             include_private = self.include_private) 
         
@@ -166,7 +178,7 @@ class ClassInspector(Inspector):
             list[str]: names of attributes.
             
         """
-        return traits.name_attributes(
+        return report.name_attributes(
             item = self.item, 
             include_private = self.include_private)
 
@@ -179,7 +191,7 @@ class ClassInspector(Inspector):
                 methods.
             
         """
-        return traits.get_methods(
+        return report.get_methods(
             item = self.item, 
             include_private = self.include_private)
 
@@ -191,7 +203,7 @@ class ClassInspector(Inspector):
             list[str]: names of parameters for a dataclass.
             
         """
-        return traits.name_parameters(item = self.item) 
+        return report.name_parameters(item = self.item) 
     
     @property
     def properties(self) -> list[str]:
@@ -201,7 +213,7 @@ class ClassInspector(Inspector):
             list[str]: names of properties.
             
         """
-        return traits.get_properties(
+        return report.get_properties(
             item = self.item, 
             include_private = self.include_private)           
                  
@@ -214,7 +226,7 @@ class ClassInspector(Inspector):
                 signatures for those methods.
             
         """
-        return traits.get_signatures(
+        return report.get_signatures(
             item = self.item, 
             include_private = self.include_private)  
 
@@ -228,7 +240,7 @@ class ClassInspector(Inspector):
             list[str]: names of variables in 'item'.
             
         """
-        return traits.get_variables(
+        return report.get_variables(
             item = self.item, 
             include_private = self.include_private)      
 
@@ -257,7 +269,7 @@ class InstanceInspector(Inspector):
                 are type hints.
             
         """
-        return traits.get_annotations(
+        return report.get_annotations(
             item = self.item, 
             include_private = self.include_private) 
 
@@ -270,7 +282,7 @@ class InstanceInspector(Inspector):
                 methods.
             
         """
-        return traits.get_methods(
+        return report.get_methods(
             item = self.item, 
             include_private = self.include_private)
 
@@ -282,7 +294,7 @@ class InstanceInspector(Inspector):
             list[str]: names of parameters for a dataclass.
             
         """
-        return traits.name_parameters(item = self.item) 
+        return report.name_parameters(item = self.item) 
     
     @property
     def properties(self) -> dict[str, Any]:
@@ -293,7 +305,7 @@ class InstanceInspector(Inspector):
                 values.
             
         """
-        return traits.get_properties(
+        return report.get_properties(
             item = self.item, 
             include_private = self.include_private)           
                  
@@ -306,7 +318,7 @@ class InstanceInspector(Inspector):
                 signatures for those methods.
             
         """
-        return traits.get_signatures(
+        return report.get_signatures(
             item = self.item, 
             include_private = self.include_private)                
          
@@ -334,7 +346,7 @@ class ModuleInspector(Inspector):
             dict[str, Type[Any]: keys are class names and values are classes.
             
         """
-        return module.get_classes(
+        return report.get_classes(
             item = self.item, 
             include_private = self.include_private)
         
@@ -347,7 +359,7 @@ class ModuleInspector(Inspector):
                 are functions.
             
         """
-        return module.get_functions(
+        return report.get_functions(
             item = self.item, 
             include_private = self.include_private)
                  
@@ -360,7 +372,7 @@ class ModuleInspector(Inspector):
                 signatures for those methods.
             
         """
-        return traits.get_signatures(
+        return report.get_signatures(
             item = self.item, 
             include_private = self.include_private)  
           
@@ -386,7 +398,7 @@ class PackageInspector(Inspector):
     
     def __post_init__(self) -> None:
         """Initializes class instance attributes."""
-        self.item = utilities.pathlibify(item = self.item)
+        self.item = amos.pathlibify(item = self.item)
         
     """ Properties """
 
@@ -398,7 +410,7 @@ class PackageInspector(Inspector):
             list[pathlib.Path]: list of non-python-module file paths.
             
         """
-        return package.get_file_paths(
+        return report.get_file_paths(
             item = self.item, 
             recursive = self.include_subfolders)
 
@@ -410,7 +422,7 @@ class PackageInspector(Inspector):
             list[pathlib.Path]: list of folder paths.
             
         """
-        return package.get_folder_paths(
+        return report.get_folder_paths(
             item = self.item, 
             recursive = self.include_subfolders)
 
@@ -426,7 +438,7 @@ class PackageInspector(Inspector):
                 modules and values as the corresponding modules.
             
         """
-        return package.get_modules(
+        return report.get_modules(
             item = self.item, 
             recursive = self.include_subfolders)  
         
@@ -438,7 +450,7 @@ class PackageInspector(Inspector):
             list[pathlib.Path]: list of python-module file paths.
             
         """
-        return package.get_module_paths(
+        return report.get_module_paths(
             item = self.item, 
             recursive = self.include_subfolders)  
               
@@ -450,6 +462,6 @@ class PackageInspector(Inspector):
             list[pathlib.Path]: list of all paths.
             
         """
-        return package.get_paths(
+        return report.get_paths(
             item = self.item, 
             recursive = self.include_subfolders)
