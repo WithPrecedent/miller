@@ -326,7 +326,7 @@ def is_nested_sequence(item: Sequence[Any]) -> bool:
     """ 
     return (
         is_sequence(item = item)
-        and any(is_sequence(item = v) for v in item.values()))
+        and any(is_sequence(item = v) for v in item))
 
 @is_nested.register(Set)         
 def is_nested_set(item: Set[Any]) -> bool:
@@ -341,7 +341,7 @@ def is_nested_set(item: Set[Any]) -> bool:
     """ 
     return (
         is_set(item = item)
-        and any(is_set(item = v) for v in item.values()))
+        and any(is_set(item = v) for v in item))
         
 def is_sequence(item: Union[object, Type[Any]]) -> bool:
     """Returns if 'item' is a sequence and is NOT a str type.
