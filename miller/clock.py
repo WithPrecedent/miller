@@ -49,7 +49,7 @@ def how_soon_is_now(
     time_string = amos.datetime_to_string(
         item = datetime.datetime.now(),
         time_format = time_format)
-    if prefix is None:
+    if prefix is not None:
         return f'{prefix}{time_string}'
     else:
         return time_string
