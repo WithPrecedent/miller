@@ -520,7 +520,7 @@ def is_variable(item: Union[object, Type[Any]], attribute: str) -> bool:
     """
     return (
         hasattr(item, attribute)
-        and not is_function(item = item, attribute = attribute)
+        and not is_function(item = item)
         and not is_property(item = item, attribute = attribute))
 
 """ File and Folder Checkers """

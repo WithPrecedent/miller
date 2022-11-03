@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "miller"
-version = "0.1.3"
+version = "0.1.4"
 description = "introspection tools using consistent, accessible syntax"
 authors = ["Corey Rayburn Yung <coreyrayburnyung@gmail.com>"]
 
