@@ -72,6 +72,7 @@ from __future__ import annotations
 from collections.abc import (
     Collection, Container, Hashable, Iterable, Mapping, MutableMapping, 
     MutableSequence, Sequence, Set)
+import dataclasses
 import functools
 import inspect
 import pathlib
@@ -388,6 +389,30 @@ def has_attributes(
     
     """
     return all(hasattr(item, a) for a in attributes)
+
+def has_fields(
+    item: Union[dataclasses.dataclass, Type[dataclasses.dataclass]], 
+    attributes: MutableSequence[str]) -> bool:
+    """Returns whether 'attributes' exist in dataclass 'item'.
+
+    Args:
+        item (Union[dataclasses.dataclass, Type[dataclasses.dataclass]]): 
+            dataclass or dataclass instance to examine.
+        attributes (MutableSequence[str]): names of attributes to check to see
+            if they exist in 'item'.
+    
+    Raises:
+        TypeError: if 'item' is not a dataclass.
+        
+    Returns:
+        bool: whether all 'attributes' exist in 'items'.
+    
+    """
+    if dataclasses.is_dataclass(item):
+        all_fields = [f.name for f in dataclasses.fields(item)]
+        return all(a in all_fields for a in attributes)
+    else:
+        raise TypeError('item must be a dataclass')
 
 def has_methods(
     item: Union[object, Type[Any]], 

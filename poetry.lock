@@ -48,6 +48,18 @@ optional = false
 python-versions = ">=3.7"
 
 [[package]]
+name = "nagata"
+version = "0.1.3"
+description = "python file management using a common, intuitive syntax"
+category = "main"
+optional = false
+python-versions = ">=3.9,<4.0"
+
+[package.dependencies]
+amos = ">=0.1.10,<0.2.0"
+miller = ">=0.1.4,<0.2.0"
+
+[[package]]
 name = "packaging"
 version = "21.3"
 description = "Core utilities for Python packages"
@@ -121,7 +133,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "34436b873e39b6c571b76c0f7bd5750713205c8bf4dfb254fc25764984e2dee0"
+content-hash = "8da63e7c585127f621238287e516c75d14319f7b76b07fdf67649eb2ed55b992"
 
 [metadata.files]
 amos = [
@@ -142,6 +154,10 @@ colorama = [
 more-itertools = [
     {file = "more-itertools-9.0.0.tar.gz", hash = "sha256:5a6257e40878ef0520b1803990e3e22303a41b5714006c32a3fd8304b26ea1ab"},
     {file = "more_itertools-9.0.0-py3-none-any.whl", hash = "sha256:250e83d7e81d0c87ca6bd942e6aeab8cc9daa6096d12c5308f3f92fa5e5c1f41"},
+]
+nagata = [
+    {file = "nagata-0.1.3-py3-none-any.whl", hash = "sha256:afaaecf61672d2403e4f58039cf9ca2f2d34aea22d2773f3f65963dc677834f6"},
+    {file = "nagata-0.1.3.tar.gz", hash = "sha256:8bac47638dd8036ad244cdef656cd1047fb4ca7e4a296298c6217e8e4035074a"},
 ]
 packaging = [
     {file = "packaging-21.3-py3-none-any.whl", hash = "sha256:ef103e05f519cdc783ae24ea4e2e0f508a9c99b2d4969652eed6a2e1ea5bd522"},

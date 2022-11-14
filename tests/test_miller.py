@@ -102,6 +102,8 @@ def test_all() -> None:
     assert properties == {'get_something': 'something'}
     methods = miller.get_methods(item = a_dataclass) 
     assert isinstance(methods[0], types.MethodType)
+    attributes = miller.name_fields(item = TestDataclass)
+    assert attributes == ['a_dict', 'a_list']
     return
 
 if __name__ == '__main__':

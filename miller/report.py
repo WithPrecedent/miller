@@ -53,6 +53,7 @@ ToDo:
 from __future__ import annotations
 from collections.abc import (
     Container, Hashable, Iterable, Mapping, MutableSequence, Sequence, Set)
+import dataclasses
 import functools
 import inspect
 import pathlib
@@ -61,6 +62,7 @@ import types
 from typing import Any, Optional, Type, Union
 
 import amos
+import nagata
 
 from . import check
 
@@ -188,6 +190,32 @@ def get_attributes(
     values = [getattr(item, m) for m in attributes]
     return dict(zip(attributes, values))
 
+def get_fields(
+    item: dataclasses.dataclass | Type[dataclasses.dataclass], 
+    include_private: bool = False) -> dict[str, dataclasses.Field]:
+    """Returns whether 'attributes' exist in dataclass 'item'.
+
+    Args:
+        item (dataclasses.dataclass | Type[dataclasses.dataclass]): dataclass or 
+            dataclass instance to examine.
+        include_private (bool): whether to include items that begin with '_'
+            (True) or to exclude them (False). Defauls to False.    
+    Raises:
+        TypeError: if 'item' is not a dataclass.
+        
+    Returns:
+        dict[str, dataclasses.Field]: dict of fields in 'item' (keys are 
+            attribute names and values are dataclass fields).
+    
+    """
+    if dataclasses.is_dataclass(item):
+        attributes = {f.name: f for f in dataclasses.fields(item)}
+        if not include_private:
+            attributes = amos.drop_privates(item = attributes)
+        return attributes
+    else:
+        raise TypeError('item must be a dataclass')
+    
 def get_methods(
     item: Union[object, Type[Any]], 
     include_private: bool = False) -> dict[str, types.MethodType]:
@@ -286,6 +314,31 @@ def name_attributes(
         names = amos.drop_privates(item = names)
     return names
 
+def name_fields(
+    item: dataclasses.dataclass | Type[dataclasses.dataclass], 
+    include_private: bool = False) -> list[str]:
+    """Returns whether 'attributes' exist in dataclass 'item'.
+
+    Args:
+        item (dataclasses.dataclass | Type[dataclasses.dataclass]): dataclass or 
+            dataclass instance to examine.
+        include_private (bool): whether to include items that begin with '_'
+            (True) or to exclude them (False). Defauls to False.    
+    Raises:
+        TypeError: if 'item' is not a dataclass.
+        
+    Returns:
+        list[str]: names of fields in 'item'.
+    
+    """
+    if dataclasses.is_dataclass(item):
+        attributes = [f.name for f in dataclasses.fields(item)]
+        if not include_private:
+            attributes = amos.drop_privates(item = attributes)
+        return attributes
+    else:
+        raise TypeError('item must be a dataclass')
+    
 def name_methods(
     item: Union[object, Type[Any]], 
     include_private: bool = False) -> list[str]:
@@ -364,7 +417,6 @@ def name_variables(
     return names
 
 """ Module Reporters """
-
           
 def get_classes(
     item: Union[types.ModuleType, str], 
@@ -508,7 +560,7 @@ def get_modules(
         
     """
     return [
-        amos.from_file_path(path = p)
+        nagata.from_file_path(path = p)
         for p in get_paths(item = item, recursive = recursive)]
 
 def get_module_paths(
