@@ -51,7 +51,7 @@ import inspect
 from types import FunctionType
 from typing import Any, Optional, Type, Union
 
-import amos
+import camina
 
 
 LINE_BREAK: str = '\n'
@@ -191,10 +191,10 @@ def beautify_object(
         if hasattr(module, '__package__'):
             package = module.__package__
     if facade.name == 'object':
-        name = amos.namify(item = item)
+        name = camina.namify(item = item)
     else:
         name = ''
-    base = amos.snakify(item.__class__.__name__)
+    base = camina.snakify(item.__class__.__name__)
     indent = _get_indent(offsets = offsets)
     inner = _get_indent(offsets = offsets, extra = TAB)
     summary = [f'{indent}']

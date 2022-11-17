@@ -61,7 +61,7 @@ import sys
 import types
 from typing import Any, Optional, Type, Union
 
-import amos
+import camina
 import nagata
 
 from . import check
@@ -211,7 +211,7 @@ def get_fields(
     if dataclasses.is_dataclass(item):
         attributes = {f.name: f for f in dataclasses.fields(item)}
         if not include_private:
-            attributes = amos.drop_privates(item = attributes)
+            attributes = camina.drop_privates(item = attributes)
         return attributes
     else:
         raise TypeError('item must be a dataclass')
@@ -311,7 +311,7 @@ def name_attributes(
     """
     names = dir(item)
     if not include_private:
-        names = amos.drop_privates(item = names)
+        names = camina.drop_privates(item = names)
     return names
 
 def name_fields(
@@ -334,7 +334,7 @@ def name_fields(
     if dataclasses.is_dataclass(item):
         attributes = [f.name for f in dataclasses.fields(item)]
         if not include_private:
-            attributes = amos.drop_privates(item = attributes)
+            attributes = camina.drop_privates(item = attributes)
         return attributes
     else:
         raise TypeError('item must be a dataclass')
@@ -357,7 +357,7 @@ def name_methods(
         a for a in dir(item)
         if check.is_method(item = item, attribute = a)]
     if not include_private:
-        methods = amos.drop_privates(item = methods)
+        methods = camina.drop_privates(item = methods)
     return methods
 
 def name_parameters(item: Type[Any]) -> list[str]:
@@ -392,7 +392,7 @@ def name_properties(
         a for a in dir(item)
         if check.is_property(item = item, attribute = a)]
     if not include_private:
-        properties = amos.drop_privates(item = properties)
+        properties = camina.drop_privates(item = properties)
     return properties
 
 def name_variables(
@@ -413,7 +413,7 @@ def name_variables(
     names = [
         a for a in dir(item) if check.is_variable(item = item, attribute = a)]
     if not include_private:
-        names = amos.drop_privates(item = names)
+        names = camina.drop_privates(item = names)
     return names
 
 """ Module Reporters """
@@ -438,7 +438,7 @@ def get_classes(
         m[1] for m in inspect.getmembers(item, inspect.isclass)
         if m[1].__module__ == item.__name__]
     if not include_private:
-        classes = amos.drop_privates(item = classes)
+        classes = camina.drop_privates(item = classes)
     return classes
         
 def get_functions(
@@ -461,7 +461,7 @@ def get_functions(
         m[1] for m in inspect.getmembers(item, inspect.isfunction)
         if m[1].__module__ == item.__name__]
     if not include_private:
-        functions = amos.drop_privates(item = functions)
+        functions = camina.drop_privates(item = functions)
     return functions 
    
 def name_classes(
@@ -484,7 +484,7 @@ def name_classes(
         m[0] for m in inspect.getmembers(item, inspect.isclass)
         if m[1].__module__ == item.__name__]
     if not include_private:
-        names = amos.drop_privates(item = names)
+        names = camina.drop_privates(item = names)
     return names
        
 def name_functions(
@@ -507,7 +507,7 @@ def name_functions(
         m[0] for m in inspect.getmembers(item, inspect.isfunction)
         if m[1].__module__ == item.__name__]
     if not include_private:
-        names = amos.drop_privates(item = names)
+        names = camina.drop_privates(item = names)
     return names
 
 """ File and Folder Reporters """
@@ -594,7 +594,7 @@ def get_paths(
         list[pathlib.Path]: a list of all paths in 'item'.
         
     """
-    item = amos.pathlibify(item = item) 
+    item = camina.pathlibify(item = item) 
     if recursive:
         return  list(folder.rglob(f'*.{suffix}')) # type: ignore
     else:
@@ -613,7 +613,7 @@ def name_modules(
         list[str]: a list of python module names in 'item'.
         
     """
-    item = amos.pathlibify(item = item)
+    item = camina.pathlibify(item = item)
     kwargs = {'item': item, 'suffix': 'py', 'recursive': recursive}
     paths = [p.stem for p in get_paths(**kwargs)] # type: ignore
     return [str(p) for p in paths]

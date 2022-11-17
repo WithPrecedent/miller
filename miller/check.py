@@ -79,7 +79,7 @@ import pathlib
 import types
 from typing import Any, Optional, Type, Union
 
-import amos
+import camina
 
 
 """ Contents Checkers """
@@ -428,7 +428,7 @@ def has_methods(
         bool: whether all 'methods' exist in 'items' and are types.MethodType.
         
     """
-    methods = list(amos.iterify(methods))
+    methods = list(camina.iterify(methods))
     return all(is_method(item = item, attribute = m) for m in methods)
 
 def has_properties(
@@ -445,7 +445,7 @@ def has_properties(
         bool: whether all 'properties' exist in 'items'.
         
     """
-    properties = list(amos.iterify(properties))
+    properties = list(camina.iterify(properties))
     return all(is_property(item = item, attribute = p) for p in properties)
     
 def has_signatures(
@@ -560,7 +560,7 @@ def is_file(item: Union[str, pathlib.Path]) -> bool:
         bool: whether 'item' is a non-python-module file.
         
     """
-    item = amos.pathlibify(item = item)
+    item = camina.pathlibify(item = item)
     return (
         item.exists() 
         and item.is_file() 
@@ -576,7 +576,7 @@ def is_folder(item: Union[str, pathlib.Path]) -> bool:
         bool: whether 'item' is a path to a folder.
         
     """
-    item = amos.pathlibify(item = item)
+    item = camina.pathlibify(item = item)
     return item.exists() and item.is_dir() # type: ignore
 
 def is_module(item: Union[str, pathlib.Path]) -> bool:
@@ -589,7 +589,7 @@ def is_module(item: Union[str, pathlib.Path]) -> bool:
         bool: whether 'item' is a python-module file.
         
     """
-    item = amos.pathlibify(item = item)
+    item = camina.pathlibify(item = item)
     return item.exists() and item.is_file() and item.suffix in ['.py'] # type: ignore
 
 def is_path(item: Union[str, pathlib.Path]) -> bool:
@@ -602,7 +602,7 @@ def is_path(item: Union[str, pathlib.Path]) -> bool:
         bool: whether 'item' is a currently existing path.
         
     """
-    item = amos.pathlibify(item = item)
+    item = camina.pathlibify(item = item)
     return item.exists() # type: ignore
 
 

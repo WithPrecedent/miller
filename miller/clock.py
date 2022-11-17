@@ -31,7 +31,7 @@ import datetime
 import time
 from typing import Any, Optional, Type, Union
 
-import amos
+import camina
 
 
 def how_soon_is_now(
@@ -46,7 +46,7 @@ def how_soon_is_now(
         str: with current date and time in 'format' format.
 
     """
-    time_string = amos.datetime_to_string(
+    time_string = camina.datetime_to_string(
         item = datetime.datetime.now(),
         time_format = time_format)
     if prefix is not None:
