@@ -36,11 +36,13 @@ import camina
 
 def how_soon_is_now(
     prefix: Optional[str] = None,
-    time_format: str = '%Y-%m-%d_%H-%M') -> str:
+    time_format: Optional[str] = '%Y-%m-%d_%H-%M') -> str:
     """Creates a string from current date and time.
 
     Args:
-        prefix: a prefix to add to the returned str.
+        prefix (Optional[str]): a prefix to add to the returned str.
+        time_format (Optional[str): format, using Python syntax in the 
+            'datetime' module', for the str output of the date and time.
         
     Returns:
         str: with current date and time in 'format' format.
