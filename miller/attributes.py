@@ -1,5 +1,5 @@
 """
-check: functions that check passed item and give a boolean result
+attributes: inspects attributes of classes, instances, or modules
 Corey Rayburn Yung <coreyrayburnyung@gmail.com>
 Copyright 2020-2022, Corey Rayburn Yung
 License: Apache-2.0
@@ -17,14 +17,6 @@ License: Apache-2.0
     limitations under the License.
 
 Contents:
-    Contents Checkers:
-        contains
-        dict_contains
-        list_contains
-        set_contains
-        tuple_contains
-        parallel_contains
-        serial_contains
     Simple Type Checkers:
         is_container: returns if an item is a container but not a str.
         is_function: returns if an item is a function type.
@@ -81,298 +73,9 @@ from typing import Any, Optional, Type, Union
 
 import camina
 
+from . import defaults
+from . import objects
 
-""" Contents Checkers """
-  
-@functools.singledispatch
-def contains(
-    item: object,
-    contents: Union[Type[Any], tuple[Type[Any], ...]]) -> bool:
-    """Returns whether 'item' contains the type(s) in 'contents'.
-
-    Args:
-        item (object): item to examine.
-        contents (Union[Type[Any], tuple[Type[Any], ...]]): types to check for
-            in 'item' contents.
-        
-    Raises:
-        TypeError: if 'item' does not match any of the registered types.
-        
-    Returns:
-        bool: whether 'item' holds the types in 'contents'.
-        
-    """
-    raise TypeError(f'item {item} is not supported by {__name__}')
-
-@contains.register(Mapping)    
-def dict_contains(
-    item: Mapping[Hashable, Any], 
-    contents: tuple[Union[Type[Any], tuple[Type[Any], ...]],
-                    Union[Type[Any], tuple[Type[Any], ...]]]) -> bool:
-    """Returns whether dict 'item' contains the type(s) in 'contents'.
-
-    Args:
-        item (Mapping[Hashable, Any]): item to examine.
-        contents (Union[Type[Any], tuple[Type[Any], ...]]): types to check for
-            in 'item' contents.
-
-    Returns:
-        bool: whether 'item' holds the types in 'contents'.
-        
-    """
-    return (
-        serial_contains(item = item.keys(), contents = contents[0])
-        and serial_contains(item = item.values(), contents = contents[1]))
-
-@contains.register(MutableSequence)   
-def list_contains(
-    item: MutableSequence[Any],
-    contents: Union[Type[Any], tuple[Type[Any], ...]]) -> bool:
-    """Returns whether list 'item' contains the type(s) in 'contents'.
-
-    Args:
-        item (MutableSequence[Any]): item to examine.
-        contents (Union[Type[Any], tuple[Type[Any], ...]]): types to check for
-            in 'item' contents.
-
-    Returns:
-        bool: whether 'item' holds the types in 'contents'.
-        
-    """
-    return serial_contains(item = item, contents = contents)
-
-@contains.register(Set)   
-def set_contains(
-    item: Set[Any],
-    contents: Union[Type[Any], tuple[Type[Any], ...]]) -> bool:
-    """Returns whether list 'item' contains the type(s) in 'contents'.
-
-    Args:
-        item (Set[Any]): item to examine.
-        contents (Union[Type[Any], tuple[Type[Any], ...]]): types to check for
-            in 'item' contents.
-
-    Returns:
-        bool: whether 'item' holds the types in 'contents'.
-        
-    """
-    return serial_contains(item = item, contents = contents)
-
-@contains.register(tuple)   
-def tuple_contains(
-    item: tuple[Any, ...],
-    contents: Union[Type[Any], tuple[Type[Any], ...]]) -> bool:
-    """Returns whether tuple 'item' contains the type(s) in 'contents'.
-
-    Args:
-        item (tuple[Any, ...]): item to examine.
-        contents (Union[Type[Any], tuple[Type[Any], ...]]): types to check for
-            in 'item' contents.
-
-    Returns:
-        bool: whether 'item' holds the types in 'contents'.
-        
-    """
-    if isinstance(contents, tuple) and len(item) == len(contents):
-        technique = parallel_contains
-    else:
-        technique = serial_contains
-    return technique(item = item, contents = contents)
-
-@contains.register(Sequence)   
-def parallel_contains(
-    item: Sequence[Any],
-    contents: tuple[Type[Any], ...]) -> bool:
-    """Returns whether parallel 'item' contains the type(s) in 'contents'.
-
-    Args:
-        item (Sequence[Any]): item to examine.
-        contents (Union[Type[Any], tuple[Type[Any], ...]]): types to check for
-            in 'item' contents.
-
-    Returns:
-        bool: whether 'item' holds the types in 'contents'.
-        
-    """
-    return all(isinstance(item[i], contents[i]) for i in enumerate(item))
-
-@contains.register(Container)       
-def serial_contains(
-    item: Container[Any],
-    contents: Union[Type[Any], tuple[Type[Any], ...]]) -> bool:
-    """Returns whether serial 'item' contains the type(s) in 'contents'.
-
-    Args:
-        item (Container[Any]): item to examine.
-        contents (Union[Type[Any], tuple[Type[Any], ...]]): types to check for
-            in 'item' contents.
-
-    Returns:
-        bool: whether 'item' holds the types in 'contents'.
-        
-    """
-    return all(isinstance(i, contents) for i in item)
-    
-""" Simple Type Checkers """
-    
-def is_container(item: Union[object, Type[Any]]) -> bool:
-    """Returns if 'item' is a container and not a str.
-    
-    Args:
-        item (Union[object, Type[Any]]): class or instance to examine.
-        
-    Returns:
-        bool: if 'item' is a container but not a str.
-        
-    """  
-    if not inspect.isclass(item):
-        item = item.__class__ 
-    return issubclass(item, Container) and not issubclass(item, str)
-
-def is_dict(item: Union[object, Type[Any]]) -> bool:
-    """Returns if 'item' is a mutable mapping (generic dict type).
-    
-    Args:
-        item (Union[object, Type[Any]]): class or instance to examine.
-        
-    Returns:
-        bool: if 'item' is a mutable mapping type.
-        
-    """  
-    if not inspect.isclass(item):
-        item = item.__class__ 
-    return isinstance(item, MutableMapping) 
-
-def is_function(item: Union[object, Type[Any]]) -> bool:
-    """Returns if 'item' is a function type.
-    
-    Args:
-        item (Union[object, Type[Any]]): class or instance to examine.
-        
-    Returns:
-        bool: if 'item' is a function type.
-        
-    """  
-    return isinstance(item, types.FunctionType)
-   
-def is_iterable(item: Union[object, Type[Any]]) -> bool:
-    """Returns if 'item' is iterable and is NOT a str type.
-    
-    Args:
-        item (Union[object, Type[Any]]): class or instance to examine.
-        
-    Returns:
-        bool: if 'item' is iterable but not a str.
-        
-    """ 
-    if not inspect.isclass(item):
-        item = item.__class__ 
-    return issubclass(item, Iterable) and not issubclass(item, str)
-
-def is_list(item: Union[object, Type[Any]]) -> bool:
-    """Returns if 'item' is a mutable sequence (generic list type).
-    
-    Args:
-        item (Union[object, Type[Any]]): class or instance to examine.
-        
-    Returns:
-        bool: if 'item' is a mutable list type.
-        
-    """
-    if not inspect.isclass(item):
-        item = item.__class__ 
-    return isinstance(item, MutableSequence)
-
-@functools.singledispatch
-def is_nested(item: object) -> bool:
-    """Returns if 'item' is nested at least one-level.
-    
-    Args:
-        item (object): instance to examine.
-        
-    Raises:
-        TypeError: if 'item' does not match any of the registered types.
-        
-    Returns:
-        bool: if 'item' is a nested mapping.
-        
-    """ 
-    raise TypeError(f'item {item} is not supported by {__name__}')
-
-@is_nested.register(Mapping)   
-def is_nested_dict(item: Mapping[Any, Any]) -> bool:
-    """Returns if 'item' is nested at least one-level.
-    
-    Args:
-        item (Union[object, Type[Any]]): class or instance to examine.
-        
-    Returns:
-        bool: if 'item' is a nested mapping.
-        
-    """ 
-    return (
-        isinstance(item, Mapping) 
-        and any(isinstance(v, Mapping) for v in item.values()))
-
-@is_nested.register(Sequence)     
-def is_nested_sequence(item: Sequence[Any]) -> bool:
-    """Returns if 'item' is nested at least one-level.
-    
-    Args:
-        item (Union[object, Type[Any]]): class or instance to examine.
-        
-    Returns:
-        bool: if 'item' is a nested sequence.
-        
-    """ 
-    return (
-        is_sequence(item = item)
-        and any(is_sequence(item = v) for v in item))
-
-@is_nested.register(Set)         
-def is_nested_set(item: Set[Any]) -> bool:
-    """Returns if 'item' is nested at least one-level.
-    
-    Args:
-        item (Union[object, Type[Any]]): class or instance to examine.
-        
-    Returns:
-        bool: if 'item' is a nested set.
-        
-    """ 
-    return (
-        is_set(item = item)
-        and any(is_set(item = v) for v in item))
-        
-def is_sequence(item: Union[object, Type[Any]]) -> bool:
-    """Returns if 'item' is a sequence and is NOT a str type.
-    
-    Args:
-        item (Union[object, Type[Any]]): class or instance to examine.
-        
-    Returns:
-        bool: if 'item' is a sequence but not a str.
-        
-    """ 
-    if not inspect.isclass(item):
-        item = item.__class__ 
-    return issubclass(item, Sequence) and not issubclass(item, str) 
-        
-def is_set(item: Union[object, Type[Any]]) -> bool:
-    """Returns if 'item' is a Set (including generic type sets).
-    
-    Args:
-        item (Union[object, Type[Any]]): class or instance to examine.
-        
-    Returns:
-        bool: if 'item' is a set.
-        
-    """ 
-    if not inspect.isclass(item):
-        item = item.__class__ 
-    return issubclass(item, Set)
-
-""" Attribute Checkers """
 
 def has_attributes(
     item: Union[object, Type[Any]], 
@@ -392,13 +95,13 @@ def has_attributes(
 
 def has_fields(
     item: Union[dataclasses.dataclass, Type[dataclasses.dataclass]], 
-    attributes: MutableSequence[str]) -> bool:
+    fields: MutableSequence[str]) -> bool:
     """Returns whether 'attributes' exist in dataclass 'item'.
 
     Args:
         item (Union[dataclasses.dataclass, Type[dataclasses.dataclass]]): 
             dataclass or dataclass instance to examine.
-        attributes (MutableSequence[str]): names of attributes to check to see
+        fields (MutableSequence[str]): names of attributes to check to see
             if they exist in 'item'.
     
     Raises:
@@ -410,7 +113,7 @@ def has_fields(
     """
     if dataclasses.is_dataclass(item):
         all_fields = [f.name for f in dataclasses.fields(item)]
-        return all(a in all_fields for a in attributes)
+        return all(a in all_fields for a in fields)
     else:
         raise TypeError('item must be a dataclass')
 
@@ -545,66 +248,8 @@ def is_variable(item: Union[object, Type[Any]], attribute: str) -> bool:
     """
     return (
         hasattr(item, attribute)
-        and not is_function(item = item)
+        and not objects.is_function(item = item)
         and not is_property(item = item, attribute = attribute))
-
-""" File and Folder Checkers """
-
-def is_file(item: Union[str, pathlib.Path]) -> bool:
-    """Returns whether 'item' is a non-python-module file.
-    
-    Args:
-        item (Union[str, pathlib.Path]): path to check.
-        
-    Returns:
-        bool: whether 'item' is a non-python-module file.
-        
-    """
-    item = camina.pathlibify(item = item)
-    return (
-        item.exists() 
-        and item.is_file() 
-        and not item.suffix in ['.py', '.pyc'])
-
-def is_folder(item: Union[str, pathlib.Path]) -> bool:
-    """Returns whether 'item' is a path to a folder.
-    
-    Args:
-        item (Union[str, pathlib.Path]): path to check.
-        
-    Returns:
-        bool: whether 'item' is a path to a folder.
-        
-    """
-    item = camina.pathlibify(item = item)
-    return item.exists() and item.is_dir() # type: ignore
-
-def is_module(item: Union[str, pathlib.Path]) -> bool:
-    """Returns whether 'item' is a python-module file.
-    
-    Args:
-        item (Union[str, pathlib.Path]): path to check.
-        
-    Returns:
-        bool: whether 'item' is a python-module file.
-        
-    """
-    item = camina.pathlibify(item = item)
-    return item.exists() and item.is_file() and item.suffix in ['.py'] # type: ignore
-
-def is_path(item: Union[str, pathlib.Path]) -> bool:
-    """Returns whether 'item' is a currently existing path.
-    
-    Args:
-        item (Union[str, pathlib.Path]): path to check.
-        
-    Returns:
-        bool: whether 'item' is a currently existing path.
-        
-    """
-    item = camina.pathlibify(item = item)
-    return item.exists() # type: ignore
-
 
 # def has_annotations(
 #     item: Union[object, Type[Any]], 

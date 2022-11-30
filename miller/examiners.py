@@ -40,7 +40,7 @@ from typing import Any, Optional, Type, Union
 
 import camina
 
-from . import report
+from . import modules
 
 
 @dataclasses.dataclass
@@ -79,7 +79,7 @@ class Inspector(object):
                 values.
             
         """
-        return report.get_attributes(
+        return modules.catalog_attributes(
             item = self.item, 
             include_private = self.include_private)
         
@@ -95,7 +95,7 @@ class Inspector(object):
                 in 'item'. Returns None if 'item' is not a container.
             
         """
-        return report.has_types(item = self.item)
+        return modules.has_types(item = self.item)
                 
     @property
     def name(self) -> Optional[str]:
@@ -128,7 +128,7 @@ class Inspector(object):
                 values.
             
         """
-        return report.get_variables(
+        return modules.get_variables(
             item = self.item, 
             include_private = self.include_private)                  
 
@@ -137,7 +137,7 @@ class Inspector(object):
     def __str__(self) -> str:
         """Returns all properties and their contents in a readable str."""
         representation = ""
-        for name, content in report.get_properties(item = self).items():
+        for name, content in modules.get_properties(item = self).items():
             representation += name + ': ' + content + '\n'
         return representation
             
@@ -166,7 +166,7 @@ class ClassInspector(Inspector):
                 are type hints.
             
         """
-        return report.get_annotations(
+        return modules.get_annotations(
             item = self.item, 
             include_private = self.include_private) 
         
@@ -178,7 +178,7 @@ class ClassInspector(Inspector):
             list[str]: names of attributes.
             
         """
-        return report.name_attributes(
+        return modules.name_attributes(
             item = self.item, 
             include_private = self.include_private)
 
@@ -191,7 +191,7 @@ class ClassInspector(Inspector):
                 methods.
             
         """
-        return report.get_methods(
+        return modules.get_methods(
             item = self.item, 
             include_private = self.include_private)
 
@@ -203,7 +203,7 @@ class ClassInspector(Inspector):
             list[str]: names of parameters for a dataclass.
             
         """
-        return report.name_parameters(item = self.item) 
+        return modules.name_parameters(item = self.item) 
     
     @property
     def properties(self) -> list[str]:
@@ -213,7 +213,7 @@ class ClassInspector(Inspector):
             list[str]: names of properties.
             
         """
-        return report.get_properties(
+        return modules.get_properties(
             item = self.item, 
             include_private = self.include_private)           
                  
@@ -226,7 +226,7 @@ class ClassInspector(Inspector):
                 signatures for those methods.
             
         """
-        return report.get_signatures(
+        return modules.get_signatures(
             item = self.item, 
             include_private = self.include_private)  
 
@@ -240,7 +240,7 @@ class ClassInspector(Inspector):
             list[str]: names of variables in 'item'.
             
         """
-        return report.get_variables(
+        return modules.get_variables(
             item = self.item, 
             include_private = self.include_private)      
 
@@ -269,7 +269,7 @@ class InstanceInspector(Inspector):
                 are type hints.
             
         """
-        return report.get_annotations(
+        return modules.get_annotations(
             item = self.item, 
             include_private = self.include_private) 
 
@@ -282,7 +282,7 @@ class InstanceInspector(Inspector):
                 methods.
             
         """
-        return report.get_methods(
+        return modules.get_methods(
             item = self.item, 
             include_private = self.include_private)
 
@@ -294,7 +294,7 @@ class InstanceInspector(Inspector):
             list[str]: names of parameters for a dataclass.
             
         """
-        return report.name_parameters(item = self.item) 
+        return modules.name_parameters(item = self.item) 
     
     @property
     def properties(self) -> dict[str, Any]:
@@ -305,7 +305,7 @@ class InstanceInspector(Inspector):
                 values.
             
         """
-        return report.get_properties(
+        return modules.get_properties(
             item = self.item, 
             include_private = self.include_private)           
                  
@@ -318,7 +318,7 @@ class InstanceInspector(Inspector):
                 signatures for those methods.
             
         """
-        return report.get_signatures(
+        return modules.get_signatures(
             item = self.item, 
             include_private = self.include_private)                
          
@@ -346,7 +346,7 @@ class ModuleInspector(Inspector):
             dict[str, Type[Any]: keys are class names and values are classes.
             
         """
-        return report.get_classes(
+        return modules.get_classes(
             item = self.item, 
             include_private = self.include_private)
         
@@ -359,7 +359,7 @@ class ModuleInspector(Inspector):
                 are functions.
             
         """
-        return report.get_functions(
+        return modules.get_functions(
             item = self.item, 
             include_private = self.include_private)
                  
@@ -372,7 +372,7 @@ class ModuleInspector(Inspector):
                 signatures for those methods.
             
         """
-        return report.get_signatures(
+        return modules.get_signatures(
             item = self.item, 
             include_private = self.include_private)  
           
@@ -410,7 +410,7 @@ class PackageInspector(Inspector):
             list[pathlib.Path]: list of non-python-module file paths.
             
         """
-        return report.get_file_paths(
+        return modules.get_file_paths(
             item = self.item, 
             recursive = self.include_subfolders)
 
@@ -422,7 +422,7 @@ class PackageInspector(Inspector):
             list[pathlib.Path]: list of folder paths.
             
         """
-        return report.get_folder_paths(
+        return modules.get_folder_paths(
             item = self.item, 
             recursive = self.include_subfolders)
 
@@ -438,7 +438,7 @@ class PackageInspector(Inspector):
                 modules and values as the corresponding modules.
             
         """
-        return report.get_modules(
+        return modules.get_modules(
             item = self.item, 
             recursive = self.include_subfolders)  
         
@@ -450,7 +450,7 @@ class PackageInspector(Inspector):
             list[pathlib.Path]: list of python-module file paths.
             
         """
-        return report.get_module_paths(
+        return modules.get_module_paths(
             item = self.item, 
             recursive = self.include_subfolders)  
               
@@ -462,6 +462,6 @@ class PackageInspector(Inspector):
             list[pathlib.Path]: list of all paths.
             
         """
-        return report.get_paths(
+        return modules.get_paths(
             item = self.item, 
             recursive = self.include_subfolders)

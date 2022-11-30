@@ -1,5 +1,5 @@
 """
-report: functions that return data stored in a passed python object
+modules: inspects modules
 Corey Rayburn Yung <coreyrayburnyung@gmail.com>
 Copyright 2020-2022, Corey Rayburn Yung
 License: Apache-2.0
@@ -39,12 +39,7 @@ Contents:
         get_functions
         name_classes
         name_functions   
-    File and Folder Reporters:
-        get_file_paths
-        get_folder_paths
-        get_modules
-        get_module_paths
-        name_modules
+
         
 ToDo:
     Add support for Kinds once that system is complete.
@@ -64,7 +59,7 @@ from typing import Any, Optional, Type, Union
 import camina
 import nagata
 
-from . import check
+from . import objects
 
 
 """ Container Reporters """   
@@ -355,7 +350,7 @@ def name_methods(
     """
     methods = [
         a for a in dir(item)
-        if check.is_method(item = item, attribute = a)]
+        if objects.is_method(item = item, attribute = a)]
     if not include_private:
         methods = camina.drop_privates(item = methods)
     return methods
@@ -390,7 +385,7 @@ def name_properties(
         item = item.__class__
     properties = [
         a for a in dir(item)
-        if check.is_property(item = item, attribute = a)]
+        if objects.is_property(item = item, attribute = a)]
     if not include_private:
         properties = camina.drop_privates(item = properties)
     return properties
@@ -411,7 +406,7 @@ def name_variables(
             
     """
     names = [
-        a for a in dir(item) if check.is_variable(item = item, attribute = a)]
+        a for a in dir(item) if objects.is_variable(item = item, attribute = a)]
     if not include_private:
         names = camina.drop_privates(item = names)
     return names
@@ -512,108 +507,3 @@ def name_functions(
 
 """ File and Folder Reporters """
 
-def get_file_paths(
-    item: Union[str, pathlib.Path],
-    recursive: bool = False) -> list[pathlib.Path]:  
-    """Returns list of non-python module file paths in 'item'.
-    
-    Args:
-        item (Union[str, pathlib.Path]): path of folder to examine.
-        recursive (bool): whether to include subfolders. Defaults to False.
-        
-    Returns:
-        list[pathlib.Path]: a list of file paths in 'item'.
-        
-    """
-    paths = get_paths(item = item, recursive = recursive)
-    files = [p for p in paths if p.is_file()]
-    return [f for f in files if f.is_file]
-
-def get_folder_paths(
-    item: Union[str, pathlib.Path],
-    recursive: bool = False) -> list[pathlib.Path]:  
-    """Returns list of folder paths in 'item'.
-    
-    Args:
-        item (Union[str, pathlib.Path]): path of folder to examine.
-        recursive (bool): whether to include subfolders. Defaults to False.
-        
-    Returns:
-        list[pathlib.Path]: a list of folder paths in 'item'.
-        
-    """
-    paths = get_paths(item = item, recursive = recursive)
-    return [p for p in paths if check.is_folder(item = p)]
-
-def get_modules(
-    item: Union[str, pathlib.Path],
-    recursive: bool = False) -> dict[types.ModuleType]:  
-    """Returns dict of python module names and modules in 'item'.
-    
-    Args:
-        item (Union[str, pathlib.Path]): path of folder to examine.
-        recursive (bool): whether to include subfolders. Defaults to False.
-        
-    Returns:
-        dict[str, types.ModuleType]: dict with str key names of python modules 
-            and values as the corresponding modules.
-        
-    """
-    return [
-        nagata.from_file_path(path = p)
-        for p in get_paths(item = item, recursive = recursive)]
-
-def get_module_paths(
-    item: Union[str, pathlib.Path],
-    recursive: bool = False) -> list[pathlib.Path]:  
-    """Returns list of python module paths in 'item'.
-    
-    Args:
-        item (Union[str, pathlib.Path]): path of folder to examine.
-        recursive (bool): whether to include subfolders. Defaults to False.
-        
-    Returns:
-        list[pathlib.Path]: a list of python module paths in 'item'.
-        convert.
-    """
-    paths = get_paths(item = item, recursive = recursive)
-    return [p for p in paths if check.is_module(item = p)]
-
-def get_paths(
-    item: Union[str, pathlib.Path], 
-    suffix: str = '*',
-    recursive: bool = False) -> list[pathlib.Path]:  
-    """Returns list of all paths in 'item'.
-    
-    Args:
-        item (Union[str, pathlib.Path]): path of folder to examine.
-        suffix (str): file suffix to match. Defaults to '*' (all file suffixes). 
-        recursive (bool): whether to include subfolders. Defaults to False.
-        
-    Returns:
-        list[pathlib.Path]: a list of all paths in 'item'.
-        
-    """
-    item = camina.pathlibify(item = item) 
-    if recursive:
-        return  list(folder.rglob(f'*.{suffix}')) # type: ignore
-    else:
-        return list(item.glob(f'*.{suffix}')) # type: ignore
-      
-def name_modules(
-    item: Union[str, pathlib.Path],
-    recursive: bool = False) -> list[str]:  
-    """Returns list of python module names in 'item'.
-    
-    Args:
-        item (Union[str, pathlib.Path]): path of folder to examine.
-        recursive (bool): whether to include subfolders. Defaults to False.
-        
-    Returns:
-        list[str]: a list of python module names in 'item'.
-        
-    """
-    item = camina.pathlibify(item = item)
-    kwargs = {'item': item, 'suffix': 'py', 'recursive': recursive}
-    paths = [p.stem for p in get_paths(**kwargs)] # type: ignore
-    return [str(p) for p in paths]

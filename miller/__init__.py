@@ -1,5 +1,5 @@
 """
-miller: introspection tools using consistent, accessible syntax 
+miller: introspection tools using a consistent and intuitive syntax 
 Corey Rayburn Yung <coreyrayburnyung@gmail.com>
 Copyright 2020-2022, Corey Rayburn Yung
 License: Apache-2.0
@@ -52,8 +52,9 @@ __package__ = 'miller'
 __author__ = 'Corey Rayburn Yung'
 
 
-from .check import *
-from .clock import *
+from .attributes import *
+from .defaults import *
 from .examiners import *
-from .report import *
-from .represent import *
+from .modules import *
+from .objects import *
+from .paths import *

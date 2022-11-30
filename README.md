@@ -8,7 +8,7 @@ Named after the erstwhile inspector from *The Expanse*, this package provides co
 
 # Why miller?
 
-## Simple
+## Universal
 
 Consider the different and often difficult-to-read syntax that Python uses for introspection of different objects.
 ```
@@ -32,16 +32,69 @@ In addition, each of those **miller** functions includes a boolean parameter `in
 
 Unlike the default Python instrospection functions and methods, **miller** uses a consistent syntax and structure that is far more intuitive. This allows users to guess what the appropriate syntax should by following a simple, consistent structure.
 
-**miller** uses four basic prefixes for its core introspection functions:
- 
-* `get`: returns the items sought.
-* `has`: returns a bool as to whether a class or object has a list of items.
-* `is`: returns a bool as to whether a class or object is a type.
-* `name`: returns the str names of the items sought.
-  
-Those prefixes are followed by an underscore and a suffix indicating what information is sought. So, for example, 
+**miller** uses five basic prefixes for its introspection functions:
 
-* `get_methods`: returns a dict of the method names and methods of an object.
+| prefix   | what it does   | returns   |
+|---|---|---|
+| `catalog`  |combines results of corresponding  `name` and `get` functions into a `dict`  | `dict[str, Any]`   |
+| `get`  | gets sought types from an item  |   `list[Any]`   |
+| `has`  | whether an item has specified types  |   `bool`   |
+| `is` | whether an item is a type  |   `bool`   |
+| `name` | gets `str` names of sought types from an item  |   `list[str]`   |
+
+Those prefixes are followed by an underscore and a suffix indicating what information is sought. **miller** has XXX possible suffixes for each of those prefixes:
+| suffix  | what it concerns   | what types it inspects   |
+|---|---|---|
+| `annotations`  | class, function, or method annotations   | `object`, `Type`, or `ModuleType`  |
+| `attribute`  | an attribute (including methods) of a class  | attribute in an `object` or `Type` |
+| `attributes`  | attributes (including methods or functions)  |  `object`, `Type`, or `ModuleType`  |
+| `class`  | a class (not an instance)  | `object` or `Type` |
+| `classes`  | classes in a module    | `ModuleType`   |
+| `field`  | field in a dataclass  | `dataclass` or `Type[dataclass]` |
+| `fields`  | fields in a dataclass  | `dataclass` or `Type[dataclass]`  |
+| `file_path`  | path of a file | `str` or `Path`  |
+| `file_paths`  | paths of files in a path  | `str` or `Path`  |
+| `folder_path`  | path of a folder  | `str` or `Path`  |
+| `folder_paths`  | paths of folders in a path   | `str` or `Path`  |
+| `function`  | a callable function  | `object`|
+| `functions`  | functions in a module  | `ModuleType`  |
+| `instance`  | a class instance (not a class)  | `object` or `Type` |
+| `method`  | method in a class  | attribute in an `object` or `Type` |
+| `methods`  | class or instance methods  | `object` or `Type`   |
+| `module`  | module types  | `object` or `Type` |
+| `modules`  | paths of modules in a path   |  `str` or `Path`  |
+| `path`  | path on disk  | `str` or `Path` |
+| `paths`  | combination of file_paths and folder_paths  | `str` or `Path`   |
+| `property`  | attributes of a class  | attribute in an `object` |
+| `properties`  | properties of a class  | `object` or `Type`   |
+| `signatures`  | class, function, or method signatures  | `object`, `Type`, or `ModuleType`    |
+| `variable`  | attributes (excluding methods) of a class | `object`, `Type`, or `ModuleType`   |
+| `variables`  | an attribute (excluding methods or functions)  |  `object`, `Type`, or `ModuleType`   |
+
+The following functions are available in **miller** for the `catalog`, `get`, `has`, and `name`  suffixes :
+
+| prefix/suffix | `catalog`  | `get`  | `has`  | `name`  |
+|---|---|---|---|---|---|---|
+| `annotations` | X | X | X | X |
+| `attributes` | X | X | X | X | 
+| `classes` | X | X | X | X | 
+| `fields` | X | X | X | X | 
+| `file_paths` | X | X | X | X | 
+| `folder_paths` | X | X | X | X | 
+| `functions` | X | X | X | X | 
+| `methods` | X | X | X | X | 
+| `modules` | X | X | X | X |  
+| `paths`  | X | X | X | X | 
+| `properties` | X | X | X | X | 
+| `signatures` | X | X | X | X | 
+| `variables` | X | X | X | X | 
+
+For the `is` prefix, functions with the following suffixes are included: 
+
+ So, for example, 
+
+* `catalog_methods`: returns a dict of the method names and methods of an object.
+* `get_methods`: returns a list of methods of an object.
 * `has_methods`: returns whether an object has all of the named methods passed to the `methods` parameter.
 * `is_method`: returns whether an item is a method of an object.
 * `name_methods`: returns a list of names of methods of an object.

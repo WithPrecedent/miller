@@ -60,24 +60,7 @@ class TestClass(object):
         return
    
     
-def test_all() -> None:
-    a_folder = pathlib.Path('.') / 'tests' / 'dummy_folder'
-    a_file = pathlib.Path(a_folder) / 'dummy_module.py'
-    assert miller.is_folder(item = a_folder)
-    assert miller.is_module(item = a_file)
-    assert miller.name_modules(item = a_folder) == ['dummy_module']
-    all_modules = miller.get_modules(item = a_folder)
-    a_module = all_modules[0]
-    assert type(a_module) == types.ModuleType
-    assert a_module.__name__ == 'dummy_module'
-    class_names = miller.name_classes(item = a_module)
-    assert class_names == ['DummyClass', 'DummyDataclass']
-    function_names = miller.name_functions(item = a_module)
-    assert function_names == ['dummy_function']
-    classes = miller.get_classes(item = a_module)
-    assert inspect.isclass(classes[0])
-    functions = miller.get_functions(item = a_module)
-    assert type(functions[0]) == types.FunctionType
+def test_attributes() -> None:
     a_class = TestClass()
     a_dataclass = TestDataclass()
     assert miller.is_class_attribute(item = a_class, attribute = 'a_classvar')
@@ -106,6 +89,33 @@ def test_all() -> None:
     assert attributes == ['a_dict', 'a_list']
     return
 
-if __name__ == '__main__':
-    test_all()
+def test_modules() -> None:
+    a_folder = pathlib.Path('.') / 'tests' / 'dummy_folder'
+    all_modules = miller.get_modules(item = a_folder, import_modules = True)
+    a_module = all_modules[0]
+    class_names = miller.name_classes(item = a_module)
+    assert class_names == ['DummyClass', 'DummyDataclass']
+    function_names = miller.name_functions(item = a_module)
+    assert function_names == ['dummy_function']
+    classes = miller.get_classes(item = a_module)
+    assert inspect.isclass(classes[0])
+    functions = miller.get_functions(item = a_module)
+    assert type(functions[0]) == types.FunctionType
+    return
 
+def test_paths() -> None:
+    a_folder = pathlib.Path('.') / 'tests' / 'dummy_folder'
+    a_file = pathlib.Path(a_folder) / 'dummy_module.py'
+    assert miller.is_folder(item = a_folder)
+    assert miller.is_module(item = a_file)
+    assert miller.name_modules(item = a_folder) == ['dummy_module']
+    all_modules = miller.get_modules(item = a_folder, import_modules = True)
+    a_module = all_modules[0]
+    assert type(a_module) == types.ModuleType
+    assert a_module.__name__ == 'dummy_module'
+    return
+
+if __name__ == '__main__':
+    test_paths()
+    test_modules()
+    test_attributes()
