@@ -105,7 +105,7 @@ class Inspector(object):
             str: inferred name of the stored 'item'.
             
         """
-        return camina.namify(item = self.item) 
+        return camina.namify(self.item) 
         
     @property
     def type(self) -> Type[Any]:
@@ -398,7 +398,7 @@ class PackageInspector(Inspector):
     
     def __post_init__(self) -> None:
         """Initializes class instance attributes."""
-        self.item = camina.pathlibify(item = self.item)
+        self.item = camina.pathlibify(self.item)
         
     """ Properties """
 

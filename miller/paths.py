@@ -233,7 +233,7 @@ def get_paths(
     """
     if recursive is None:
         recursive = defaults.RECURSIVE   
-    item = camina.pathlibify(item = item) 
+    item = camina.pathlibify(item) 
     if recursive:
         return list(item.rglob(f'*.{suffix}'))
     else:
@@ -253,9 +253,9 @@ def has_files(
         bool: whether all 'elements' are in 'item'.
         
     """ 
-    item = camina.pathlibify(item = item)
+    item = camina.pathlibify(item)
     paths = get_paths(item = item, recursive = False)
-    elements = [camina.pahlibify(item = p) for p in elements]
+    elements = [camina.pahlibify(p) for p in elements]
     return all(elements in paths)
           
 def has_folders(
@@ -272,9 +272,9 @@ def has_folders(
         bool: whether all 'elements' are in 'item'.
         
     """ 
-    item = camina.pathlibify(item = item)
+    item = camina.pathlibify(item)
     paths = get_paths(item = item, recursive = False)
-    elements = [camina.pahlibify(item = p) for p in elements]
+    elements = [camina.pahlibify(p) for p in elements]
     return all(elements in paths)
       
 def has_modules(
@@ -291,9 +291,9 @@ def has_modules(
         bool: whether all 'elements' are in 'item'.
         
     """ 
-    item = camina.pathlibify(item = item)
+    item = camina.pathlibify(item)
     paths = get_paths(item = item, recursive = False)
-    elements = [camina.pahlibify(item = p) for p in elements]
+    elements = [camina.pahlibify(p) for p in elements]
     return all(elements in paths)
       
 def has_paths(
@@ -310,9 +310,9 @@ def has_paths(
         bool: whether all 'elements' are in 'item'.
         
     """ 
-    item = camina.pathlibify(item = item)
+    item = camina.pathlibify(item)
     paths = get_paths(item = item, recursive = False)
-    elements = [camina.pahlibify(item = p) for p in elements]
+    elements = [camina.pahlibify(p) for p in elements]
     return all(elements in paths)
 
 def is_file(item: str | pathlib.Path) -> bool:
@@ -325,7 +325,7 @@ def is_file(item: str | pathlib.Path) -> bool:
         bool: whether 'item' is a non-python-module file.
         
     """ 
-    item = camina.pathlibify(item = item)
+    item = camina.pathlibify(item)
     return (
         item.exists() 
         and item.is_file() 
@@ -341,7 +341,7 @@ def is_folder(item: str | pathlib.Path) -> bool:
         bool: whether 'item' is a path to a folder.
         
     """ 
-    item = camina.pathlibify(item = item)
+    item = camina.pathlibify(item)
     return item.exists() and item.is_dir()
 
 def is_module(item: str | pathlib.Path) -> bool:
@@ -354,7 +354,7 @@ def is_module(item: str | pathlib.Path) -> bool:
         bool: whether 'item' is a python-module file.
         
     """  
-    item = camina.pathlibify(item = item)
+    item = camina.pathlibify(item)
     return (
         item.exists() 
         and item.is_file() 
@@ -370,7 +370,7 @@ def is_path(item: str | pathlib.Path) -> bool:
         bool: whether 'item' is a currently existing path.
         
     """ 
-    item = camina.pathlibify(item = item)
+    item = camina.pathlibify(item)
     return item.exists()
       
 def name_files(
@@ -391,7 +391,7 @@ def name_files(
     """
     if recursive is None:
         recursive = defaults.RECURSIVE   
-    item = camina.pathlibify(item = item)
+    item = camina.pathlibify(item)
     kwargs = {'item': item, 'recursive': recursive}
     return [p.stem for p in get_files(**kwargs)]
           
@@ -411,7 +411,7 @@ def name_folders(
     """
     if recursive is None:
         recursive = defaults.RECURSIVE   
-    item = camina.pathlibify(item = item)
+    item = camina.pathlibify(item)
     kwargs = {'item': item, 'recursive': recursive}
     return [p.name for p in get_folders(**kwargs)]
       
@@ -433,7 +433,7 @@ def name_modules(
     """
     if recursive is None:
         recursive = defaults.RECURSIVE   
-    item = camina.pathlibify(item = item)
+    item = camina.pathlibify(item)
     kwargs = {'item': item, 'recursive': recursive}
     return [p.stem for p in get_modules(**kwargs)]
       

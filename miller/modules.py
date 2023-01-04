@@ -59,6 +59,7 @@ from typing import Any, Optional, Type, Union
 import camina
 import nagata
 
+from . import attributes
 from . import objects
 
 
@@ -350,7 +351,7 @@ def name_methods(
     """
     methods = [
         a for a in dir(item)
-        if objects.is_method(item = item, attribute = a)]
+        if attributes.is_method(item = item, attribute = a)]
     if not include_private:
         methods = camina.drop_privates(item = methods)
     return methods
@@ -385,7 +386,7 @@ def name_properties(
         item = item.__class__
     properties = [
         a for a in dir(item)
-        if objects.is_property(item = item, attribute = a)]
+        if attributes.is_property(item = item, attribute = a)]
     if not include_private:
         properties = camina.drop_privates(item = properties)
     return properties
@@ -406,7 +407,8 @@ def name_variables(
             
     """
     names = [
-        a for a in dir(item) if objects.is_variable(item = item, attribute = a)]
+        a for a in dir(item) 
+        if attributes.is_variable(item = item, attribute = a)]
     if not include_private:
         names = camina.drop_privates(item = names)
     return names
