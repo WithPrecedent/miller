@@ -4,24 +4,37 @@
 
 *"I'm a tool that finds things."* - Detective Josephus Miller
 
-Named after the erstwhile inspector from *The Expanse*, this package provides convenient, simple introspection tools for packages, modules, classes, objects, attributes, and containers. 
+<p align="center">
+<img src="https://media.giphy.com/media/l44Q6pEdnMOQqHgek/giphy.gif" height="300"/>
+</p>
+
+Named after the erstwhile inspector from *The Expanse*, this package provides convenient, introspection tools using a consistent, intuitive syntax for packages, modules, classes, objects, attributes, and containers. 
 
 # Why miller?
 
 ## Universal
 
 Consider the different and often difficult-to-read syntax that Python uses for introspection of different objects.
-```
+``` python
 """Returns a list of function names in the module 'item'."""
-[m[0] for m in inspect.getmembers(item, inspect.isfunction)
+[m[0] for m in inspect.getmembers(item, inspect.isfunction) 
  if m[1].__module__ == item.__name__]
+
 """Returns names of properties of the instance 'item'."""
 [a for a in dir(item) if isinstance(getattr(a, item), property)] 
+
 """Returns names of fields of the dataclass 'item'."""
 [f.name for f in dataclasses.fields(item)] 
 ```
-That code can be difficult to remember, requires importing a range of packages, and is not easy to understand if you are not familiar with the relevant imported packages. In contrast, miller uses simple, easy-to-read code for each of the above requests:
-```
+That code can be difficult to remember, requires importing a range of packages, and is not easy to understand if you are not familiar with the relevant imported packages. 
+
+<p align="center">
+<img src="https://media.giphy.com/media/3oz8xxBsDMZWcMCHoQ/giphy.gif" height="300"/>
+</p>
+
+In contrast, **miller** uses simple, easy-to-read code for each of the above requests:
+
+``` python
 name_functions(item)
 name_properties(item)
 name_fields(item)
@@ -29,6 +42,10 @@ name_fields(item)
 In addition, each of those **miller** functions includes a boolean parameter `include_privates` which indicates whether you want to include any matching items that have str names beginning with an underscore.
 
 ## Intuitive
+
+<p align="center">
+<img src="https://media.giphy.com/media/PiqvXUF6UI6enzyNY9/giphy.gif" height="300"/>
+</p>
 
 Unlike the default Python instrospection functions and methods, **miller** uses a consistent syntax and structure that is far more intuitive. This allows users to guess what the appropriate syntax should by following a simple, consistent structure.
 
@@ -98,6 +115,10 @@ For the `is` prefix, functions with the following suffixes are included:
 * `has_methods`: returns whether an object has all of the named methods passed to the `methods` parameter.
 * `is_method`: returns whether an item is a method of an object.
 * `name_methods`: returns a list of names of methods of an object.
+
+<p align="center">
+<img src="https://media.giphy.com/media/l0Ex6Yb0meOZQloWs/giphy.gif" height="300"/>
+</p>
 
 # Contributing 
 

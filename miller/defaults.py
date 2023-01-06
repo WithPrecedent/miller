@@ -28,3 +28,21 @@ from __future__ import annotations
 
 MODULE_SUFFIXES: list[str] = ['.py', '.pyc']
 RECURSIVE: bool = False
+
+
+def set_recursion(recursive: bool) -> None:
+    """Sets globally the default rule whether tools should be recursive.
+
+    Args:
+        recursive (bool): value to set the RECURSIVE variable to.
+
+    Raises:
+        TypeError: if 'recursive' is not a boolean type.
+        
+    """
+    if isinstance(recursive, bool):
+        RECURSIVE = recursive
+    else:
+        raise TypeError('recursive argument must be a boolean type')
+    
+    

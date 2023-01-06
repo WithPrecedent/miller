@@ -62,88 +62,7 @@ import nagata
 from . import attributes
 from . import objects
 
-
-""" Container Reporters """   
-
-@functools.singledispatch
-def get_types(item: object) -> Optional[Union[
-    tuple[Type[Any], ...], 
-    tuple[tuple[Type[Any], ...], tuple[Type[Any], ...]]]]:
-    """Returns types contained in 'item'.
-
-    Args:
-        item (object): item to examine.
-    
-    Returns:
-        Optional[Union[tuple[Type[Any], ...], tuple[tuple[Type[Any], ...], 
-            tuple[Type[Any], ...]]]]:: returns the types of things contained 
-            in 'item'. Returns None if 'item' is not a container.
-        
-    """
-    raise TypeError(f'item {item} is not supported by {__name__}')
-
-@get_types.register(Mapping)  
-def get_types_dict(
-    item: Mapping[Hashable, Any]) -> Optional[
-        tuple[tuple[Type[Any], ...], tuple[Type[Any], ...]]]:
-    """Returns types contained in 'item'.
-
-    Args:
-        item (object): item to examine.
-    
-    Returns:
-        Optional[tuple[Type[Any], ...]]: returns the types of things contained 
-            in 'item'. Returns None if 'item' is not a container.
-        
-    """
-    if isinstance(item, Mapping):
-        key_types = get_types_sequence(item = item.keys())
-        value_types = get_types_sequence(item = item.values())
-        return tuple([key_types, value_types])
-    else:
-        return None
-
-@get_types.register(MutableSequence)  
-def get_types_list(item: list[Any]) -> Optional[tuple[Type[Any], ...]]:
-    """Returns types contained in 'item'.
-
-    Args:
-        item (list[Any]): item to examine.
-    
-    Returns:
-        Optional[tuple[Type[Any], ...]]: returns the types of things contained 
-            in 'item'. Returns None if 'item' is not a container.
-        
-    """
-    if isinstance(item, list):
-        key_types = get_types_sequence(item = item.keys())
-        value_types = get_types_sequence(item = item.values())
-        return tuple([key_types, value_types])
-    else:
-        return None
-
-@get_types.register(Sequence)    
-def get_types_sequence(item: Sequence[Any]) -> Optional[tuple[Type[Any], ...]]:
-    """Returns types contained in 'item'.
-
-    Args:
-        item (Sequence[Any]): item to examine.
-    
-    Returns:
-        Optional[tuple[Type[Any], ...]]: returns the types of things contained 
-            in 'item'. Returns None if 'item' is not a container.
-        
-    """
-    if isinstance(item, Sequence):
-        all_types = []
-        for thing in item:
-            kind = type(thing)
-            if not kind in all_types:
-                all_types.append(kind)
-        return tuple(all_types)
-    else:
-        return None
-    
+   
 """ Class and Instance Reporters """   
      
 def get_annotations(
@@ -506,6 +425,3 @@ def name_functions(
     if not include_private:
         names = camina.drop_privates(item = names)
     return names
-
-""" File and Folder Reporters """
-

@@ -1,5 +1,5 @@
 """
-objects: tests objects and types
+objects: inspects objects and types
 Corey Rayburn Yung <coreyrayburnyung@gmail.com>
 Copyright 2020-2022, Corey Rayburn Yung
 License: Apache-2.0
@@ -125,67 +125,6 @@ def is_list(item: Union[object, Type[Any]]) -> bool:
         item = item.__class__ 
     return isinstance(item, MutableSequence)
 
-@functools.singledispatch
-def is_nested(item: object) -> bool:
-    """Returns if 'item' is nested at least one-level.
-    
-    Args:
-        item (object): instance to examine.
-        
-    Raises:
-        TypeError: if 'item' does not match any of the registered types.
-        
-    Returns:
-        bool: if 'item' is a nested mapping.
-        
-    """ 
-    raise TypeError(f'item {item} is not supported by {__name__}')
-
-@is_nested.register(Mapping)   
-def is_nested_dict(item: Mapping[Any, Any]) -> bool:
-    """Returns if 'item' is nested at least one-level.
-    
-    Args:
-        item (Union[object, Type[Any]]): class or instance to examine.
-        
-    Returns:
-        bool: if 'item' is a nested mapping.
-        
-    """ 
-    return (
-        isinstance(item, Mapping) 
-        and any(isinstance(v, Mapping) for v in item.values()))
-
-@is_nested.register(Sequence)     
-def is_nested_sequence(item: Sequence[Any]) -> bool:
-    """Returns if 'item' is nested at least one-level.
-    
-    Args:
-        item (Union[object, Type[Any]]): class or instance to examine.
-        
-    Returns:
-        bool: if 'item' is a nested sequence.
-        
-    """ 
-    return (
-        is_sequence(item = item)
-        and any(is_sequence(item = v) for v in item))
-
-@is_nested.register(Set)         
-def is_nested_set(item: Set[Any]) -> bool:
-    """Returns if 'item' is nested at least one-level.
-    
-    Args:
-        item (Union[object, Type[Any]]): class or instance to examine.
-        
-    Returns:
-        bool: if 'item' is a nested set.
-        
-    """ 
-    return (
-        is_set(item = item)
-        and any(is_set(item = v) for v in item))
-        
 def is_sequence(item: Union[object, Type[Any]]) -> bool:
     """Returns if 'item' is a sequence and is NOT a str type.
     
