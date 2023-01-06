@@ -52,10 +52,10 @@ __package__ = 'miller'
 __author__ = 'Corey Rayburn Yung'
 
 
-from .attributes import *
-from .containers import *
+from .check import *
 from .defaults import *
 from .examiners import *
-from .modules import *
-from .objects import *
-from .paths import *
+from .identify import *
+from .label import *
+from .map import *
+from .report import *

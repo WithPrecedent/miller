@@ -67,6 +67,8 @@ Those prefixes are followed by an underscore and a suffix indicating what inform
 | `attributes`  | attributes (including methods or functions)  |  `object`, `Type`, or `ModuleType`  |
 | `class`  | a class (not an instance)  | `object` or `Type` |
 | `classes`  | classes in a module    | `ModuleType`   |
+| `class_attribute`  | attributes of a class (not an instance)  | `object` or `Type` |
+| `class_attributes`  | attributes of a class (not an instance)    | `object` or `Type`    |
 | `field`  | field in a dataclass  | `dataclass` or `Type[dataclass]` |
 | `fields`  | fields in a dataclass  | `dataclass` or `Type[dataclass]`  |
 | `file_path`  | path of a file | `str` or `Path`  |

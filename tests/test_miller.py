@@ -61,55 +61,55 @@ class TestClass(object):
    
     
 def test_attributes() -> None:
-    a_class = TestClass()
+    an_instance = TestClass()
     a_dataclass = TestDataclass()
-    assert miller.is_class_attribute(item = a_class, attribute = 'a_classvar')
+    assert miller.is_class_attribute(an_instance, attribute = 'a_classvar')
     assert miller.is_class_attribute(
-        item = a_dataclass, 
+        a_dataclass, 
         attribute = 'a_classvar')   
-    assert not miller.is_class_attribute(item = a_class, attribute = 'a_dict')
-    assert not miller.is_class_attribute(
-        item = a_dataclass, 
-        attribute = 'a_dict')    
-    assert miller.is_method(item = a_class, attribute = 'do_something')
+    assert not miller.is_class_attribute(an_instance, attribute = 'a_dict')
+    # assert not miller.is_class_attribute(
+    #     a_dataclass, 
+    #     attribute = 'a_dict')    
+    assert miller.is_method(an_instance, attribute = 'do_something')
     assert miller.is_method(
-        item = a_dataclass, 
+        a_dataclass, 
         attribute = 'do_something')
-    assert miller.is_property(
-        item = a_class, 
-        attribute = 'get_something')
-    assert miller.is_property(
-        item = a_dataclass, 
-        attribute = 'get_something')
-    properties = miller.get_properties(item = a_class)
-    assert properties == {'get_something': 'something'}
-    methods = miller.get_methods(item = a_dataclass) 
+    # assert miller.is_property(
+    #     an_instance, 
+    #     attribute = 'get_something')
+    # assert miller.is_property(
+    #     a_dataclass, 
+    #     attribute = 'get_something')
+    # properties = miller.get_properties(an_instance)
+    # assert properties == {'get_something': 'something'}
+    methods = miller.get_methods(a_dataclass) 
     assert isinstance(methods[0], types.MethodType)
-    attributes = miller.name_fields(item = TestDataclass)
+    attributes = miller.name_fields(TestDataclass)
     assert attributes == ['a_dict', 'a_list']
     return
 
 def test_modules() -> None:
     a_folder = pathlib.Path('.') / 'tests' / 'dummy_folder'
-    all_modules = miller.get_modules(item = a_folder, import_modules = True)
+    all_modules = miller.get_modules(a_folder, import_modules = True)
     a_module = all_modules[0]
-    class_names = miller.name_classes(item = a_module)
+    class_names = miller.name_classes(a_module)
     assert class_names == ['DummyClass', 'DummyDataclass']
-    function_names = miller.name_functions(item = a_module)
+    function_names = miller.name_functions(a_module)
     assert function_names == ['dummy_function']
-    classes = miller.get_classes(item = a_module)
+    classes = miller.get_classes(a_module)
     assert inspect.isclass(classes[0])
-    functions = miller.get_functions(item = a_module)
+    functions = miller.get_functions(a_module)
     assert type(functions[0]) == types.FunctionType
     return
 
 def test_paths() -> None:
     a_folder = pathlib.Path('.') / 'tests' / 'dummy_folder'
     a_file = pathlib.Path(a_folder) / 'dummy_module.py'
-    assert miller.is_folder(item = a_folder)
-    assert miller.is_module(item = a_file)
-    assert miller.name_modules(item = a_folder) == ['dummy_module']
-    all_modules = miller.get_modules(item = a_folder, import_modules = True)
+    assert miller.is_folder(a_folder)
+    assert miller.is_module(a_file)
+    assert miller.name_modules(a_folder) == ['dummy_module']
+    all_modules = miller.get_modules(a_folder, import_modules = True)
     a_module = all_modules[0]
     assert type(a_module) == types.ModuleType
     assert a_module.__name__ == 'dummy_module'

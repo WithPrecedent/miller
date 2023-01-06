@@ -1,5 +1,5 @@
 """
-paths: inspects paths on disk
+identify: tests types of classes and instances
 Corey Rayburn Yung <coreyrayburnyung@gmail.com>
 Copyright 2020-2022, Corey Rayburn Yung
 License: Apache-2.0
@@ -38,282 +38,95 @@ Contents:
     name_modules
     name_paths  
           
+    Simple Type Checkers:
+        is_container: returns if an item is a container but not a str.
+        is_function: returns if an item is a function type.
+        is_iterable: returns if an item is iterable but not a str.
+        is_nested: dispatcher which returns if an item is a nested container.
+        is_nested_dict: returns if an item is a nested dict.
+        is_nested_sequence: returns if an item is a nested sequence.
+        is_nested_set: returns if an item is a nested set.
+        is_sequence: returns if an item is a sequence but not a str. 
+    
 To Do:
+    Adding parsing functionality to commented signature functions to find
+        equivalence when one signature has subtypes of the other signature
+        (e.g., one type annotation is 'dict' and the other is 'MutableMapping').
+        It might be necessary to create a separate Signature-like class to 
+        implement this functionality. This includes fixing or abandoning 
+        'has_annotations' due to issues matching type annotations.
+    Add support for Kinds once that system is complete.
+    Add support for types (using type annotations) in the 'contains' function so
+        that 'contains' can be applied to classes and not just instances.
+    Add 'dispatcher' framework to 'contains' once the dispatcher framework is
+        completed in the 'bobbie' package and the Kind system is completed in
+        the nagata package. This should replace existing usages of python's
+        singledispatch, which doesn't propertly deal with subtypes.
+    
 
     
 """
 from __future__ import annotations
+from collections.abc import (
+    Collection, Container, Hashable, Iterable, Mapping, MutableMapping, 
+    MutableSequence, Sequence, Set)
+import functools
+import inspect
 import pathlib
 import types
-from typing import Optional
+from typing import Any, Type
 
 import camina
-import nagata
 
 from . import defaults
+from . import identify
+ 
+ 
+def is_class_attribute(item: object | Type[Any], /, attribute: str) -> bool:
+    """Returns if 'attribute' is a class attribute of 'item'.
 
+    Args:
+        item (object | Type[Any]): class or instance to examine.
+        attribute (str): name of attribute to examine.
 
-def catalog_files(
-    item: str | pathlib.Path,
-    recursive: Optional[bool] = None) -> dict[str, pathlib.Path]:  
-    """Returns dict of python file names and file paths in 'item'.
-    
-    Args:
-        item (str | pathlib.Path): path of folder to examine.
-        recursive (Optional[bool]): whether to include subfolders. Defaults to 
-            None. If 'recursive' is None, 'defaults.RECURSIVE' is used.
-        
     Returns:
-        dict[dict[str, pathlib.Path]: dict with keys being file names and values
-            being file paths. 
+        bool: where 'attribute' is a class attribute.
         
-    """
-    if recursive is None:
-        recursive = defaults.RECURSIVE   
-    kwargs = {'item': item, 'recursive': recursive}
-    names = name_files(**kwargs)
-    files = get_files(**kwargs)
-    return dict(zip(names, files))
-
-def catalog_folders(
-    item: str | pathlib.Path,
-    recursive: Optional[bool] = None) -> dict[str, pathlib.Path]:  
-    """Returns dict of python folder names and folder paths in 'item'.
-    
-    Args:
-        item (str | pathlib.Path): path of folder to examine.
-        recursive (Optional[bool]): whether to include subfolders. Defaults to 
-            None. If 'recursive' is None, 'defaults.RECURSIVE' is used.
-        
-    Returns:
-        dict[dict[str, pathlib.Path]: dict with keys being folder names and 
-            values being folder paths. 
-        
-    """
-    if recursive is None:
-        recursive = defaults.RECURSIVE   
-    kwargs = {'item': item, 'recursive': recursive}
-    names = name_folders(**kwargs)
-    folders = get_folders(**kwargs)
-    return dict(zip(names, folders))
-
-def catalog_modules(
-    item: str | pathlib.Path,
-    recursive: Optional[bool] = None,
-    import_modules: Optional[bool] = False) -> (
-        dict[str, types.ModuleType] | dict[str, pathlib.Path]):  
-    """Returns dict of python module names and modules in 'item'.
-    
-    Args:
-        item (str | pathlib.Path): path of folder to examine.
-        recursive (Optional[bool]): whether to include subfolders. Defaults to 
-            None. If 'recursive' is None, 'defaults.RECURSIVE' is used.
-        import_modules (Optional[bool]): whether the values in the returned dict
-            should be imported modules (True) or file paths to modules (False).
-        
-    Returns:
-        dict[str, types.ModuleType] | dict[str, pathlib.Path]: dict with str key 
-            names of python modules and values as the paths to corresponding 
-            modules or the imported modules (if 'import_modules' is True).
-        
-    """
-    if recursive is None:
-        recursive = defaults.RECURSIVE   
-    kwargs = {'item': item, 'recursive': recursive}
-    names = name_modules(**kwargs)
-    modules = get_modules(**kwargs, import_modules = import_modules)
-    return dict(zip(names, modules))
-
-def catalog_paths(
-    item: str | pathlib.Path,
-    recursive: Optional[bool] = None) -> dict[str, pathlib.Path]:  
-    """Returns dict of python path names and paths in 'item'.
-    
-    Args:
-        item (str | pathlib.Path): path of folder to examine.
-        recursive (Optional[bool]): whether to include subfolders. Defaults to 
-            None. If 'recursive' is None, 'defaults.RECURSIVE' is used.
-        
-    Returns:
-        dict[dict[str, pathlib.Path]: dict with keys being paht names and values
-            being paths. 
-        
-    """
-    if recursive is None:
-        recursive = defaults.RECURSIVE   
-    kwargs = {'item': item, 'recursive': recursive}
-    names = name_paths(**kwargs)
-    paths = get_paths(**kwargs)
-    return dict(zip(names, paths))
-    
-def get_files(
-    item: str | pathlib.Path, 
-    recursive: Optional[bool] = None,
-    suffix: Optional[str] = '*') -> list[pathlib.Path]:  
-    """Returns list of non-python module file paths in 'item'.
-    
-    Args:
-        item (str | pathlib.Path): path of folder to examine. 
-        recursive (Optional[bool]): whether to include subfolders. Defaults to 
-            None. If 'recursive' is None, 'defaults.RECURSIVE' is used.
-        suffix (Optional[str]): file suffix to match. Defaults to '*' (all 
-            suffixes).
-        
-    Returns:
-        list[pathlib.Path]: a list of file paths in 'item'.
-        
-    """
-    if recursive is None:
-        recursive = defaults.RECURSIVE   
-    paths = get_paths(item = item, recursive = recursive, suffix = suffix)
-    return [p for p in paths if is_file(item = p)]
-
-def get_folders(
-    item: str | pathlib.Path,
-    recursive: Optional[bool] = None) -> list[pathlib.Path]:  
-    """Returns list of folder paths in 'item'.
-    
-    Args:
-        item (str | pathlib.Path): path of folder to examine.
-        recursive (bool): whether to include subfolders. Defaults to None. If
-            'recursive' is None, 'defaults.RECURSIVE' is used.
-        
-    Returns:
-        list[pathlib.Path]: a list of folder paths in 'item'.
-        
-    """
-    if recursive is None:
-        recursive = defaults.RECURSIVE   
-    paths = get_paths(item = item, recursive = recursive)
-    return [p for p in paths if is_folder(item = p)]
-
-def get_modules(
-    item: str | pathlib.Path,
-    recursive: Optional[bool] = None,
-    import_modules: Optional[bool] = False) -> (
-        list[pathlib.Path |types.ModuleType]):  
-    """Returns list of python module paths in 'item'.
-    
-    Args:
-        item (str | pathlib.Path): path of folder to examine.
-        recursive (bool): whether to include subfolders. Defaults to None. If
-            'recursive' is None, 'defaults.RECURSIVE' is used.
-        import_modules (Optional[bool]): whether the values in the returned dict
-            should be imported modules (True) or file paths to modules (False).
-                    
-    Returns:
-        list[pathlib.Path |types.ModuleType]: a list of python module paths in 
-            'item' or imported modules if 'import_modules' is True.
-            
-    """
-    if recursive is None:
-        recursive = defaults.RECURSIVE   
-    paths = get_paths(item = item, recursive = recursive)
-    modules = [p for p in paths if is_module(item = p)]
-    if import_modules:
-        modules = [nagata.from_file_path(path = p) for p in modules]
-    return modules
-    
-def get_paths(
-    item: str | pathlib.Path, 
-    recursive: Optional[bool] = None,
-    suffix: Optional[str] = '*') -> list[pathlib.Path]:  
-    """Returns list of all paths in 'item'.
-    
-    Args:
-        item (str | pathlib.Path): path of folder to examine. 
-        recursive (Optional[bool]): whether to include subfolders. Defaults to 
-            None. If 'recursive' is None, 'defaults.RECURSIVE' is used.
-        suffix (Optional[str]): file suffix to match. Defaults to '*' (all 
-            suffixes).
-        
-    Returns:
-        list[pathlib.Path]: a list of all paths in 'item'.
-        
-    """
-    if recursive is None:
-        recursive = defaults.RECURSIVE   
-    item = camina.pathlibify(item) 
-    if recursive:
-        return list(item.rglob(f'*.{suffix}'))
-    else:
-        return list(item.glob(f'*.{suffix}'))
+    """    
+    if not inspect.isclass(item):
+        item.__class__
+    return (
+        hasattr(item, attribute)
+        and not is_method(item, attribute = attribute)
+        and not is_property(item, attribute = attribute))
       
-def has_files(
-    item: str | pathlib.Path,
-    elements: list[str | pathlib.Path]) -> bool:  
-    """Returns whether all 'elements' are in 'item'.
-  
+def is_container(item: object | Type[Any]) -> bool:
+    """Returns if 'item' is a container and not a str.
+    
     Args:
-        item (str | pathlib.Path): path of folder to examine.
-        elements (list[str | pathlib.Path]): list of paths to test whether they 
-            are in 'item'.
+        item (object | Type[Any]): class or instance to examine.
         
     Returns:
-        bool: whether all 'elements' are in 'item'.
+        bool: if 'item' is a container but not a str.
         
-    """ 
-    item = camina.pathlibify(item)
-    paths = get_paths(item = item, recursive = False)
-    elements = [camina.pahlibify(p) for p in elements]
-    return all(elements in paths)
-          
-def has_folders(
-    item: str | pathlib.Path,
-    elements: list[str | pathlib.Path]) -> bool:  
-    """Returns whether all 'elements' are in 'item'.
-  
+    """  
+    if not inspect.isclass(item):
+        item.__class__ 
+    return issubclass(item, Container) and not issubclass(item, str)
+
+def is_dict(item: object | Type[Any]) -> bool:
+    """Returns if 'item' is a mutable mapping (generic dict type).
+    
     Args:
-        item (str | pathlib.Path): path of folder to examine.
-        elements (list[str | pathlib.Path]): list of paths to test whether they 
-            are in 'item'.
+        item (object | Type[Any]): class or instance to examine.
         
     Returns:
-        bool: whether all 'elements' are in 'item'.
+        bool: if 'item' is a mutable mapping type.
         
-    """ 
-    item = camina.pathlibify(item)
-    paths = get_paths(item = item, recursive = False)
-    elements = [camina.pahlibify(p) for p in elements]
-    return all(elements in paths)
-      
-def has_modules(
-    item: str | pathlib.Path,
-    elements: list[str | pathlib.Path]) -> bool:  
-    """Returns whether all 'elements' are in 'item'.
-  
-    Args:
-        item (str | pathlib.Path): path of folder to examine.
-        elements (list[str | pathlib.Path]): list of paths to test whether they 
-            are in 'item'.
-        
-    Returns:
-        bool: whether all 'elements' are in 'item'.
-        
-    """ 
-    item = camina.pathlibify(item)
-    paths = get_paths(item = item, recursive = False)
-    elements = [camina.pahlibify(p) for p in elements]
-    return all(elements in paths)
-      
-def has_paths(
-    item: str | pathlib.Path,
-    elements: list[str | pathlib.Path]) -> bool:  
-    """Returns whether all 'elements' are in 'item'.
-  
-    Args:
-        item (str | pathlib.Path): path of folder to examine.
-        elements (list[str | pathlib.Path]): list of paths to test whether they 
-            are in 'item'.
-        
-    Returns:
-        bool: whether all 'elements' are in 'item'.
-        
-    """ 
-    item = camina.pathlibify(item)
-    paths = get_paths(item = item, recursive = False)
-    elements = [camina.pahlibify(p) for p in elements]
-    return all(elements in paths)
+    """  
+    if not inspect.isclass(item):
+        item.__class__ 
+    return isinstance(item, MutableMapping) 
 
 def is_file(item: str | pathlib.Path) -> bool:
     """Returns whether 'item' is a non-python-module file.
@@ -329,7 +142,7 @@ def is_file(item: str | pathlib.Path) -> bool:
     return (
         item.exists() 
         and item.is_file() 
-        and not item.suffix in defaults.MODULE_SUFFIXES)
+        and not item.suffix in defaults.MODULE_EXTENSIONS)
 
 def is_folder(item: str | pathlib.Path) -> bool:
     """Returns whether 'item' is a path to a folder.
@@ -344,6 +157,64 @@ def is_folder(item: str | pathlib.Path) -> bool:
     item = camina.pathlibify(item)
     return item.exists() and item.is_dir()
 
+def is_function(item: object | Type[Any]) -> bool:
+    """Returns if 'item' is a function type.
+    
+    Args:
+        item (object | Type[Any]): class or instance to examine.
+        
+    Returns:
+        bool: if 'item' is a function type.
+        
+    """  
+    return isinstance(item, types.FunctionType)
+   
+def is_iterable(item: object | Type[Any]) -> bool:
+    """Returns if 'item' is iterable and is NOT a str type.
+    
+    Args:
+        item (object | Type[Any]): class or instance to examine.
+        
+    Returns:
+        bool: if 'item' is iterable but not a str.
+        
+    """ 
+    if not inspect.isclass(item):
+        item.__class__ 
+    return issubclass(item, Iterable) and not issubclass(item, str)
+
+def is_list(item: object | Type[Any]) -> bool:
+    """Returns if 'item' is a mutable sequence (generic list type).
+    
+    Args:
+        item (object | Type[Any]): class or instance to examine.
+        
+    Returns:
+        bool: if 'item' is a mutable list type.
+        
+    """
+    if not inspect.isclass(item):
+        item.__class__ 
+    return isinstance(item, MutableSequence)
+  
+def is_method(item: object | Type[Any], attribute: Any) -> bool:
+    """Returns if 'attribute' is a method of 'item'.
+
+    Args:
+        item (object | Type[Any]): class or instance to examine.
+        attribute (str): name of attribute to examine.
+
+    Returns:
+        bool: where 'attribute' is a method of 'item'.
+        
+    """ 
+    if isinstance(attribute, str):
+        try:
+            attribute = getattr(item, attribute)
+        except AttributeError:
+            return False
+    return inspect.ismethod(attribute)
+ 
 def is_module(item: str | pathlib.Path) -> bool:
     """Returns whether 'item' is a python-module file.
     
@@ -358,8 +229,84 @@ def is_module(item: str | pathlib.Path) -> bool:
     return (
         item.exists() 
         and item.is_file() 
-        and item.suffix in defaults.MODULE_SUFFIXES)
+        and item.suffix in defaults.MODULE_EXTENSIONS)
 
+@functools.singledispatch
+def is_nested(item: object, /) -> bool:
+    """Returns if 'item' is nested at least one-level.
+    
+    Args:
+        item (object): instance to examine.
+        
+    Raises:
+        TypeError: if 'item' does not match any of the registered types.
+        
+    Returns:
+        bool: if 'item' is a nested mapping.
+        
+    """ 
+    raise TypeError(f'item {item} is not supported by {__name__}')
+
+@is_nested.register(Mapping)   
+def is_nested_dict(item: Mapping[Any, Any], /) -> bool:
+    """Returns if 'item' is nested at least one-level.
+    
+    Args:
+        item (Mapping[Any, Any]): class or instance to examine.
+        
+    Returns:
+        bool: if 'item' is a nested mapping.
+        
+    """ 
+    return (
+        isinstance(item, Mapping) 
+        and any(isinstance(v, Mapping) for v in item.values()))
+
+@is_nested.register(MutableSequence)     
+def is_nested_list(item: MutableSequence[Any], /) -> bool:
+    """Returns if 'item' is nested at least one-level.
+    
+    Args:
+        item (MutableSequence[Any]): class or instance to examine.
+        
+    Returns:
+        bool: if 'item' is a nested sequence.
+        
+    """ 
+    return (
+        identify.is_sequence(item)
+        and any(identify.is_sequence(item = v) for v in item))
+
+@is_nested.register(Set)         
+def is_nested_set(item: Set[Any], /) -> bool:
+    """Returns if 'item' is nested at least one-level.
+    
+    Args:
+        item (item: Set[Any]): class or instance to examine.
+        
+    Returns:
+        bool: if 'item' is a nested set.
+        
+    """ 
+    return (
+        identify.is_set(item)
+        and any(identify.is_set(item = v) for v in item))
+
+@is_nested.register(tuple)     
+def is_nested_tuple(item: tuple[Any, ...], /) -> bool:
+    """Returns if 'item' is nested at least one-level.
+    
+    Args:
+        item (tuple[Any, ...]): class or instance to examine.
+        
+    Returns:
+        bool: if 'item' is a nested sequence.
+        
+    """ 
+    return (
+        identify.is_sequence(item)
+        and any(identify.is_sequence(item = v) for v in item))
+    
 def is_path(item: str | pathlib.Path) -> bool:
     """Returns whether 'item' is a currently existing path.
     
@@ -372,92 +319,71 @@ def is_path(item: str | pathlib.Path) -> bool:
     """ 
     item = camina.pathlibify(item)
     return item.exists()
-      
-def name_files(
-    item: str | pathlib.Path,
-    recursive: Optional[bool] = None) -> list[str]:  
-    """Returns list of names of non-python-module file paths in 'item'.
-    
-    The 'stem' property of 'pathlib.Path' is used for the names.
-        
+
+def is_property(item: object | Type[Any], attribute: Any) -> bool:
+    """Returns if 'attribute' is a property of 'item'.
+
     Args:
-        item (str | pathlib.Path): path of folder to examine.
-        recursive (bool): whether to include subfolders. Defaults to None. If
-            'recursive' is None, 'defaults.RECURSIVE' is used.
-        
+        item (object | Type[Any]): class or instance to examine.
+        attribute (str): name of attribute to examine.
+
     Returns:
-        list[str]: a list of names of non-python-module file paths in 'item'.
+        bool: where 'attribute' is a property of 'item'.
         
-    """
-    if recursive is None:
-        recursive = defaults.RECURSIVE   
-    item = camina.pathlibify(item)
-    kwargs = {'item': item, 'recursive': recursive}
-    return [p.stem for p in get_files(**kwargs)]
-          
-def name_folders(
-    item: str | pathlib.Path,
-    recursive: Optional[bool] = None) -> list[str]:  
-    """Returns list of names of folder paths in 'item'.
+    """ 
+    if not inspect.isclass(item):
+        item.__class__
+    if isinstance(attribute, str):
+        try:
+            attribute = getattr(item, attribute)
+        except AttributeError:
+            return False
+    return isinstance(attribute, property)
+    
+def is_sequence(item: object | Type[Any]) -> bool:
+    """Returns if 'item' is a sequence and is NOT a str type.
     
     Args:
-        item (str | pathlib.Path): path of folder to examine.
-        recursive (bool): whether to include subfolders. Defaults to None. If
-            'recursive' is None, 'defaults.RECURSIVE' is used.
+        item (object | Type[Any]): class or instance to examine.
         
     Returns:
-        list[str]: a list of folder paths in 'item'.
+        bool: if 'item' is a sequence but not a str.
         
-    """
-    if recursive is None:
-        recursive = defaults.RECURSIVE   
-    item = camina.pathlibify(item)
-    kwargs = {'item': item, 'recursive': recursive}
-    return [p.name for p in get_folders(**kwargs)]
-      
-def name_modules(
-    item: str | pathlib.Path,
-    recursive: Optional[bool] = None) -> list[str]:  
-    """Returns list of names of paths to python modules in 'item'.
-    
-    The 'stem' property of 'pathlib.Path' is used for the names.
+    """ 
+    if not inspect.isclass(item):
+        item.__class__ 
+    return issubclass(item, Sequence) and not issubclass(item, str) 
+        
+def is_set(item: object | Type[Any]) -> bool:
+    """Returns if 'item' is a Set (including generic type sets).
     
     Args:
-        item (str | pathlib.Path): path of folder to examine.
-        recursive (bool): whether to include subfolders. Defaults to None. If
-            'recursive' is None, 'defaults.RECURSIVE' is used.
+        item (object | Type[Any]): class or instance to examine.
         
     Returns:
-        list[str]: a list of names of paths to python modules in 'item'.
+        bool: if 'item' is a set.
         
-    """
-    if recursive is None:
-        recursive = defaults.RECURSIVE   
-    item = camina.pathlibify(item)
-    kwargs = {'item': item, 'recursive': recursive}
-    return [p.stem for p in get_modules(**kwargs)]
-      
-def name_paths(
-    item: str | pathlib.Path,
-    recursive: Optional[bool] = None) -> list[str]:  
-    """Returns list of names of paths in 'item'.
-    
-    For folders, the 'name' property of 'pathlib.Path' is used. For files, the
-    'stem' property is.
-    
+    """ 
+    if not inspect.isclass(item):
+        item.__class__ 
+    return issubclass(item, Set)
+  
+def is_variable(
+    item: object | Type[Any] | types.ModuleType, 
+    attribute: str) -> bool:
+    """Returns if 'attribute' is a simple data attribute of 'item'.
+
     Args:
-        item (str | pathlib.Path): path of folder to examine.
-        recursive (bool): whether to include subfolders. Defaults to None. If
-            'recursive' is None, 'defaults.RECURSIVE' is used.
-        
+        item (object | Type[Any] | types.ModuleType): class or instance to 
+            examine.
+        attribute (str): name of attribute to examine.
+
     Returns:
-        list[str]: a list of names of paths in 'item'.
+        bool: where 'attribute' is a simple variable (and not a method or 
+            property) or 'item'.
         
-    """
-    if recursive is None:
-        recursive = defaults.RECURSIVE   
-    kwargs = {'item': item, 'recursive': recursive}
+    """ 
     return (
-        name_files(**kwargs) 
-        + name_folders(**kwargs) 
-        + name_modules(**kwargs))
+        hasattr(item, attribute)
+        and not is_function(item)
+        and not is_property(item, attribute = attribute))

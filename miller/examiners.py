@@ -40,7 +40,7 @@ from typing import Any, Optional, Type, Union
 
 import camina
 
-from . import modules
+from . import check
 
 
 @dataclasses.dataclass
