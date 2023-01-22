@@ -268,7 +268,7 @@ def has_traits(
 @functools.singledispatch
 def has_contents(
     item: object, /,
-    contents: Union[Type[Any], tuple[Type[Any], ...]]) -> bool:
+    contents: Type[Any] | tuple[Type[Any], ...]) -> bool:
     """Returns whether 'item' contains the type(s) in 'contents'.
 
     Args:
