@@ -50,7 +50,7 @@ from typing import Optional
 import camina
 import nagata
 
-from . import defaults
+from . import rules
 from . import label
 from . import report
 
@@ -71,7 +71,7 @@ def catalog_files(
         
     """
     if recursive is None:
-        recursive = defaults.RECURSIVE   
+        recursive = rules.RECURSIVE   
     kwargs = {'item': item, 'recursive': recursive}
     names = label.name_files(**kwargs)
     files = report.get_files(**kwargs)
@@ -93,7 +93,7 @@ def catalog_folders(
         
     """
     if recursive is None:
-        recursive = defaults.RECURSIVE   
+        recursive = rules.RECURSIVE   
     kwargs = {'item': item, 'recursive': recursive}
     names = label.name_folders(**kwargs)
     folders = report.get_folders(**kwargs)
@@ -120,7 +120,7 @@ def catalog_modules(
         
     """
     if recursive is None:
-        recursive = defaults.RECURSIVE   
+        recursive = rules.RECURSIVE   
     kwargs = {'item': item, 'recursive': recursive}
     names = label.name_modules(**kwargs)
     modules = report.get_modules(**kwargs, import_modules = import_modules)
@@ -142,7 +142,7 @@ def catalog_paths(
         
     """
     if recursive is None:
-        recursive = defaults.RECURSIVE   
+        recursive = rules.RECURSIVE   
     kwargs = {'item': item, 'recursive': recursive}
     names = label.name_paths(**kwargs)
     paths = report.get_paths(**kwargs)

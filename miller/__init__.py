@@ -53,9 +53,9 @@ __author__ = 'Corey Rayburn Yung'
 
 
 from .check import *
-from .defaults import *
 from .examiners import *
 from .identify import *
 from .label import *
 from .map import *
 from .report import *
+from .rules import *

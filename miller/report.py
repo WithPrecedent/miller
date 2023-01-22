@@ -59,7 +59,7 @@ from typing import Any, Optional, Type
 import camina
 import nagata
 
-from . import defaults
+from . import rules
 from . import identify
 from . import label
 
@@ -277,7 +277,7 @@ def get_files(
         
     """
     if recursive is None:
-        recursive = defaults.RECURSIVE   
+        recursive = rules.RECURSIVE   
     paths = get_paths(item, recursive = recursive, suffix = suffix)
     return [p for p in paths if identify.is_file(item = p)]
 
@@ -296,7 +296,7 @@ def get_folders(
         
     """
     if recursive is None:
-        recursive = defaults.RECURSIVE   
+        recursive = rules.RECURSIVE   
     paths = get_paths(item, recursive = recursive)
     return [p for p in paths if identify.is_folder(item = p)]
 
@@ -320,7 +320,7 @@ def get_modules(
             
     """
     if recursive is None:
-        recursive = defaults.RECURSIVE   
+        recursive = rules.RECURSIVE   
     paths = get_paths(item, recursive = recursive)
     modules = [p for p in paths if identify.is_module(item = p)]
     if import_modules:
@@ -345,7 +345,7 @@ def get_paths(
         
     """
     if recursive is None:
-        recursive = defaults.RECURSIVE   
+        recursive = rules.RECURSIVE   
     item = camina.pathlibify(item) 
     if recursive:
         return list(item.rglob(f'*.{suffix}'))

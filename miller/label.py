@@ -59,7 +59,7 @@ from typing import Any, Optional, Type
 import camina
 import nagata
 
-from . import defaults
+from . import rules
 from . import identify
 from . import report
 
@@ -125,7 +125,7 @@ def name_files(
         
     """
     if recursive is None:
-        recursive = defaults.RECURSIVE   
+        recursive = rules.RECURSIVE   
     item = camina.pathlibify(item)
     kwargs = {'item': item, 'recursive': recursive}
     return [p.stem for p in report.get_files(**kwargs)]
@@ -145,7 +145,7 @@ def name_folders(
         
     """
     if recursive is None:
-        recursive = defaults.RECURSIVE   
+        recursive = rules.RECURSIVE   
     item = camina.pathlibify(item)
     kwargs = {'item': item, 'recursive': recursive}
     return [p.name for p in report.get_folders(**kwargs)]
@@ -188,7 +188,7 @@ def name_modules(
         
     """
     if recursive is None:
-        recursive = defaults.RECURSIVE   
+        recursive = rules.RECURSIVE   
     item = camina.pathlibify(item)
     kwargs = {'item': item, 'recursive': recursive}
     return [p.stem for p in report.get_modules(**kwargs)]
@@ -223,7 +223,7 @@ def name_paths(
         
     """
     if recursive is None:
-        recursive = defaults.RECURSIVE   
+        recursive = rules.RECURSIVE   
     kwargs = {'item': item, 'recursive': recursive}
     return (
         name_files(**kwargs) 

@@ -55,7 +55,7 @@ from typing import Any, Optional, Type
 
 import camina
 
-from . import defaults
+from . import rules
 from . import identify
 from . import report
 

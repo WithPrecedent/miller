@@ -78,7 +78,7 @@ from typing import Any, Type
 
 import camina
 
-from . import defaults
+from . import rules
 from . import identify
  
  
@@ -142,7 +142,7 @@ def is_file(item: str | pathlib.Path) -> bool:
     return (
         item.exists() 
         and item.is_file() 
-        and not item.suffix in defaults.MODULE_EXTENSIONS)
+        and not item.suffix in rules.MODULE_EXTENSIONS)
 
 def is_folder(item: str | pathlib.Path) -> bool:
     """Returns whether 'item' is a path to a folder.
@@ -229,7 +229,7 @@ def is_module(item: str | pathlib.Path) -> bool:
     return (
         item.exists() 
         and item.is_file() 
-        and item.suffix in defaults.MODULE_EXTENSIONS)
+        and item.suffix in rules.MODULE_EXTENSIONS)
 
 @functools.singledispatch
 def is_nested(item: object, /) -> bool:
