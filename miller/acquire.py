@@ -1,5 +1,5 @@
 """
-report: gets type information of classes and instances 
+acquire: returns introspection information in lists of introspected items
 Corey Rayburn Yung <coreyrayburnyung@gmail.com>
 Copyright 2020-2022, Corey Rayburn Yung
 License: Apache-2.0
@@ -67,9 +67,13 @@ from . import label
 """ Class and Instance Reporters """   
      
 def get_annotations(
-    item: object, 
+    item: object | types.ModuleType, 
     include_private: bool = False) -> dict[str, Type[Any]]:
     """Returns dict of attributes of 'item' with type annotations.
+    
+    This function follows the best practices suggested for compatibility with
+    Python 3.9 and before (without relying on the newer functionality of 3.10):
+    https://docs.python.org/3/howto/annotations.html
     
     Args:
         item (object): instance to examine.
@@ -81,7 +85,10 @@ def get_annotations(
             and values are type annotations) that are type annotated.
             
     """
-    annotations = item.__annotations__
+    if isinstance(item, type):
+        annotations = item.__dict__.get('__annotations__', None)
+    else:
+        annotations = getattr(item, '__annotations__', None)
     if include_private:
         return annotations
     else:
@@ -548,9 +555,9 @@ def get_functions(
 
 
 @functools.singledispatch
-def get_types(item: object) -> Optional[Union[
-    tuple[Type[Any], ...], 
-    tuple[tuple[Type[Any], ...], tuple[Type[Any], ...]]]]:
+def get_types(item: object) -> Optional[
+    tuple[Type[Any], ...] |
+    tuple[tuple[Type[Any], ...], tuple[Type[Any], ...]]]:
     """Returns types contained in 'item'.
 
     Args:

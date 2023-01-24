@@ -1,5 +1,5 @@
 """
-check: checks types of classes and instances
+check: returns booleans about introspection information contents 
 Corey Rayburn Yung <coreyrayburnyung@gmail.com>
 Copyright 2020-2022, Corey Rayburn Yung
 License: Apache-2.0
@@ -17,10 +17,10 @@ License: Apache-2.0
     limitations under the License.
 
 Contents:
-    catalog_files
-    catalog_folders
-    catalog_modules
-    catalog_paths  
+    map_files
+    map_folders
+    map_modules
+    map_paths  
     report.get_files
     report.get_folders
     report.get_modules
@@ -57,7 +57,7 @@ import camina
 
 from . import rules
 from . import identify
-from . import report
+from . import acquire
 
 
 def has_attributes(
@@ -115,7 +115,7 @@ def has_files(
         
     """ 
     item = camina.pathlibify(item)
-    paths = report.get_paths(item, recursive = False)
+    paths = acquire.get_paths(item, recursive = False)
     elements = [camina.pahlibify(p) for p in elements]
     return all(elements in paths)
           
@@ -134,7 +134,7 @@ def has_folders(
         
     """ 
     item = camina.pathlibify(item)
-    paths = report.get_paths(item, recursive = False)
+    paths = acquire.get_paths(item, recursive = False)
     elements = [camina.pahlibify(p) for p in elements]
     return all(elements in paths)
      
@@ -170,7 +170,7 @@ def has_modules(
         
     """ 
     item = camina.pathlibify(item)
-    paths = report.get_paths(item, recursive = False)
+    paths = acquire.get_paths(item, recursive = False)
     elements = [camina.pahlibify(p) for p in elements]
     return all(elements in paths)
    
@@ -189,7 +189,7 @@ def has_paths(
         
     """ 
     item = camina.pathlibify(item)
-    paths = report.get_paths(item, recursive = False)
+    paths = acquire.get_paths(item, recursive = False)
     elements = [camina.pahlibify(p) for p in elements]
     return all(elements in paths)
    
@@ -273,8 +273,8 @@ def has_contents(
 
     Args:
         item (object): item to examine.
-        contents (Union[Type[Any], tuple[Type[Any], ...]]): types to check for
-            in 'item' contents.
+        contents (Type[Any] | tuple[Type[Any], ...]): types to check for in 
+            'item' contents.
         
     Raises:
         TypeError: if 'item' does not match any of the registered types.
@@ -288,14 +288,14 @@ def has_contents(
 @has_contents.register(Mapping)    
 def has_contents_dict(
     item: Mapping[Hashable, Any], /, 
-    contents: tuple[Union[Type[Any], tuple[Type[Any], ...]],
-                    Union[Type[Any], tuple[Type[Any], ...]]]) -> bool:
+    contents: tuple[Type[Any] | tuple[Type[Any], ...],
+                    Type[Any] | tuple[Type[Any], ...]]) -> bool:
     """Returns whether dict 'item' contains the type(s) in 'contents'.
 
     Args:
         item (Mapping[Hashable, Any]): item to examine.
-        contents (Union[Type[Any], tuple[Type[Any], ...]]): types to check for
-            in 'item' contents.
+        contents (tuple[Type[Any] | tuple[Type[Any], ...], Type[Any] | 
+            tuple[Type[Any], ...]]): types to check for in 'item' contents.
 
     Returns:
         bool: whether 'item' holds the types in 'contents'.
@@ -308,13 +308,13 @@ def has_contents_dict(
 @has_contents.register(MutableSequence)   
 def has_contents_list(
     item: MutableSequence[Any], /,
-    contents: Union[Type[Any], tuple[Type[Any], ...]]) -> bool:
+    contents: Type[Any] | tuple[Type[Any], ...]) -> bool:
     """Returns whether list 'item' contains the type(s) in 'contents'.
 
     Args:
         item (MutableSequence[Any]): item to examine.
-        contents (Union[Type[Any], tuple[Type[Any], ...]]): types to check for
-            in 'item' contents.
+        contents (Type[Any] | tuple[Type[Any], ...]): types to check for in 
+            'item' contents.
 
     Returns:
         bool: whether 'item' holds the types in 'contents'.
@@ -325,13 +325,13 @@ def has_contents_list(
 @has_contents.register(Set)   
 def has_contents_set(
     item: Set[Any], /,
-    contents: Union[Type[Any], tuple[Type[Any], ...]]) -> bool:
+    contents: Type[Any] | tuple[Type[Any], ...]) -> bool:
     """Returns whether list 'item' contains the type(s) in 'contents'.
 
     Args:
         item (Set[Any]): item to examine.
-        contents (Union[Type[Any], tuple[Type[Any], ...]]): types to check for
-            in 'item' contents.
+        contents (Type[Any] | tuple[Type[Any], ...]): types to check for in 
+            'item' contents.
 
     Returns:
         bool: whether 'item' holds the types in 'contents'.
@@ -342,13 +342,13 @@ def has_contents_set(
 @has_contents.register(tuple)   
 def has_contents_tuple(
     item: tuple[Any, ...], /,
-    contents: Union[Type[Any], tuple[Type[Any], ...]]) -> bool:
+    contents: Type[Any] | tuple[Type[Any], ...]) -> bool:
     """Returns whether tuple 'item' contains the type(s) in 'contents'.
 
     Args:
         item (tuple[Any, ...]): item to examine.
-        contents (Union[Type[Any], tuple[Type[Any], ...]]): types to check for
-            in 'item' contents.
+        contents (Type[Any] | tuple[Type[Any], ...]): types to check for in 
+            'item' contents.
 
     Returns:
         bool: whether 'item' holds the types in 'contents'.
@@ -368,8 +368,7 @@ def has_contents_parallel(
 
     Args:
         item (Sequence[Any]): item to examine.
-        contents (Union[Type[Any], tuple[Type[Any], ...]]): types to check for
-            in 'item' contents.
+        contents (tuple[Type[Any], ...]): types to check for in 'item' contents.
 
     Returns:
         bool: whether 'item' holds the types in 'contents'.
@@ -380,13 +379,13 @@ def has_contents_parallel(
 @has_contents.register(Container)       
 def has_contents_serial(
     item: Container[Any], /,
-    contents: Union[Type[Any], tuple[Type[Any], ...]]) -> bool:
+    contents: Type[Any] | tuple[Type[Any], ...]) -> bool:
     """Returns whether serial 'item' contains the type(s) in 'contents'.
 
     Args:
         item (Container[Any]): item to examine.
-        contents (Union[Type[Any], tuple[Type[Any], ...]]): types to check for
-            in 'item' contents.
+        contents (Type[Any] | tuple[Type[Any], ...]): types to check for in 
+            'item' contents.
 
     Returns:
         bool: whether 'item' holds the types in 'contents'.

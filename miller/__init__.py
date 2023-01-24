@@ -45,7 +45,7 @@ any other package maintainer - I want to ensure the package is as accessible and
 useful as possible.
      
 """
-__version__ = '0.1.7'
+__version__ = '0.1.8'
 
 __package__ = 'miller'
 
@@ -56,6 +56,6 @@ from .check import *
 from .examiners import *
 from .identify import *
 from .label import *
-from .map import *
-from .report import *
+from .catalog import *
+from .acquire import *
 from .rules import *

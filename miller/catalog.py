@@ -1,5 +1,5 @@
 """
-map: creates dicts of classes and instance type information
+catalog: returns introspection information in dics
 Corey Rayburn Yung <coreyrayburnyung@gmail.com>
 Copyright 2020-2022, Corey Rayburn Yung
 License: Apache-2.0
@@ -17,10 +17,10 @@ License: Apache-2.0
     limitations under the License.
 
 Contents:
-    catalog_files
-    catalog_folders
-    catalog_modules
-    catalog_paths  
+    map_files
+    map_folders
+    map_modules
+    map_paths  
     report.get_files
     report.get_folders
     report.get_modules
@@ -52,10 +52,10 @@ import nagata
 
 from . import rules
 from . import label
-from . import report
+from . import acquire
 
 
-def catalog_files(
+def map_files(
     item: str | pathlib.Path,
     recursive: Optional[bool] = None) -> dict[str, pathlib.Path]:  
     """Returns dict of python file names and file paths in 'item'.
@@ -74,10 +74,10 @@ def catalog_files(
         recursive = rules.RECURSIVE   
     kwargs = {'item': item, 'recursive': recursive}
     names = label.name_files(**kwargs)
-    files = report.get_files(**kwargs)
+    files = acquire.get_files(**kwargs)
     return dict(zip(names, files))
 
-def catalog_folders(
+def map_folders(
     item: str | pathlib.Path,
     recursive: Optional[bool] = None) -> dict[str, pathlib.Path]:  
     """Returns dict of python folder names and folder paths in 'item'.
@@ -96,10 +96,10 @@ def catalog_folders(
         recursive = rules.RECURSIVE   
     kwargs = {'item': item, 'recursive': recursive}
     names = label.name_folders(**kwargs)
-    folders = report.get_folders(**kwargs)
+    folders = acquire.get_folders(**kwargs)
     return dict(zip(names, folders))
 
-def catalog_modules(
+def map_modules(
     item: str | pathlib.Path,
     recursive: Optional[bool] = None,
     import_modules: Optional[bool] = False) -> (
@@ -123,10 +123,10 @@ def catalog_modules(
         recursive = rules.RECURSIVE   
     kwargs = {'item': item, 'recursive': recursive}
     names = label.name_modules(**kwargs)
-    modules = report.get_modules(**kwargs, import_modules = import_modules)
+    modules = acquire.get_modules(**kwargs, import_modules = import_modules)
     return dict(zip(names, modules))
 
-def catalog_paths(
+def map_paths(
     item: str | pathlib.Path,
     recursive: Optional[bool] = None) -> dict[str, pathlib.Path]:  
     """Returns dict of python path names and paths in 'item'.
@@ -145,5 +145,5 @@ def catalog_paths(
         recursive = rules.RECURSIVE   
     kwargs = {'item': item, 'recursive': recursive}
     names = label.name_paths(**kwargs)
-    paths = report.get_paths(**kwargs)
+    paths = acquire.get_paths(**kwargs)
     return dict(zip(names, paths))

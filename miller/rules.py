@@ -1,5 +1,5 @@
 """
-defaults: default introspection settings
+rules: global settings for miller
 Corey Rayburn Yung <coreyrayburnyung@gmail.com>
 Copyright 2020-2022, Corey Rayburn Yung
 License: Apache-2.0

@@ -1,5 +1,5 @@
 """
-identify: tests types of classes and instances
+identify: returns booleans about typing of introspected items
 Corey Rayburn Yung <coreyrayburnyung@gmail.com>
 Copyright 2020-2022, Corey Rayburn Yung
 License: Apache-2.0
@@ -17,10 +17,10 @@ License: Apache-2.0
     limitations under the License.
 
 Contents:
-    catalog_files
-    catalog_folders
-    catalog_modules
-    catalog_paths  
+    map_files
+    map_folders
+    map_modules
+    map_paths  
     get_files
     get_folders
     get_modules

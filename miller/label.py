@@ -1,5 +1,5 @@
 """
-label: gets names of classes, instances, and contents
+label: returns introspection information in lists of names of introspected items
 Corey Rayburn Yung <coreyrayburnyung@gmail.com>
 Copyright 2020-2022, Corey Rayburn Yung
 License: Apache-2.0
@@ -61,7 +61,7 @@ import nagata
 
 from . import rules
 from . import identify
-from . import report
+from . import acquire
 
 
 def name_attributes(
@@ -128,7 +128,7 @@ def name_files(
         recursive = rules.RECURSIVE   
     item = camina.pathlibify(item)
     kwargs = {'item': item, 'recursive': recursive}
-    return [p.stem for p in report.get_files(**kwargs)]
+    return [p.stem for p in acquire.get_files(**kwargs)]
           
 def name_folders(
     item: str | pathlib.Path,
@@ -148,7 +148,7 @@ def name_folders(
         recursive = rules.RECURSIVE   
     item = camina.pathlibify(item)
     kwargs = {'item': item, 'recursive': recursive}
-    return [p.name for p in report.get_folders(**kwargs)]
+    return [p.name for p in acquire.get_folders(**kwargs)]
        
 def name_methods(
     item: object | Type[Any], 
@@ -191,7 +191,7 @@ def name_modules(
         recursive = rules.RECURSIVE   
     item = camina.pathlibify(item)
     kwargs = {'item': item, 'recursive': recursive}
-    return [p.stem for p in report.get_modules(**kwargs)]
+    return [p.stem for p in acquire.get_modules(**kwargs)]
   
 def name_parameters(item: Type[Any]) -> list[str]:
     """Returns list of parameters based on annotations of 'item'.

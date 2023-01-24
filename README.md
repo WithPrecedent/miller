@@ -53,7 +53,7 @@ Unlike the default Python instrospection functions and methods, **miller** uses 
 
 | prefix   | what it does   | returns   |
 |---|---|---|
-| `catalog`  |combines results of corresponding  `name` and `get` functions into a `dict`  | `dict[str, Any]`   |
+| `map`  |combines results of corresponding  `name` and `get` functions into a `dict`  | `dict[str, Any]`   |
 | `get`  | gets sought types from an item  |   `list[Any]`   |
 | `has`  | whether an item has specified types  |   `bool`   |
 | `is` | whether an item is a type  |   `bool`   |
@@ -90,9 +90,9 @@ Those prefixes are followed by an underscore and a suffix indicating what inform
 | `variable`  | attributes (excluding methods) of a class | `object`, `Type`, or `ModuleType`   |
 | `variables`  | an attribute (excluding methods or functions)  |  `object`, `Type`, or `ModuleType`   |
 
-The following functions are available in **miller** for the `catalog`, `get`, `has`, and `name`  suffixes :
+The following functions are available in **miller** for the `map`, `get`, `has`, and `name`  suffixes :
 
-| prefix/suffix | `catalog`  | `get`  | `has`  | `name`  |
+| prefix/suffix | `map`  | `get`  | `has`  | `name`  |
 |---|---|---|---|---|---|---|
 | `annotations` | X | X | X | X |
 | `attributes` | X | X | X | X | 
@@ -112,7 +112,7 @@ For the `is` prefix, functions with the following suffixes are included:
 
  So, for example, 
 
-* `catalog_methods`: returns a dict of the method names and methods of an object.
+* `map_methods`: returns a dict of the method names and methods of an object.
 * `get_methods`: returns a list of methods of an object.
 * `has_methods`: returns whether an object has all of the named methods passed to the `methods` parameter.
 * `is_method`: returns whether an item is a method of an object.
