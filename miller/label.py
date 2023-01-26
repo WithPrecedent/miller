@@ -80,7 +80,7 @@ def name_attributes(
     """
     names = dir(item)
     if not include_private:
-        names = camina.drop_privates(item = names)
+        names = camina.drop_privates(names)
     return names
 
 def name_fields(
@@ -103,7 +103,7 @@ def name_fields(
     if dataclasses.is_dataclass(item):
         attributes = [f.name for f in dataclasses.fields(item)]
         if not include_private:
-            attributes = camina.drop_privates(item = attributes)
+            attributes = camina.drop_privates(attributes)
         return attributes
     else:
         raise TypeError('item must be a dataclass')
@@ -168,7 +168,7 @@ def name_methods(
         a for a in dir(item)
         if identify.is_method(item, attribute = a)]
     if not include_private:
-        methods = camina.drop_privates(item = methods)
+        methods = camina.drop_privates(methods)
     return methods
       
 def name_modules(
@@ -250,7 +250,7 @@ def name_properties(
         a for a in dir(item)
         if identify.is_property(item, attribute = a)]
     if not include_private:
-        properties = camina.drop_privates(item = properties)
+        properties = camina.drop_privates(properties)
     return properties
 
 def name_variables(
@@ -272,7 +272,7 @@ def name_variables(
         a for a in dir(item) 
         if identify.is_variable(item, attribute = a)]
     if not include_private:
-        names = camina.drop_privates(item = names)
+        names = camina.drop_privates(names)
     return names
   
 def name_classes(
@@ -295,7 +295,7 @@ def name_classes(
         m[0] for m in inspect.getmembers(item, inspect.isclass)
         if m[1].__module__ == item.__name__]
     if not include_private:
-        names = camina.drop_privates(item = names)
+        names = camina.drop_privates(names)
     return names
        
 def name_functions(
@@ -318,5 +318,5 @@ def name_functions(
         m[0] for m in inspect.getmembers(item, inspect.isfunction)
         if m[1].__module__ == item.__name__]
     if not include_private:
-        names = camina.drop_privates(item = names)
+        names = camina.drop_privates(names)
     return names

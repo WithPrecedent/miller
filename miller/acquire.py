@@ -29,16 +29,16 @@ Contents:
         get_properties
         get_signatures
         get_variables
-        label.label.name_attributes
-        label.label.name_methods
-        label.label.name_parameters
-        label.label.name_properties
-        label.label.name_variables
+        label.name_attributes
+        label.name_methods
+        label.name_parameters
+        label.name_properties
+        label.name_variables
     Module Reporters:
         get_classes
         get_functions
-        label.label.name_classes
-        label.label.name_functions   
+        label.name_classes
+        label.name_functions   
 
         
 ToDo:
@@ -109,7 +109,7 @@ def get_attributes(
             and values are attribute values).
             
     """
-    attributes = label.label.name_attributes(item, include_private = include_private)
+    attributes = label.name_attributes(item, include_private = include_private)
     values = [getattr(item, m) for m in attributes]
     return dict(zip(attributes, values))
 
@@ -134,7 +134,7 @@ def get_fields(
     if dataclasses.identify.is_dataclass(item):
         attributes = {f.name: f for f in dataclasses.fields(item)}
         if not include_private:
-            attributes = camina.drop_privates(item = attributes)
+            attributes = camina.drop_privates(attributes)
         return attributes
     else:
         raise TypeError('item must be a dataclass')
@@ -154,7 +154,7 @@ def get_methods(
             names and values are methods).
         
     """ 
-    methods = label.label.name_methods(item, include_private = include_private)
+    methods = label.name_methods(item, include_private = include_private)
     return [getattr(item, m) for m in methods]
 
 def get_properties(
@@ -172,7 +172,7 @@ def get_properties(
             and values are property values).
         
     """    
-    properties = label.label.name_properties(item, include_private = include_private)
+    properties = label.name_properties(item, include_private = include_private)
     values = [getattr(item, p) for p in properties]
     return dict(zip(properties, values))
 
@@ -191,7 +191,7 @@ def get_signatures(
             are method names and values are method signatures).
                    
     """ 
-    methods = label.label.name_methods(item, include_private = include_private)
+    methods = label.name_methods(item, include_private = include_private)
     signatures = [inspect.signature(getattr(item, m)) for m in methods]
     return dict(zip(methods, signatures))
 
@@ -210,9 +210,9 @@ def get_variables(
             and values are attribute values) that are not methods or properties.
             
     """
-    attributes = label.label.name_attributes(item, include_private = include_private)
-    methods = label.label.name_methods(item, include_private = include_private)
-    properties = label.label.name_properties(item, include_private = include_private)
+    attributes = label.name_attributes(item, include_private = include_private)
+    methods = label.name_methods(item, include_private = include_private)
+    properties = label.name_properties(item, include_private = include_private)
     variables = [
         a for a in attributes if a not in methods and a not in properties]
     values = [getattr(item, m) for m in variables]
@@ -238,9 +238,9 @@ def get_classes(
         item = sys.modules[item]
     classes = [
         m[1] for m in inspect.getmembers(item, inspect.isclass)
-        if m[1].__module__ == item.__label.label.name__]
+        if m[1].__module__ == item.__label.name__]
     if not include_private:
-        classes = camina.drop_privates(item = classes)
+        classes = camina.drop_privates(classes)
     return classes
         
 def get_functions(
@@ -261,9 +261,9 @@ def get_functions(
         item = sys.modules[item]
     functions = [
         m[1] for m in inspect.getmembers(item, inspect.isfunction)
-        if m[1].__module__ == item.__label.label.name__]
+        if m[1].__module__ == item.__label.name__]
     if not include_private:
-        functions = camina.drop_privates(item = functions)
+        functions = camina.drop_privates(functions)
     return functions 
     
 def get_files(
@@ -423,7 +423,7 @@ def get_fields(
     if dataclasses.identify.is_dataclass(item):
         attributes = {f.name: f for f in dataclasses.fields(item)}
         if not include_private:
-            attributes = camina.drop_privates(item = attributes)
+            attributes = camina.drop_privates(attributes)
         return attributes
     else:
         raise TypeError('item must be a dataclass')
@@ -527,7 +527,7 @@ def get_classes(
         m[1] for m in inspect.getmembers(item, inspect.isclass)
         if m[1].__module__ == item.__name__]
     if not include_private:
-        classes = camina.drop_privates(item = classes)
+        classes = camina.drop_privates(classes)
     return classes
         
 def get_functions(
@@ -550,7 +550,7 @@ def get_functions(
         m[1] for m in inspect.getmembers(item, inspect.isfunction)
         if m[1].__module__ == item.__name__]
     if not include_private:
-        functions = camina.drop_privates(item = functions)
+        functions = camina.drop_privates(functions)
     return functions 
 
 

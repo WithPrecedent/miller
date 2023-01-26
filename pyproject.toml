@@ -10,7 +10,7 @@ repository = "https://github.com/WithPrecedent/miller"
 
 [tool.poetry.dependencies]
 python = "^3.9"
-camina = "^0.1.12"
+camina = "^0.1.15"
 nagata = "^0.1.5"
 
 [tool.poetry.dev-dependencies]
