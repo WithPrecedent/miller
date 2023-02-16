@@ -40,12 +40,6 @@ from typing import Any, Optional, Type, Union
 
 import camina
 
-from . import acquire
-from . import catalog
-from . import check
-from . import identify
-from . import label
-
 
 @dataclasses.dataclass
 class Inspector(object):
@@ -70,7 +64,7 @@ class Inspector(object):
         elif isinstance(item, object):
             return InstanceInspector(item, *args, **kwargs)
         else:
-            raise TypeError(f'item must be a module, path, class, or object')
+            raise TypeError('item must be a module, path, class, or object')
     
     """ Properties """
         
@@ -141,7 +135,7 @@ class Inspector(object):
     def __str__(self) -> str:
         """Returns all properties and their contents in a readable str."""
         representation = ""
-        for name, content in acquire.get_properties(item = self).items():
+        for name, content in acquire.list_properties(item = self).items():
             representation += name + ': ' + content + '\n'
         return representation
             
@@ -217,7 +211,7 @@ class ClassInspector(Inspector):
             list[str]: names of properties.
             
         """
-        return acquire.get_properties(
+        return acquire.list_properties(
             item = self.item, 
             include_private = self.include_private)           
                  
@@ -230,7 +224,7 @@ class ClassInspector(Inspector):
                 signatures for those methods.
             
         """
-        return modules.get_signatures(
+        return modules.list_signatures(
             item = self.item, 
             include_private = self.include_private)  
 
@@ -244,7 +238,7 @@ class ClassInspector(Inspector):
             list[str]: names of variables in 'item'.
             
         """
-        return modules.get_variables(
+        return modules.list_variables(
             item = self.item, 
             include_private = self.include_private)      
 
@@ -273,7 +267,7 @@ class InstanceInspector(Inspector):
                 are type hints.
             
         """
-        return modules.get_annotations(
+        return modules.list_annotations(
             item = self.item, 
             include_private = self.include_private) 
 
@@ -286,7 +280,7 @@ class InstanceInspector(Inspector):
                 methods.
             
         """
-        return modules.get_methods(
+        return modules.list_methods(
             item = self.item, 
             include_private = self.include_private)
 
@@ -309,7 +303,7 @@ class InstanceInspector(Inspector):
                 values.
             
         """
-        return modules.get_properties(
+        return modules.list_properties(
             item = self.item, 
             include_private = self.include_private)           
                  
@@ -322,7 +316,7 @@ class InstanceInspector(Inspector):
                 signatures for those methods.
             
         """
-        return modules.get_signatures(
+        return modules.list_signatures(
             item = self.item, 
             include_private = self.include_private)                
          
@@ -350,7 +344,7 @@ class ModuleInspector(Inspector):
             dict[str, Type[Any]: keys are class names and values are classes.
             
         """
-        return modules.get_classes(
+        return modules.list_classes(
             item = self.item, 
             include_private = self.include_private)
         
@@ -363,7 +357,7 @@ class ModuleInspector(Inspector):
                 are functions.
             
         """
-        return modules.get_functions(
+        return modules.list_functions(
             item = self.item, 
             include_private = self.include_private)
                  
@@ -376,7 +370,7 @@ class ModuleInspector(Inspector):
                 signatures for those methods.
             
         """
-        return modules.get_signatures(
+        return modules.list_signatures(
             item = self.item, 
             include_private = self.include_private)  
           
@@ -414,7 +408,7 @@ class PackageInspector(Inspector):
             list[pathlib.Path]: list of non-python-module file paths.
             
         """
-        return modules.get_file_paths(
+        return modules.list_file_paths(
             item = self.item, 
             recursive = self.include_subfolders)
 
@@ -426,7 +420,7 @@ class PackageInspector(Inspector):
             list[pathlib.Path]: list of folder paths.
             
         """
-        return modules.get_folder_paths(
+        return modules.list_folder_paths(
             item = self.item, 
             recursive = self.include_subfolders)
 
@@ -442,7 +436,7 @@ class PackageInspector(Inspector):
                 modules and values as the corresponding modules.
             
         """
-        return modules.get_modules(
+        return modules.list_modules(
             item = self.item, 
             recursive = self.include_subfolders)  
         
@@ -454,7 +448,7 @@ class PackageInspector(Inspector):
             list[pathlib.Path]: list of python-module file paths.
             
         """
-        return modules.get_module_paths(
+        return modules.list_module_paths(
             item = self.item, 
             recursive = self.include_subfolders)  
               
@@ -466,6 +460,6 @@ class PackageInspector(Inspector):
             list[pathlib.Path]: list of all paths.
             
         """
-        return modules.get_paths(
+        return modules.list_paths(
             item = self.item, 
             recursive = self.include_subfolders)

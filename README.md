@@ -113,7 +113,7 @@ For the `is` prefix, functions with the following suffixes are included:
  So, for example, 
 
 * `map_methods`: returns a dict of the method names and methods of an object.
-* `get_methods`: returns a list of methods of an object.
+* `list_methods`: returns a list of methods of an object.
 * `has_methods`: returns whether an object has all of the named methods passed to the `methods` parameter.
 * `is_method`: returns whether an item is a method of an object.
 * `name_methods`: returns a list of names of methods of an object.

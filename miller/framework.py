@@ -1,5 +1,5 @@
 """
-rules: global settings for miller
+framework: functions for changing global settings for miller
 Corey Rayburn Yung <coreyrayburnyung@gmail.com>
 Copyright 2020-2022, Corey Rayburn Yung
 License: Apache-2.0
@@ -27,13 +27,24 @@ from __future__ import annotations
 from collections.abc import Callable, Sequence
 from typing import Any, Type
 
-import camina
+from . import configuration
 
+    
+def set_keyer(namer: Callable[[object | Type[Any]], str]) -> None:
+    """Sets the global default function used to name items.
 
-MODULE_EXTENSIONS: list[str] = ['.py', '.pyc']
-NAMER: Callable[[object | Type[Any]], str] = camina.namify
-RECURSIVE: bool = False
+    Args:
+        namer (Callable[[object | Type[Any]], str]): function that returns a 
+            str name of any item passed.
 
+    Raises:
+        TypeError: if 'namer' is not callable.
+        
+    """
+    if isinstance(namer, Callable):
+        configuration.KEYER = namer
+    else:
+        raise TypeError('extensions argument must be a sequence of strings')
     
 def set_module_extensions(extensions: Sequence[str]) -> None:
     """Sets the global default rule of python module suffixes.
@@ -48,26 +59,10 @@ def set_module_extensions(extensions: Sequence[str]) -> None:
     if (isinstance(extensions, Sequence) 
             and not isinstance(extensions, str)
             and all(isinstance(i, str) for i in extensions)):
-        globals()['MODULE_EXTENSIONS'] = extensions
+        configuration.MODULE_EXTENSIONS = extensions
     else:
         raise TypeError('extensions argument must be a sequence of strings')
-    
-def set_namer(namer: Callable[[object | Type[Any]], str]) -> None:
-    """Sets the global default function used to name items.
-
-    Args:
-        namer (Callable[[object | Type[Any]], str]): function that returns a 
-            str name of any item passed.
-
-    Raises:
-        TypeError: if 'namer' is not callable.
-        
-    """
-    if isinstance(namer, Callable):
-        globals()['NAMER'] = namer
-    else:
-        raise TypeError('extensions argument must be a sequence of strings')
-    
+ 
 def set_recursion(recursive: bool) -> None:
     """Sets the global default rule whether tools should be recursive.
     
@@ -83,8 +78,7 @@ def set_recursion(recursive: bool) -> None:
         
     """
     if isinstance(recursive, bool):
-        globals()['RECURSIVE'] = recursive
+        configuration.RECURSIVE = recursive
     else:
         raise TypeError('recursive argument must be a boolean type')
-
-        
+       
