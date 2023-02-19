@@ -31,8 +31,10 @@ from typing import Any, Type
 import camina
 
 
-MODULE_EXTENSIONS: list[str] = ['.py', '.pyc']
 KEYER: Callable[[object | Type[Any]], str] = camina.namify
+MATCH_ALL: bool = True
+MODULE_EXTENSIONS: list[str] = ['.py', '.pyc']
+RAISE_ERRORS: bool = True
 RECURSIVE: bool = False
  
      

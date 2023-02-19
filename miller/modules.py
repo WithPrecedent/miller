@@ -17,46 +17,90 @@ License: Apache-2.0
     limitations under the License.
 
 Contents:
-  
-
-        
+    has_classes:
+    has_functions:
+    has_objects:
+    list_classes:
+    list_functions:
+    list_objects:
+    map_classes:
+    map_functions:
+    map_objects:
+    name_classes:
+    name_functions:
+    name_objects:  
+      
 ToDo:
-    Add support for Kinds once that system is complete.
+
 
 """
 from __future__ import annotations
-from collections.abc import (
-    Container, Hashable, Iterable, Mapping, MutableSequence, Sequence, Set)
-import dataclasses
-import functools
+from collections.abc import MutableSequence
 import inspect
-import pathlib
 import sys
 import types
-from typing import Any, Optional, Type
+from typing import Any, Type
 
 import camina
-import nagata
 
-    
-def list_annotations(
-    item: object | types.ModuleType, 
-    include_private: bool = False) -> list[Any]:
-    """Returns list of type annotations.
-    
+
+def has_classes(
+    item: types.ModuleType | str, 
+    classes: MutableSequence[str]) -> bool:
+    """Returns whether 'classes' exist in 'item'.
+
     Args:
-        item (object): instance to examine.
-        include_private (bool): whether to include items that begin with '_'
-            (True) or to exclude them (False). Defauls to False.
-                        
-    Returns:
-        list[Any]: list of annotations of 'item'.
+        item (types.ModuleType | str): module or its name to inspect.
+        classes (MutableSequence[str]): names of classes to check to see if they
+            exist in 'item'.
             
+    Returns:
+        bool: whether all 'classes' exist in 'item'.
+    
     """
-    return list(map_annotations(
-        item = item, 
-        include_private = include_private).values())
-       
+    if isinstance(item, str):
+        item = sys.modules[item]
+    module_classes = list_classes(item = item, include_private = True)
+    return all(c in module_classes for c in classes)
+
+def has_functions(
+    item: types.ModuleType | str, 
+    functions: MutableSequence[str]) -> bool:
+    """Returns whether 'functions' exist in 'item'.
+
+    Args:
+        item (types.ModuleType | str): module or its name to inspect.
+        functions (MutableSequence[str]): names of functions to check to see if 
+            they exist in 'item'.
+            
+    Returns:
+        bool: whether all 'functions' exist in 'item'.
+    
+    """
+    if isinstance(item, str):
+        item = sys.modules[item]
+    module_functions = list_functions(item = item, include_private = True)
+    return all(c in module_functions for c in functions)
+
+def has_objects(
+    item: types.ModuleType | str, 
+    objects: MutableSequence[str]) -> bool:
+    """Returns whether 'objects' exist in 'item'.
+
+    Args:
+        item (types.ModuleType | str): module or its name to inspect.
+        objects (MutableSequence[str]): names of objects to check to see if 
+            they exist in 'item'.
+            
+    Returns:
+        bool: whether all 'objects' exist in 'item'.
+    
+    """
+    if isinstance(item, str):
+        item = sys.modules[item]
+    module_objects = list_objects(item = item, include_private = True)
+    return all(c in module_objects for c in objects)
+   
 def list_classes(
     item: types.ModuleType | str, 
     include_private: bool = False) -> list[Type[Any]]:
@@ -75,7 +119,7 @@ def list_classes(
         item = sys.modules[item]
     classes = [
         m[1] for m in inspect.getmembers(item, inspect.isclass)
-        if m[1].__module__ == item.__label.name__]
+        if m[1].__module__ == item.__name__]
     if not include_private:
         classes = camina.drop_privates(classes)
     return classes
@@ -91,18 +135,110 @@ def list_functions(
             (True) or to exclude them (False). Defauls to False.
         
     Returns:
-        list[Type[types.FunctionType]]: list of functions in 'item'.
+        list[types.FunctionType]: list of functions in 'item'.
         
     """
     if isinstance(item, str):
         item = sys.modules[item]
     functions = [
         m[1] for m in inspect.getmembers(item, inspect.isfunction)
-        if m[1].__module__ == item.__label.name__]
+        if m[1].__module__ == item.__name__]
     if not include_private:
         functions = camina.drop_privates(functions)
     return functions 
-  
+      
+def list_objects(
+    item: types.ModuleType | str, 
+    include_private: bool = False) -> list[Any]:
+    """Returns list of objects in 'item'.
+    
+    Args:
+        item (types.ModuleType | str): module or its name to inspect.
+        include_private (bool): whether to include items that begin with '_'
+            (True) or to exclude them (False). Defauls to False.
+        
+    Returns:
+        Any: list of objects in 'item'.
+        
+    """
+    if isinstance(item, str):
+        item = sys.modules[item]
+    all_items = [
+        m[1] for m in inspect.getmembers()
+        if m[1].__module__ == item.__name__]
+    classes = list_classes(item, include_private = include_private)
+    functions = list_functions(item, include_private = include_private)
+    objects = [i for i in all_items if i not in classes]
+    return [i for i in objects if i not in functions]
+   
+def map_classes(
+    item: types.ModuleType | str, 
+    include_private: bool = False) -> dict[str, Type[Any]]:
+    """Returns dict of classes in 'item'.
+    
+    Args:
+        item (types.ModuleType | str): module or its name to inspect.
+        include_private (bool): whether to include items that begin with '_'
+            (True) or to exclude them (False). Defauls to False.
+        
+    Returns:
+        dict[str, Type[Any]]: dict with keys being class names and values
+            being classes. 
+        
+    """
+    kwargs = dict(item = item, include_private = include_private)
+    names = name_classes(**kwargs)
+    classes = list_classes(**kwargs)
+    return dict(zip(names, classes))
+   
+def map_functions(
+    item: types.ModuleType | str, 
+    include_private: bool = False) -> dict[str, Type[Any]]:
+    """Returns dict of functions in 'item'.
+    
+    Args:
+        item (types.ModuleType | str): module or its name to inspect.
+        include_private (bool): whether to include items that begin with '_'
+            (True) or to exclude them (False). Defauls to False.
+        
+    Returns:
+        dict[str, Type[Any]]: dict with keys being function names and values
+            being functions. 
+        
+    """
+    kwargs = dict(item = item, include_private = include_private)
+    names = name_functions(**kwargs)
+    functions = list_functions(**kwargs)
+    return dict(zip(names, functions))
+   
+def map_objects(
+    item: types.ModuleType | str, 
+    include_private: bool = False) -> dict[str, Type[Any]]:
+    """Returns dict of objects in 'item'.
+    
+    Args:
+        item (types.ModuleType | str): module or its name to inspect.
+        include_private (bool): whether to include items that begin with '_'
+            (True) or to exclude them (False). Defauls to False.
+        
+    Returns:
+        dict[str, Type[Any]]: dict with keys being object names and values
+            being objects. 
+        
+    """
+    if isinstance(item, str):
+        item = sys.modules[item]
+    objects = {
+        m[0]: m[1] for m in inspect.getmembers()
+        if m[1].__module__ == item.__name__}
+    if not include_private:
+        objects = camina.drop_privates(objects)
+    return objects
+    # kwargs = dict(item = item, include_private = include_private)
+    # names = name_objects(**kwargs)
+    # objects = list_objects(**kwargs)
+    # return dict(zip(names, objects))   
+
 def name_classes(
     item: types.ModuleType | str, 
     include_private: bool = False) -> list[str]:
@@ -149,25 +285,27 @@ def name_functions(
         names = camina.drop_privates(names)
     return names
 
-def name_variables(
-    item: object | Type[Any], 
-    include_private: bool = False) -> list[str]:
-    """Returns variable names of 'item'.
+def name_objects(
+    item: types.ModuleType | str, 
+    include_private: bool = False) -> list[Any]:
+    """Returns list of names of objects in 'item'.
     
     Args:
-        item (object | Type[Any]): item to examine.
+        item (types.ModuleType | str): module or its name to inspect.
         include_private (bool): whether to include items that begin with '_'
             (True) or to exclude them (False). Defauls to False.
-                        
+        
     Returns:
-        list[str]: names of attributes in 'item' that are neither methods nor
-            properties.
-            
+        Any: list of names of objects in 'item'.
+        
     """
-    names = [
-        a for a in dir(item) 
-        if identify.is_variable(item, attribute = a)]
-    if not include_private:
-        names = camina.drop_privates(names)
-    return names
+    if isinstance(item, str):
+        item = sys.modules[item]
+    all_items = [
+        m[0] for m in inspect.getmembers()
+        if m[1].__module__ == item.__name__]
+    classes = name_classes(item, include_private = include_private)
+    functions = name_functions(item, include_private = include_private)
+    objects = [i for i in all_items if i not in classes]
+    return [i for i in objects if i not in functions]
  

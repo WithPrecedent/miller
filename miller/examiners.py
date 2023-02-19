@@ -40,6 +40,11 @@ from typing import Any, Optional, Type, Union
 
 import camina
 
+from . import attributes
+from . import containers
+from . import disks
+from . import modules
+
 
 @dataclasses.dataclass
 class Inspector(object):
@@ -77,7 +82,7 @@ class Inspector(object):
                 values.
             
         """
-        return catalog.map_attributes(
+        return objects.map_attributes(
             item = self.item, 
             include_private = self.include_private)
         
@@ -93,7 +98,7 @@ class Inspector(object):
                 in 'item'. Returns None if 'item' is not a container.
             
         """
-        return check.has_types(item = self.item)
+        return containers.has_types(item = self.item)
                 
     @property
     def name(self) -> Optional[str]:
@@ -126,7 +131,7 @@ class Inspector(object):
                 values.
             
         """
-        return catalog.map_variables(
+        return modules.map_variables(
             item = self.item, 
             include_private = self.include_private)                  
 
@@ -135,7 +140,7 @@ class Inspector(object):
     def __str__(self) -> str:
         """Returns all properties and their contents in a readable str."""
         representation = ""
-        for name, content in acquire.list_properties(item = self).items():
+        for name, content in objects.map_properties(item = self).items():
             representation += name + ': ' + content + '\n'
         return representation
             
@@ -164,7 +169,7 @@ class ClassInspector(Inspector):
                 are type hints.
             
         """
-        return catalog.map_annotations(
+        return modules.map_annotations(
             item = self.item, 
             include_private = self.include_private) 
         
@@ -176,7 +181,7 @@ class ClassInspector(Inspector):
             list[str]: names of attributes.
             
         """
-        return label.name_attributes(
+        return objects.name_attributes(
             item = self.item, 
             include_private = self.include_private)
 
@@ -189,7 +194,7 @@ class ClassInspector(Inspector):
                 methods.
             
         """
-        return catalog.map_methods(
+        return objects.map_methods(
             item = self.item, 
             include_private = self.include_private)
 
@@ -201,7 +206,7 @@ class ClassInspector(Inspector):
             list[str]: names of parameters for a dataclass.
             
         """
-        return label.name_parameters(item = self.item) 
+        return objects.name_parameters(item = self.item) 
     
     @property
     def properties(self) -> list[str]:
@@ -211,7 +216,7 @@ class ClassInspector(Inspector):
             list[str]: names of properties.
             
         """
-        return acquire.list_properties(
+        return objects.list_properties(
             item = self.item, 
             include_private = self.include_private)           
                  

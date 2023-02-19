@@ -29,28 +29,15 @@ from typing import Any, ClassVar
 
 import miller
 
-
-@dataclasses.dataclass
-class TestDataclass(object):
-    
-    a_dict: dict[Any, Any] = dataclasses.field(default_factory = dict)
-    a_list: list[Any] = dataclasses.field(default_factory = list)
-    a_classvar: ClassVar[Any] = None     
-
-    @property
-    def list_something(self) -> str:
-        return 'something'
-    
-    def do_something(self) -> None:
-        return
-    
     
 class TestClass(object):
     
     a_classvar: str = 'tree'
     
     def __init__(self) -> None:
-        a_dict = {'tree': 'house'}
+        self.a_dict = {'tree': 'house'}
+        self.a_list = []
+        return
 
     @property
     def list_something(self) -> str:
@@ -58,35 +45,89 @@ class TestClass(object):
     
     def do_something(self) -> None:
         return
+
+    @classmethod
+    def do_something_with_class(cls) -> None:
+        pass
    
+   
+@dataclasses.dataclass
+class TestDataclass(object):
+    
+    a_dict: dict[Any, Any] = dataclasses.field(default_factory = dict)
+    a_list: list[Any] = dataclasses.field(default_factory = list)
+    a_classvar: ClassVar[str] = 'tree'     
+
+    @property
+    def list_something(self) -> str:
+        return 'something'
+    
+    def do_something(self) -> None:
+        return
+
+    @classmethod
+    def do_something_with_class(cls) -> None:
+        pass
+           
     
 def test_attributes() -> None:
     an_instance = TestClass()
     a_dataclass = TestDataclass()
-    assert miller.is_class_attribute(an_instance, attribute = 'a_classvar')
-    assert miller.is_class_attribute(
-        a_dataclass, 
-        attribute = 'a_classvar')   
-    assert not miller.is_class_attribute(an_instance, attribute = 'a_dict')
-    # assert not miller.is_class_attribute(
-    #     a_dataclass, 
-    #     attribute = 'a_dict')    
-    assert miller.is_method(an_instance, attribute = 'do_something')
-    assert miller.is_method(
-        a_dataclass, 
-        attribute = 'do_something')
-    # assert miller.is_property(
-    #     an_instance, 
-    #     attribute = 'list_something')
-    # assert miller.is_property(
-    #     a_dataclass, 
-    #     attribute = 'list_something')
-    # properties = miller.list_properties(an_instance)
-    # assert properties == {'list_something': 'something'}
-    methods = miller.list_methods(a_dataclass) 
-    assert isinstance(methods[0], types.MethodType)
-    attributes = miller.name_fields(TestDataclass)
-    assert attributes == ['a_dict', 'a_list']
+    for instance in [an_instance, a_dataclass]:
+        assert miller.is_attribute(
+            instance, 
+            'a_dict',
+            raise_error = False)  
+        assert miller.is_instance_attribute(
+            instance, 
+            'a_dict',
+            raise_error = False)  
+        assert miller.is_instance_attribute(
+            instance, 
+            'a_list',
+            raise_error = False)  
+        assert miller.is_class_attribute(
+            instance, 
+            'a_classvar',
+            raise_error = False)
+        assert not miller.is_class_attribute(
+            instance, 
+            'a_dict',
+            raise_error = False) 
+        assert miller.is_variable(
+            instance, 
+            'a_dict',
+            raise_error = False)
+        assert miller.is_instance_variable(
+            instance, 
+            'a_dict',
+            raise_error = False)     
+        assert not miller.is_class_variable(
+            instance, 
+            'a_dict',
+            raise_error = False)    
+        assert miller.is_method(
+            instance, 
+            'do_something',
+            raise_error = False)
+        assert miller.is_instance_method(
+            instance, 
+            'do_something',
+            raise_error = False)  
+        assert miller.is_class_method(
+            instance, 
+            'do_something_with_class',
+            raise_error = False)
+        assert miller.is_property(
+            instance, 
+            attribute = 'list_something',
+            raise_error = False)
+        # properties = miller.list_properties(instance)
+        # assert properties == {'list_something': 'something'}
+        # methods = miller.list_methods(instance) 
+        # assert isinstance(methods[0], types.MethodType)
+        # attributes = miller.name_fields(TestDataclass)
+        # assert attributes == ['a_dict', 'a_list']
     return
 
 def test_modules() -> None:
@@ -117,5 +158,5 @@ def test_paths() -> None:
 
 if __name__ == '__main__':
     test_paths()
-    # test_modules()
-    # test_attributes()
+    test_modules()
+    test_attributes()

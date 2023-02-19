@@ -17,8 +17,23 @@ License: Apache-2.0
     limitations under the License.
 
 Contents:
-
-   
+    has_files
+    has_folders
+    has_modules
+    has_paths
+    list_files
+    list_folders
+    list_modules
+    list_paths
+    map_files
+    map_folders
+    map_modules
+    map_paths
+    name_files
+    name_folders
+    name_modules
+    name_paths   
+    
 ToDo:
     
 
@@ -32,6 +47,7 @@ import camina
 import nagata
 
 from . import configuration
+from . import identity
 
 
 def has_files(
@@ -53,7 +69,7 @@ def has_files(
     """ 
     return (
         has_paths(item, elements = elements, recursive = recursive)
-        and all(is_file(path) for path in item))
+        and all(identity.is_file(path) for path in item))
           
 def has_folders(
     item: str | pathlib.Path,
@@ -74,7 +90,7 @@ def has_folders(
     """ 
     return (
         has_paths(item, elements = elements, recursive = recursive)
-        and all(is_folder(path) for path in item))
+        and all(identity.is_folder(path) for path in item))
   
 def has_modules(
     item: str | pathlib.Path,
@@ -95,7 +111,7 @@ def has_modules(
     """ 
     return (
         has_paths(item, elements = elements, recursive = recursive)
-        and all(is_module(path) for path in item))
+        and all(identity.is_module(path) for path in item))
    
 def has_paths(
     item: str | pathlib.Path,
@@ -116,63 +132,8 @@ def has_paths(
     """ 
     paths = list_paths(item, recursive = recursive)
     elements = [camina.pahlibify(p) for p in elements]
-    return all(elements in paths) and all(is_path(path) for path in item)
- 
-def is_file(item: str | pathlib.Path) -> bool:
-    """Returns whether 'item' is a file.
-    
-    Args:
-        item (str | pathlib.Path): path to check.
-        
-    Returns:
-        bool: whether 'item' is a file.
-        
-    """ 
-    item = camina.pathlibify(item)
-    return item.exists() and item.is_file()
+    return all(elements in paths) and all(identity.is_path(path) for path in item)
 
-def is_folder(item: str | pathlib.Path) -> bool:
-    """Returns whether 'item' is a path to a folder.
-    
-    Args:
-        item (str | pathlib.Path): path to check.
-        
-    Returns:
-        bool: whether 'item' is a path to a folder.
-        
-    """ 
-    item = camina.pathlibify(item)
-    return item.exists() and item.is_dir()
- 
-def is_module(item: str | pathlib.Path) -> bool:
-    """Returns whether 'item' is a python-module file.
-    
-    Args:
-        item (str | pathlib.Path): path to check.
-        
-    Returns:
-        bool: whether 'item' is a python-module file.
-        
-    """  
-    item = camina.pathlibify(item)
-    return (
-        item.exists() 
-        and item.is_file() 
-        and item.suffix in configuration.MODULE_EXTENSIONS)
-    
-def is_path(item: str | pathlib.Path) -> bool:
-    """Returns whether 'item' is a currently existing path.
-    
-    Args:
-        item (str | pathlib.Path): path to check.
-        
-    Returns:
-        bool: whether 'item' is a currently existing path.
-        
-    """ 
-    item = camina.pathlibify(item)
-    return item.exists()
-  
 def list_files(
     item: str | pathlib.Path, 
     recursive: Optional[bool] = None,
@@ -193,7 +154,7 @@ def list_files(
     if recursive is None:
         recursive = configuration.RECURSIVE   
     paths = list_paths(item, recursive = recursive, suffix = suffix)
-    return [p for p in paths if is_file(item = p)]
+    return [p for p in paths if identity.is_file(item = p)]
 
 def list_folders(
     item: str | pathlib.Path,
@@ -212,7 +173,7 @@ def list_folders(
     if recursive is None:
         recursive = configuration.RECURSIVE   
     paths = list_paths(item, recursive = recursive)
-    return [p for p in paths if is_folder(item = p)]
+    return [p for p in paths if identity.is_folder(item = p)]
 
 def list_modules(
     item: str | pathlib.Path,
@@ -236,7 +197,7 @@ def list_modules(
     if recursive is None:
         recursive = configuration.RECURSIVE   
     paths = list_paths(item, recursive = recursive)
-    modules = [p for p in paths if is_module(item = p)]
+    modules = [p for p in paths if identity.is_module(item = p)]
     if import_modules:
         modules = [nagata.from_file_path(path = p) for p in modules]
     return modules
@@ -283,7 +244,7 @@ def map_files(
     """
     if recursive is None:
         recursive = configuration.RECURSIVE   
-    kwargs = {'item': item, 'recursive': recursive}
+    kwargs = dict(item = item, recursive = recursive)
     names = name_files(**kwargs)
     files = list_files(**kwargs)
     return dict(zip(names, files))
@@ -305,7 +266,7 @@ def map_folders(
     """
     if recursive is None:
         recursive = configuration.RECURSIVE   
-    kwargs = {'item': item, 'recursive': recursive}
+    kwargs = dict(item = item, recursive = recursive)
     names = name_folders(**kwargs)
     folders = list_folders(**kwargs)
     return dict(zip(names, folders))
@@ -332,7 +293,7 @@ def map_modules(
     """
     if recursive is None:
         recursive = configuration.RECURSIVE   
-    kwargs = {'item': item, 'recursive': recursive}
+    kwargs = dict(item = item, recursive = recursive)
     names = name_modules(**kwargs)
     modules = list_modules(**kwargs, import_modules = import_modules)
     return dict(zip(names, modules))
@@ -354,7 +315,7 @@ def map_paths(
     """
     if recursive is None:
         recursive = configuration.RECURSIVE   
-    kwargs = {'item': item, 'recursive': recursive}
+    kwargs = dict(item = item, recursive = recursive)
     names = name_paths(**kwargs)
     paths = list_paths(**kwargs)
     return dict(zip(names, paths))
@@ -378,7 +339,7 @@ def name_files(
     if recursive is None:
         recursive = configuration.RECURSIVE   
     item = camina.pathlibify(item)
-    kwargs = {'item': item, 'recursive': recursive}
+    kwargs = dict(item = item, recursive = recursive)
     return [p.stem for p in list_files(**kwargs)]
           
 def name_folders(
@@ -398,7 +359,7 @@ def name_folders(
     if recursive is None:
         recursive = configuration.RECURSIVE   
     item = camina.pathlibify(item)
-    kwargs = {'item': item, 'recursive': recursive}
+    kwargs = dict(item = item, recursive = recursive)
     return [p.name for p in list_folders(**kwargs)]
  
 def name_modules(
@@ -420,7 +381,7 @@ def name_modules(
     if recursive is None:
         recursive = configuration.RECURSIVE   
     item = camina.pathlibify(item)
-    kwargs = {'item': item, 'recursive': recursive}
+    kwargs = dict(item = item, recursive = recursive)
     return [p.stem for p in list_modules(**kwargs)]
  
 def name_paths(
@@ -442,5 +403,5 @@ def name_paths(
     """
     if recursive is None:
         recursive = configuration.RECURSIVE   
-    kwargs = {'item': item, 'recursive': recursive}
+    kwargs = dict(item = item, recursive = recursive)
     return name_files(**kwargs) + name_folders(**kwargs)
