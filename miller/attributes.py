@@ -1,5 +1,5 @@
 """
-identity: introspection tools that return a bool whether an item is a type
+attributes: introspection tools for class and instance attributes
 Corey Rayburn Yung <coreyrayburnyung@gmail.com>
 Copyright 2020-2022, Corey Rayburn Yung
 License: Apache-2.0
@@ -17,11 +17,18 @@ License: Apache-2.0
     limitations under the License.
 
 Contents:
-    is_attribute:
-    is_class_attribute:
-    is_method:
-    is_property:
-    is_variable:
+    This module contains the following types of inspectors:
+        has
+        is
+        list
+        map
+        name
+    Those relate to the following attributes of classes and instances:
+        attributes
+        fields
+        methods
+        properties
+        traits
    
 ToDo:
     
@@ -30,14 +37,15 @@ ToDo:
 from __future__ import annotations
 from collections.abc import Callable, MutableSequence
 import dataclasses
-import functools
 import inspect
 import types
 from typing import Any, Optional, Type
 
 import camina 
 
+from . import base
 from . import configuration
+from . import result
 
 
 def has_attributes(
@@ -67,17 +75,16 @@ def has_attributes(
         bool: whether all 'attributes' exist in 'item'.
     
     """
-    checker = is_attribute
-    return _check_trait(
-        item = item,
-        attributes = attributes,
+    return base.has_elements(
+        checker = is_attribute,
         raise_error = raise_error,
         match_all = match_all,
-        checker = checker)
+        item = item,
+        elements = attributes)
     
 def has_fields(
     item: dataclasses.dataclass | Type[dataclasses.dataclass], 
-    attributes: MutableSequence[str], 
+    fields: MutableSequence[str], 
     raise_error: Optional[bool] = None,
     match_all: Optional[bool] = None) -> bool:
     """Returns whether 'attributes' are fields in dataclass 'item'.
@@ -85,136 +92,127 @@ def has_fields(
     Args:
         item (dataclasses.dataclass | Type[dataclasses.dataclass]): dataclass or 
             dataclass instance to examine.
-        attributes (MutableSequence[str]): names of attributes to check.
+        fields (MutableSequence[str]): names of fields to check.
         raise_error (Optional[bool]): whether to raise an error if any 
-            'attributes' are not fields of 'item' (True) or to simply return 
-            False in such situations. Defaults to None, which means the global 
-            'miller.RAISE_ERRORS' setting will be used.
+            'fields' are not an attribute of 'item' (True) or to simply 
+            return False in such situations. Defaults to None, which means the 
+            global 'miller.RAISE_ERRORS' setting will be used.
+        match_all (Optional[bool]): whether all items in 'fields' must match
+            (True) or any of the items must match (False). Defaults to None,
+            which means the global 'miller.MATCH_ALL' will be used.
     
     Raises:
-        AttributeError: if some 'attributes' are not fields of 'item' and 
+        AttributeError: if some 'fields' are not fields of 'item' and 
             'raise_error' is True (or if it is None and the global setting is
             True).
         TypeError: if 'item' is not a dataclass.
         
     Returns:
-        bool: whether all 'attributes' are fields in dataclass 'item'.
+        bool: whether all 'fields' are fields in dataclass 'item'.
     
     """
     if dataclasses.identity.is_dataclass(item):
-        checker = is_field
-        return _check_trait(
-            item = item,
-            attributes = attributes,
+        return base.has_elements(
+            checker = is_field,
             raise_error = raise_error,
             match_all = match_all,
-            checker = checker)
+            item = item,
+            elements = fields)
     else:
         raise TypeError('item must be a dataclass')
    
 def has_methods(
     item: Any, 
-    attributes: MutableSequence[str], 
+    methods: MutableSequence[str], 
     raise_error: Optional[bool] = None,
     match_all: Optional[bool] = None) -> bool:
     """Returns whether 'item' has 'methods' which are methods.
 
     Args:
         item (Any): object to examine.
-        methods (str | MutableSequence[str]): name(s) of methods to check 
-            to see if they exist in 'item' and are types.MethodType.
-            
+        methods (MutableSequence[str]): names of methods to check.
+        raise_error (Optional[bool]): whether to raise an error if any 
+            'methods' are not an attribute of 'item' (True) or to simply 
+            return False in such situations. Defaults to None, which means the 
+            global 'miller.RAISE_ERRORS' setting will be used.
+        match_all (Optional[bool]): whether all items in 'methods' must match
+            (True) or any of the items must match (False). Defaults to None,
+            which means the global 'miller.MATCH_ALL' will be used.
+                        
     Returns:
-        bool: whether all 'methods' exist in 'item' and are types.MethodType.
+        bool: whether all 'methods' exist in 'item' and are methods.
         
     """
-    checker = is_method
-    return _check_trait(
-        item = item,
-        attributes = attributes,
+    return base.has_elements(
+        checker = is_method,
         raise_error = raise_error,
         match_all = match_all,
-        checker = checker)
+        item = item,
+        elements = methods)
   
 def has_properties(
     item: Any, 
-    attributes: MutableSequence[str], 
+    properties: MutableSequence[str], 
     raise_error: Optional[bool] = None,
     match_all: Optional[bool] = None) -> bool:
     """Returns whether 'item' has 'properties' which are properties.
 
     Args:
         item (Any): object to examine.
-        properties (MutableSequence[str]): names of properties to check to see 
-            if they exist in 'item' and are property type.
+        properties (MutableSequence[str]): names of properties to check.
+        raise_error (Optional[bool]): whether to raise an error if any 
+            'methods' are not an attribute of 'item' (True) or to simply 
+            return False in such situations. Defaults to None, which means the 
+            global 'miller.RAISE_ERRORS' setting will be used.
+        match_all (Optional[bool]): whether all items in 'methods' must match
+            (True) or any of the items must match (False). Defaults to None,
+            which means the global 'miller.MATCH_ALL' will be used.
             
     Returns:
-        bool: whether all 'properties' exist in 'item'.
+        bool: whether all 'properties' exist in 'item' and are properties.
         
     """
-    checker = is_property
-    return _check_trait(
-        item = item,
-        attributes = attributes,
+    return base.has_elements(
+        checker = is_property,
         raise_error = raise_error,
         match_all = match_all,
-        checker = checker)
-  
-def has_signatures(
-    item: Any, 
-    attributes: MutableSequence[str], 
-    raise_error: Optional[bool] = None,
-    match_all: Optional[bool] = None) -> bool:
-    """Returns whether 'item' has 'signatures' of its methods.
-
-    Args:
-        item (Any): object to examine.
-        signatures (Mapping[str, inspect.Signature]): keys are the names of 
-            methods and values are the corresponding method signatures.
-            
-    Returns:
-        bool: whether all 'signatures' exist in 'item'.
+        item = item,
+        elements = properties)
         
-    """
-    checker = is_signature
-    return _check_trait(
-        item = item,
-        attributes = attributes,
-        raise_error = raise_error,
-        match_all = match_all,
-        checker = checker)
-       
-def check_traits(
+def has_traits(
     item: Any,
     attributes: Optional[MutableSequence[str]] = None,
     methods: Optional[MutableSequence[str]] = None,
-    properties: Optional[MutableSequence[str]] = None) -> bool:
+    properties: Optional[MutableSequence[str]] = None, 
+    raise_error: Optional[bool] = None,
+    match_all: Optional[bool] = None) -> bool:
     """Returns if 'item' has 'attributes', 'methods' and 'properties'.
 
     Args:
         item (Any): object to examine.
-        attributes (MutableSequence[str]): names of attributes to check to see
-            if they exist in 'item'.
-        methods (MutableSequence[str]): name(s) of methods to check to see if 
-            they exist in 'item' and are types.MethodType.          
-        properties (MutableSequence[str]): names of properties to check to see 
-            if they exist in 'item' and are property type.
+        attributes (MutableSequence[str]): names of attributes to check.
+        methods (MutableSequence[str]): name(s) of methods to check.       
+        properties (MutableSequence[str]): names of properties to check.
+        raise_error (Optional[bool]): whether to raise an error if any of the 
+            traits are not an attribute of 'item' (True) or to simply 
+            return False in such situations. Defaults to None, which means the 
+            global 'miller.RAISE_ERRORS' setting will be used.
+        match_all (Optional[bool]): whether all items in the traits must match
+            (True) or any of the items must match (False). Defaults to None,
+            which means the global 'miller.MATCH_ALL' will be used.
                           
     Returns:
         bool: whether all passed arguments exist in 'item'.    
     
     """
-    if not inspect.isclass(item):
-        item = item.__class__
     attributes = attributes or []
     methods = methods or []
     properties = properties or []
-    signatures = signatures or {}
+    kwargs = dict(raise_error = raise_error, match_all = match_all)
     return (
-        has_attributes(item, attributes = attributes)
-        and has_methods(item, attributes = methods)
-        and has_properties(item, attributes = properties)
-        and has_signatures(item, attributes = signatures))
+        has_attributes(item, attributes = attributes, **kwargs)
+        and has_methods(item, methods = methods, **kwargs)
+        and has_properties(item, properties = properties, **kwargs))
      
 def is_attribute(
     item: dataclasses.dataclass | Type[dataclasses.dataclass],
@@ -240,12 +238,11 @@ def is_attribute(
         bool: whether 'attribute' is an attribute.
         
     """
-    if raise_error is None:
-        raise_error = configuration.RAISE_ERRORS    
-    if not hasattr(item, attribute) and raise_error:
-        raise AttributeError(f'{attribute} is not an attribute of {item}')
-    else:
-        return hasattr(item, attribute)
+    return base.is_kind(
+        checker = isinstance,
+        raise_error = raise_error,
+        item = item,
+        kind = attribute)
 
 def is_field(
     item: object | Type[Any],
@@ -271,15 +268,11 @@ def is_field(
         bool: whether 'attribute' is a field of 'item'.
         
     """
-    if raise_error is None:
-        raise_error = configuration.RAISE_ERRORS    
-    if not hasattr(item, attribute) and raise_error:
-        raise AttributeError(f'{attribute} is not an attribute of {item}')
-    else:
-        return (
-            hasattr(item, attribute) 
-            and attribute in dataclasses.fields(item))
- 
+    return base.is_kind(
+        checker = dataclasses.fields,
+        raise_error = raise_error,
+        item = getattr(item, attribute))
+        
 def is_method(
     item: object | Type[Any],
     attribute: str, 
@@ -304,14 +297,10 @@ def is_method(
         bool: whether 'attribute' is a class attribute of 'item'.
         
     """
-    if raise_error is None:
-        raise_error = configuration.RAISE_ERRORS    
-    if not hasattr(item, attribute) and raise_error:
-        raise AttributeError(f'{attribute} is not an attribute of {item}')
-    else:
-        return (
-            hasattr(item, attribute) 
-            and inspect.ismethod(getattr(item, attribute)))
+    return base.is_kind(
+        checker = inspect.ismethod,
+        raise_error = raise_error,
+        item = getattr(item, attribute))    
   
 def is_property(
     item: object | Type[Any],
@@ -871,18 +860,29 @@ def _check_trait(
     raise_error: bool,
     match_all: bool,
     checker: Callable) -> bool:
-    """_summary_
+    """Returns whether 'attributes' exist in 'item'.
 
     Args:
-        item (Any): _description_
-        attributes (MutableSequence[Any]): _description_
-        raise_error (bool): _description_
-        match_all (bool): _description_
-        checker (Callable): _description_
-
+        item (object | Type[Any]): class or instance to examine.
+        attributes (MutableSequence[str]): names of attributes to check.
+        raise_error (Optional[bool]): whether to raise an error if any 
+            'attributes' are not an attribute of 'item' (True) or to simply 
+            return False in such situations. Defaults to None, which means the 
+            global 'miller.RAISE_ERRORS' setting will be used.
+        match_all (Optional[bool]): whether all items in 'attributes' must match
+            (True) or any of the items must match (False). Defaults to None,
+            which means the global 'miller.MATCH_ALL' will be used.
+        checker (Callable): function to call to determine if an attribute in
+            'attributes' qualifies as the desired type.
+            
+    Raises:
+        AttributeError: if some 'attributes' are not an attribute of 'item' and 
+            'raise_error' is True (or if it is None and the global setting is
+            True).
+                                 
     Returns:
-        bool: _description_
-        
+        bool: whether all 'attributes' exist in 'item'.
+    
     """
     match_all = configuration.MATCH_ALL if None else match_all 
     scope = all if match_all else any
@@ -895,36 +895,3 @@ def _check_trait(
         return False
     else:
         return True
-
-def _name_traits(
-    item: Any,
-    include_private: bool,
-    raise_error: bool,
-    checker: Callable) -> MutableSequence[str]:
-    """_summary_
-
-    Args:
-        item (Any): _description_
-        include_private (bool): _description_
-        raise_error (bool): _description_
-        checker (Callable): _description_
-
-    Raises:
-        AttributeError: _description_
-
-    Returns:
-        MutableSequence[str]: _description_
-    """
-    kwargs = dict(raise_error = False)
-    matches = [
-        a.__name__ for a in dir(item)
-        if checker(item, attribute = a, **kwargs)] 
-    if not matches and raise_error:
-        raise AttributeError(
-            f'There are no matching attributes of {item}')
-    elif not matches:
-        return []
-    else:
-        if not include_private:
-            matches = camina.drop_privates(matches)  
-        return matches

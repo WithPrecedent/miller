@@ -31,13 +31,18 @@ from typing import Any, Type
 import camina
 
 
-KEYER: Callable[[object | Type[Any]], str] = camina.namify
+DEFAULT_HAS: Any = False
+DEFAULT_IS: Any = False
+DEFAULT_LIST: Any = []
+DEFAULT_MAP: Any = {}
+DEFAULT_NAME: Any = []
+KEYER: Callable[[Any], str] = camina.namify
 MATCH_ALL: bool = True
 MODULE_EXTENSIONS: list[str] = ['.py', '.pyc']
 RAISE_ERRORS: bool = True
 RECURSIVE: bool = False
- 
-     
+
+       
 @dataclasses.dataclass
 class MISSING_VALUE(object):
     """Sentinel object for a missing data or parameter.

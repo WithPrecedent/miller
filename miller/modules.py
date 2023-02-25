@@ -35,25 +35,33 @@ ToDo:
 
 """
 from __future__ import annotations
-from collections.abc import MutableSequence
+from collections.abc import Callable, MutableSequence
 import inspect
 import sys
 import types
-from typing import Any, Type
+from typing import Any, Optional, Type
 
 import camina
 
 
 def has_classes(
     item: types.ModuleType | str, 
-    classes: MutableSequence[str]) -> bool:
+    classes: MutableSequence[str], 
+    raise_error: Optional[bool] = None,
+    match_all: Optional[bool] = None) -> bool:
     """Returns whether 'classes' exist in 'item'.
 
     Args:
         item (types.ModuleType | str): module or its name to inspect.
-        classes (MutableSequence[str]): names of classes to check to see if they
-            exist in 'item'.
-            
+        classes (MutableSequence[str]): names of classes to check.
+        raise_error (Optional[bool]): whether to raise an error if any 
+            'classes' are not an attribute of 'item' (True) or to simply 
+            return False in such situations. Defaults to None, which means the 
+            global 'miller.RAISE_ERRORS' setting will be used.
+        match_all (Optional[bool]): whether all items in 'classes' must match
+            (True) or any of the items must match (False). Defaults to None,
+            which means the global 'miller.MATCH_ALL' will be used.
+                        
     Returns:
         bool: whether all 'classes' exist in 'item'.
     
@@ -115,14 +123,8 @@ def list_classes(
         list[Type[Any]]: list of classes in 'item'.
         
     """
-    if isinstance(item, str):
-        item = sys.modules[item]
-    classes = [
-        m[1] for m in inspect.getmembers(item, inspect.isclass)
-        if m[1].__module__ == item.__name__]
-    if not include_private:
-        classes = camina.drop_privates(classes)
-    return classes
+    kwargs = dict(item = item, include_private = include_private)
+    return list(map_classes(**kwargs).values())
               
 def list_functions(
     item: types.ModuleType | str, 
@@ -138,14 +140,8 @@ def list_functions(
         list[types.FunctionType]: list of functions in 'item'.
         
     """
-    if isinstance(item, str):
-        item = sys.modules[item]
-    functions = [
-        m[1] for m in inspect.getmembers(item, inspect.isfunction)
-        if m[1].__module__ == item.__name__]
-    if not include_private:
-        functions = camina.drop_privates(functions)
-    return functions 
+    kwargs = dict(item = item, include_private = include_private)
+    return list(map_functions(**kwargs).values())
       
 def list_objects(
     item: types.ModuleType | str, 
@@ -161,15 +157,8 @@ def list_objects(
         Any: list of objects in 'item'.
         
     """
-    if isinstance(item, str):
-        item = sys.modules[item]
-    all_items = [
-        m[1] for m in inspect.getmembers()
-        if m[1].__module__ == item.__name__]
-    classes = list_classes(item, include_private = include_private)
-    functions = list_functions(item, include_private = include_private)
-    objects = [i for i in all_items if i not in classes]
-    return [i for i in objects if i not in functions]
+    kwargs = dict(item = item, include_private = include_private)
+    return list(map_objects(**kwargs).values())
    
 def map_classes(
     item: types.ModuleType | str, 
@@ -186,10 +175,10 @@ def map_classes(
             being classes. 
         
     """
-    kwargs = dict(item = item, include_private = include_private)
-    names = name_classes(**kwargs)
-    classes = list_classes(**kwargs)
-    return dict(zip(names, classes))
+    return _get_object_mapping(
+        item = item, 
+        predicate = inspect.isclass, 
+        include_private = include_private)
    
 def map_functions(
     item: types.ModuleType | str, 
@@ -206,10 +195,10 @@ def map_functions(
             being functions. 
         
     """
-    kwargs = dict(item = item, include_private = include_private)
-    names = name_functions(**kwargs)
-    functions = list_functions(**kwargs)
-    return dict(zip(names, functions))
+    return _get_object_mapping(
+        item = item, 
+        predicate = inspect.isfunction, 
+        include_private = include_private)
    
 def map_objects(
     item: types.ModuleType | str, 
@@ -226,18 +215,10 @@ def map_objects(
             being objects. 
         
     """
-    if isinstance(item, str):
-        item = sys.modules[item]
-    objects = {
-        m[0]: m[1] for m in inspect.getmembers()
-        if m[1].__module__ == item.__name__}
-    if not include_private:
-        objects = camina.drop_privates(objects)
-    return objects
-    # kwargs = dict(item = item, include_private = include_private)
-    # names = name_objects(**kwargs)
-    # objects = list_objects(**kwargs)
-    # return dict(zip(names, objects))   
+    return _get_object_mapping(
+        item = item, 
+        predicate = None, 
+        include_private = include_private)  
 
 def name_classes(
     item: types.ModuleType | str, 
@@ -253,14 +234,8 @@ def name_classes(
         list[Type[types.FunctionType]]: list of functions in 'item'.
         
     """
-    if isinstance(item, str):
-        item = sys.modules[item]
-    names = [    
-        m[0] for m in inspect.getmembers(item, inspect.isclass)
-        if m[1].__module__ == item.__name__]
-    if not include_private:
-        names = camina.drop_privates(names)
-    return names
+    kwargs = dict(item = item, include_private = include_private)
+    return list(map_classes(**kwargs).keys())
  
 def name_functions(
     item: types.ModuleType | str, 
@@ -276,14 +251,8 @@ def name_functions(
         list[Type[types.FunctionType]]: list of functions in 'item'.
         
     """
-    if isinstance(item, str):
-        item = sys.modules[item]
-    names = [
-        m[0] for m in inspect.getmembers(item, inspect.isfunction)
-        if m[1].__module__ == item.__name__]
-    if not include_private:
-        names = camina.drop_privates(names)
-    return names
+    kwargs = dict(item = item, include_private = include_private)
+    return list(map_functions(**kwargs).keys())
 
 def name_objects(
     item: types.ModuleType | str, 
@@ -299,13 +268,79 @@ def name_objects(
         Any: list of names of objects in 'item'.
         
     """
+    kwargs = dict(item = item, include_private = include_private)
+    return list(map_objects(**kwargs).keys())
+
+
+""" Private Functions """
+
+def _check_trait(
+    item: Any,
+    attributes: MutableSequence[Any],
+    raise_error: bool,
+    match_all: bool,
+    checker: Callable) -> bool:
+    """Returns whether 'attributes' exist in 'item'.
+
+    Args:
+        item (object | Type[Any]): class or instance to examine.
+        attributes (MutableSequence[str]): names of attributes to check.
+        raise_error (Optional[bool]): whether to raise an error if any 
+            'attributes' are not an attribute of 'item' (True) or to simply 
+            return False in such situations. Defaults to None, which means the 
+            global 'miller.RAISE_ERRORS' setting will be used.
+        match_all (Optional[bool]): whether all items in 'attributes' must match
+            (True) or any of the items must match (False). Defaults to None,
+            which means the global 'miller.MATCH_ALL' will be used.
+        checker (Callable): function to call to determine if an attribute in
+            'attributes' qualifies as the desired type.
+            
+    Raises:
+        AttributeError: if some 'attributes' are not an attribute of 'item' and 
+            'raise_error' is True (or if it is None and the global setting is
+            True).
+                                 
+    Returns:
+        bool: whether all 'attributes' exist in 'item'.
+    
+    """
+    match_all = configuration.MATCH_ALL if None else match_all 
+    scope = all if match_all else any
+    kwargs = dict(raise_error = False)
+    check = scope(checker(item, a, **kwargs) for a in attributes)  
+    if not check and raise_error:
+        raise AttributeError(
+            f'Some of {attributes} are not attributes of {item}')
+    elif not check:
+        return False
+    else:
+        return True
+
+def _get_object_mapping(
+    item: types.ModuleType | str, 
+    predicate: Optional[Callable] = None,
+    include_private: bool = False) -> dict[str, Type[Any]]:
+    """_summary_
+
+    Args:
+        item (types.ModuleType | str): _description_
+        predicate (Callable): _description_
+        include_private (bool, optional): _description_. Defaults to False.
+
+    Returns:
+        dict[str, Type[Any]]: _description_
+        
+    """
     if isinstance(item, str):
         item = sys.modules[item]
-    all_items = [
-        m[0] for m in inspect.getmembers()
-        if m[1].__module__ == item.__name__]
-    classes = name_classes(item, include_private = include_private)
-    functions = name_functions(item, include_private = include_private)
-    objects = [i for i in all_items if i not in classes]
-    return [i for i in objects if i not in functions]
- 
+    if predicate is None:
+        objects = {
+            m[0]: m[1] for m in inspect.getmembers(item)
+            if m[1].__module__ == item.__name__}
+    else:
+        objects = {
+            m[0]: m[1] for m in inspect.getmembers(item, predicate)
+            if m[1].__module__ == item.__name__}        
+    if not include_private:
+        objects = camina.drop_privates(objects)
+    return objects
