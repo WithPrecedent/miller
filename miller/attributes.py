@@ -56,10 +56,10 @@ def has_attributes(
     """Returns whether 'attributes' exist in 'item'.
 
     Args:
-        item (object | Type[Any]): class or instance to examine.
+        item (Any): class or instance to examine.
         attributes (MutableSequence[str]): names of attributes to check.
         raise_error (Optional[bool]): whether to raise an error if any 
-            'attributes' are not an attribute of 'item' (True) or to simply 
+            'attributes' are not attributes of 'item' (True) or to simply 
             return False in such situations. Defaults to None, which means the 
             global 'miller.RAISE_ERRORS' setting will be used.
         match_all (Optional[bool]): whether all items in 'attributes' must match
@@ -67,12 +67,13 @@ def has_attributes(
             which means the global 'miller.MATCH_ALL' will be used.
     
     Raises:
-        AttributeError: if some 'attributes' are not an attribute of 'item' and 
+        AttributeError: if 'attributes' are not attributes of 'item' and 
             'raise_error' is True (or if it is None and the global setting is
             True).
                                  
     Returns:
-        bool: whether all 'attributes' exist in 'item'.
+        bool: whether some or all (depending on 'match_all') of 'attributes' 
+            exist in 'item'.
     
     """
     return base.has_elements(
@@ -80,35 +81,140 @@ def has_attributes(
         raise_error = raise_error,
         match_all = match_all,
         item = item,
-        elements = attributes)
+        attributes = attributes)
+
+def has_class_attributes(
+    item: Any, 
+    attributes: MutableSequence[str], 
+    raise_error: Optional[bool] = None,
+    match_all: Optional[bool] = None) -> bool:
+    """Returns whether 'attributes' exist in 'item' as class attributes.
+
+    Args:
+        item (Any): class or instance to examine.
+        attributes (MutableSequence[str]): names of attributes to check.
+        raise_error (Optional[bool]): whether to raise an error if any 
+            'attributes' are not attributes of 'item' (True) or to simply 
+            return False in such situations. Defaults to None, which means the 
+            global 'miller.RAISE_ERRORS' setting will be used.
+        match_all (Optional[bool]): whether all items in 'attributes' must match
+            (True) or any of the items must match (False). Defaults to None,
+            which means the global 'miller.MATCH_ALL' will be used.
     
+    Raises:
+        AttributeError: if 'attributes' are not attributes of 'item' and 
+            'raise_error' is True (or if it is None and the global setting is
+            True).
+                                 
+    Returns:
+        bool: whether some or all (depending on 'match_all') of 'attributes' 
+            exist in 'item' and are the appropriate type.
+    
+    """
+    return base.has_elements(
+        checker = is_class_attribute,
+        raise_error = raise_error,
+        match_all = match_all,
+        item = item,
+        attributes = attributes)
+
+def has_class_methods(
+    item: Any, 
+    attributes: MutableSequence[str], 
+    raise_error: Optional[bool] = None,
+    match_all: Optional[bool] = None) -> bool:
+    """Returns whether 'attributes' exist in 'item' as class methods.
+
+    Args:
+        item (Any): class or instance to examine.
+        attributes (MutableSequence[str]): names of attributes to check.
+        raise_error (Optional[bool]): whether to raise an error if any 
+            'attributes' are not attributes of 'item' (True) or to simply 
+            return False in such situations. Defaults to None, which means the 
+            global 'miller.RAISE_ERRORS' setting will be used.
+        match_all (Optional[bool]): whether all items in 'attributes' must match
+            (True) or any of the items must match (False). Defaults to None,
+            which means the global 'miller.MATCH_ALL' will be used.
+    
+    Raises:
+        AttributeError: if 'attributes' are not attributes of 'item' and 
+            'raise_error' is True (or if it is None and the global setting is
+            True).
+                                 
+    Returns:
+        bool: whether some or all (depending on 'match_all') of 'attributes' 
+            exist in 'item' and are the appropriate type.
+    
+    """
+    return base.has_elements(
+        checker = is_class_method,
+        raise_error = raise_error,
+        match_all = match_all,
+        item = item,
+        attributes = attributes)
+
+def has_class_variables(
+    item: Any, 
+    attributes: MutableSequence[str], 
+    raise_error: Optional[bool] = None,
+    match_all: Optional[bool] = None) -> bool:
+    """Returns whether 'attributes' exist in 'item' as class variables.
+
+    Args:
+        item (Any): class or instance to examine.
+        attributes (MutableSequence[str]): names of attributes to check.
+        raise_error (Optional[bool]): whether to raise an error if any 
+            'attributes' are not attributes of 'item' (True) or to simply 
+            return False in such situations. Defaults to None, which means the 
+            global 'miller.RAISE_ERRORS' setting will be used.
+        match_all (Optional[bool]): whether all items in 'attributes' must match
+            (True) or any of the items must match (False). Defaults to None,
+            which means the global 'miller.MATCH_ALL' will be used.
+    
+    Raises:
+        AttributeError: if 'attributes' are not attributes of 'item' and 
+            'raise_error' is True (or if it is None and the global setting is
+            True).
+                                 
+    Returns:
+        bool: whether some or all (depending on 'match_all') of 'attributes' 
+            exist in 'item' and are the appropriate type.
+    
+    """
+    return base.has_elements(
+        checker = is_class_variable,
+        raise_error = raise_error,
+        match_all = match_all,
+        item = item,
+        attributes = attributes)
+               
 def has_fields(
     item: dataclasses.dataclass | Type[dataclasses.dataclass], 
-    fields: MutableSequence[str], 
+    attributes: MutableSequence[str], 
     raise_error: Optional[bool] = None,
     match_all: Optional[bool] = None) -> bool:
     """Returns whether 'attributes' are fields in dataclass 'item'.
 
     Args:
-        item (dataclasses.dataclass | Type[dataclasses.dataclass]): dataclass or 
-            dataclass instance to examine.
-        fields (MutableSequence[str]): names of fields to check.
+        item (Any): class or instance to examine.
+        attributes (MutableSequence[str]): names of attributes to check.
         raise_error (Optional[bool]): whether to raise an error if any 
-            'fields' are not an attribute of 'item' (True) or to simply 
+            'attributes' are not attributes of 'item' (True) or to simply 
             return False in such situations. Defaults to None, which means the 
             global 'miller.RAISE_ERRORS' setting will be used.
-        match_all (Optional[bool]): whether all items in 'fields' must match
+        match_all (Optional[bool]): whether all items in 'attributes' must match
             (True) or any of the items must match (False). Defaults to None,
             which means the global 'miller.MATCH_ALL' will be used.
     
     Raises:
-        AttributeError: if some 'fields' are not fields of 'item' and 
+        AttributeError: if 'attributes' are not attributes of 'item' and 
             'raise_error' is True (or if it is None and the global setting is
             True).
         TypeError: if 'item' is not a dataclass.
-        
+                                 
     Returns:
-        bool: whether all 'fields' are fields in dataclass 'item'.
+        bool: whether some or all (depending on 'match_all') of 'attributes' 
+            exist in 'item' and are the appropriate type.
     
     """
     if dataclasses.identity.is_dataclass(item):
@@ -117,30 +223,141 @@ def has_fields(
             raise_error = raise_error,
             match_all = match_all,
             item = item,
-            elements = fields)
+            attributes = attributes)
     else:
         raise TypeError('item must be a dataclass')
-   
-def has_methods(
+
+def has_instance_attributes(
     item: Any, 
-    methods: MutableSequence[str], 
+    attributes: MutableSequence[str], 
     raise_error: Optional[bool] = None,
     match_all: Optional[bool] = None) -> bool:
-    """Returns whether 'item' has 'methods' which are methods.
+    """Returns whether 'attributes' exist in 'item' as instance attributes.
 
     Args:
-        item (Any): object to examine.
-        methods (MutableSequence[str]): names of methods to check.
+        item (Any): class or instance to examine.
+        attributes (MutableSequence[str]): names of attributes to check.
         raise_error (Optional[bool]): whether to raise an error if any 
-            'methods' are not an attribute of 'item' (True) or to simply 
+            'attributes' are not attributes of 'item' (True) or to simply 
             return False in such situations. Defaults to None, which means the 
             global 'miller.RAISE_ERRORS' setting will be used.
-        match_all (Optional[bool]): whether all items in 'methods' must match
+        match_all (Optional[bool]): whether all items in 'attributes' must match
             (True) or any of the items must match (False). Defaults to None,
             which means the global 'miller.MATCH_ALL' will be used.
-                        
+    
+    Raises:
+        AttributeError: if 'attributes' are not attributes of 'item' and 
+            'raise_error' is True (or if it is None and the global setting is
+            True).
+                                 
     Returns:
-        bool: whether all 'methods' exist in 'item' and are methods.
+        bool: whether some or all (depending on 'match_all') of 'attributes' 
+            exist in 'item' and are the appropriate type.
+    
+    """
+    return base.has_elements(
+        checker = is_instance_attribute,
+        raise_error = raise_error,
+        match_all = match_all,
+        item = item,
+        attributes = attributes)
+
+def has_instance_methods(
+    item: Any, 
+    attributes: MutableSequence[str], 
+    raise_error: Optional[bool] = None,
+    match_all: Optional[bool] = None) -> bool:
+    """Returns whether 'attributes' exist in 'item' as instance methods.
+
+    Args:
+        item (Any): class or instance to examine.
+        attributes (MutableSequence[str]): names of attributes to check.
+        raise_error (Optional[bool]): whether to raise an error if any 
+            'attributes' are not attributes of 'item' (True) or to simply 
+            return False in such situations. Defaults to None, which means the 
+            global 'miller.RAISE_ERRORS' setting will be used.
+        match_all (Optional[bool]): whether all items in 'attributes' must match
+            (True) or any of the items must match (False). Defaults to None,
+            which means the global 'miller.MATCH_ALL' will be used.
+    
+    Raises:
+        AttributeError: if 'attributes' are not attributes of 'item' and 
+            'raise_error' is True (or if it is None and the global setting is
+            True).
+                                 
+    Returns:
+        bool: whether some or all (depending on 'match_all') of 'attributes' 
+            exist in 'item' and are the appropriate type.
+    
+    """
+    return base.has_elements(
+        checker = is_instance_method,
+        raise_error = raise_error,
+        match_all = match_all,
+        item = item,
+        attributes = attributes)
+
+def has_instance_variables(
+    item: Any, 
+    attributes: MutableSequence[str], 
+    raise_error: Optional[bool] = None,
+    match_all: Optional[bool] = None) -> bool:
+    """Returns whether 'attributes' exist in 'item' as instance variables.
+
+    Args:
+        item (Any): class or instance to examine.
+        attributes (MutableSequence[str]): names of attributes to check.
+        raise_error (Optional[bool]): whether to raise an error if any 
+            'attributes' are not attributes of 'item' (True) or to simply 
+            return False in such situations. Defaults to None, which means the 
+            global 'miller.RAISE_ERRORS' setting will be used.
+        match_all (Optional[bool]): whether all items in 'attributes' must match
+            (True) or any of the items must match (False). Defaults to None,
+            which means the global 'miller.MATCH_ALL' will be used.
+    
+    Raises:
+        AttributeError: if 'attributes' are not attributes of 'item' and 
+            'raise_error' is True (or if it is None and the global setting is
+            True).
+                                 
+    Returns:
+        bool: whether some or all (depending on 'match_all') of 'attributes' 
+            exist in 'item' and are the appropriate type.
+    
+    """
+    return base.has_elements(
+        checker = is_instance_variable,
+        raise_error = raise_error,
+        match_all = match_all,
+        item = item,
+        attributes = attributes)
+        
+def has_methods(
+    item: Any, 
+    attributes: MutableSequence[str], 
+    raise_error: Optional[bool] = None,
+    match_all: Optional[bool] = None) -> bool:
+    """Returns whether 'attributes' exist in 'item' as methods.
+
+    Args:
+        item (Any): class or instance to examine.
+        attributes (MutableSequence[str]): names of attributes to check.
+        raise_error (Optional[bool]): whether to raise an error if any 
+            'attributes' are not attributes of 'item' (True) or to simply 
+            return False in such situations. Defaults to None, which means the 
+            global 'miller.RAISE_ERRORS' setting will be used.
+        match_all (Optional[bool]): whether all items in 'attributes' must match
+            (True) or any of the items must match (False). Defaults to None,
+            which means the global 'miller.MATCH_ALL' will be used.
+    
+    Raises:
+        AttributeError: if 'attributes' are not attributes of 'item' and 
+            'raise_error' is True (or if it is None and the global setting is
+            True).
+                                 
+    Returns:
+        bool: whether some or all (depending on 'match_all') of 'attributes' 
+            exist in 'item' and are the appropriate type.
         
     """
     return base.has_elements(
@@ -148,28 +365,34 @@ def has_methods(
         raise_error = raise_error,
         match_all = match_all,
         item = item,
-        elements = methods)
+        attributes = attributes)
   
 def has_properties(
     item: Any, 
-    properties: MutableSequence[str], 
+    attributes: MutableSequence[str], 
     raise_error: Optional[bool] = None,
     match_all: Optional[bool] = None) -> bool:
-    """Returns whether 'item' has 'properties' which are properties.
+    """Returns whether 'attributes' exist in 'item' as properties.
 
     Args:
-        item (Any): object to examine.
-        properties (MutableSequence[str]): names of properties to check.
+        item (Any): class or instance to examine.
+        attributes (MutableSequence[str]): names of attributes to check.
         raise_error (Optional[bool]): whether to raise an error if any 
-            'methods' are not an attribute of 'item' (True) or to simply 
+            'attributes' are not attributes of 'item' (True) or to simply 
             return False in such situations. Defaults to None, which means the 
             global 'miller.RAISE_ERRORS' setting will be used.
-        match_all (Optional[bool]): whether all items in 'methods' must match
+        match_all (Optional[bool]): whether all items in 'attributes' must match
             (True) or any of the items must match (False). Defaults to None,
             which means the global 'miller.MATCH_ALL' will be used.
-            
+    
+    Raises:
+        AttributeError: if 'attributes' are not attributes of 'item' and 
+            'raise_error' is True (or if it is None and the global setting is
+            True).
+                                 
     Returns:
-        bool: whether all 'properties' exist in 'item' and are properties.
+        bool: whether some or all (depending on 'match_all') of 'attributes' 
+            exist in 'item' and are the appropriate type.
         
     """
     return base.has_elements(
@@ -177,22 +400,24 @@ def has_properties(
         raise_error = raise_error,
         match_all = match_all,
         item = item,
-        elements = properties)
+        attributes = attributes)
         
 def has_traits(
     item: Any,
     attributes: Optional[MutableSequence[str]] = None,
     methods: Optional[MutableSequence[str]] = None,
     properties: Optional[MutableSequence[str]] = None, 
+    variables: Optional[MutableSequence[str]] = None,
     raise_error: Optional[bool] = None,
     match_all: Optional[bool] = None) -> bool:
-    """Returns if 'item' has 'attributes', 'methods' and 'properties'.
+    """Returns if 'item' has all or some of the passed traits.
 
     Args:
         item (Any): object to examine.
         attributes (MutableSequence[str]): names of attributes to check.
         methods (MutableSequence[str]): name(s) of methods to check.       
         properties (MutableSequence[str]): names of properties to check.
+        variables (MutableSequence[str]): names of variables to check.
         raise_error (Optional[bool]): whether to raise an error if any of the 
             traits are not an attribute of 'item' (True) or to simply 
             return False in such situations. Defaults to None, which means the 
@@ -208,21 +433,57 @@ def has_traits(
     attributes = attributes or []
     methods = methods or []
     properties = properties or []
+    variables = variables or []
     kwargs = dict(raise_error = raise_error, match_all = match_all)
     return (
         has_attributes(item, attributes = attributes, **kwargs)
-        and has_methods(item, methods = methods, **kwargs)
-        and has_properties(item, properties = properties, **kwargs))
-     
+        and has_methods(item, attributes = methods, **kwargs)
+        and has_properties(item, attributes = properties, **kwargs)
+        and has_variables(item, attributes = variables, **kwargs))
+  
+def has_variables(
+    item: Any, 
+    attributes: MutableSequence[str], 
+    raise_error: Optional[bool] = None,
+    match_all: Optional[bool] = None) -> bool:
+    """Returns whether 'attributes' exist in 'item' as simple data variables.
+
+    Args:
+        item (Any): class or instance to examine.
+        attributes (MutableSequence[str]): names of attributes to check.
+        raise_error (Optional[bool]): whether to raise an error if any 
+            'attributes' are not attributes of 'item' (True) or to simply 
+            return False in such situations. Defaults to None, which means the 
+            global 'miller.RAISE_ERRORS' setting will be used.
+        match_all (Optional[bool]): whether all items in 'attributes' must match
+            (True) or any of the items must match (False). Defaults to None,
+            which means the global 'miller.MATCH_ALL' will be used.
+    
+    Raises:
+        AttributeError: if 'attributes' are not attributes of 'item' and 
+            'raise_error' is True (or if it is None and the global setting is
+            True).
+                                 
+    Returns:
+        bool: whether some or all (depending on 'match_all') of 'attributes' 
+            exist in 'item' and are the appropriate type.
+        
+    """
+    return base.has_elements(
+        checker = is_variable,
+        raise_error = raise_error,
+        match_all = match_all,
+        item = item,
+        attributes = attributes)
+             
 def is_attribute(
-    item: dataclasses.dataclass | Type[dataclasses.dataclass],
+    item: Any,
     attribute: str, 
     raise_error: Optional[bool] = None) -> bool:
     """Returns if 'attribute' is an attribute of 'item'.
 
     Args:
-        item (object | Type[Any]): class or instance of which 'attribute' is an
-            attribute.
+        item (Any): class or instance to examine.
         attribute (str): name of attribute to examine.
         raise_error (Optional[bool]): whether to raise an error if 'attribute' 
             is not an attribute of 'item' (True) or to simply return False in
@@ -230,9 +491,8 @@ def is_attribute(
             'miller.RAISE_ERRORS' setting will be used.
     
     Raises:
-        AttributeError: if 'attribute' is not an attribute of 'item' and 
-            'raise_error' is True (or if it is None and the global setting is
-            True).
+        TypeError: if 'item' is not the appropriate type and 'raise_error' is 
+            True (or if it is None and the global setting is True).
                   
     Returns:
         bool: whether 'attribute' is an attribute.
@@ -244,141 +504,14 @@ def is_attribute(
         item = item,
         kind = attribute)
 
-def is_field(
-    item: object | Type[Any],
-    attribute: str, 
-    raise_error: Optional[bool] = None) -> bool:
-    """Returns if 'attribute' is a field of 'item'.
-
-    Args:
-        item (dataclasses.dataclass | Type[dataclasses.dataclass]): dataclass or 
-            dataclass instance to examine.
-        attribute (str): name of attribute to examine.
-        raise_error (Optional[bool]): whether to raise an error if 'attribute' 
-            is not a field of 'item' (True) or to simply return False in such 
-            situations. Defaults to None, which means the global 
-            'miller.RAISE_ERRORS' setting will be used.
-    
-    Raises:
-        AttributeError: if 'attribute' is not a field of 'item' and 
-            'raise_error' is True (or if it is None and the global setting is
-            True).
-                  
-    Returns:
-        bool: whether 'attribute' is a field of 'item'.
-        
-    """
-    return base.is_kind(
-        checker = dataclasses.fields,
-        raise_error = raise_error,
-        item = getattr(item, attribute))
-        
-def is_method(
-    item: object | Type[Any],
-    attribute: str, 
-    raise_error: Optional[bool] = None) -> bool:
-    """Returns if 'attribute' is a class attribute of 'item'.
-
-    Args:
-        item (object | Type[Any]): class or instance of which 'attribute' is an
-            attribute.
-        attribute (str): name of attribute to examine.
-        raise_error (Optional[bool]): whether to raise an error if 'attribute' 
-            is not an attribute of 'item' (True) or to simply return False in
-            such situations. Defaults to None, which means the global 
-            'miller.RAISE_ERRORS' setting will be used.
-    
-    Raises:
-        AttributeError: if 'attribute' is not an attribute of 'item' and 
-            'raise_error' is True (or if it is None and the global setting is
-            True).
-                  
-    Returns:
-        bool: whether 'attribute' is a class attribute of 'item'.
-        
-    """
-    return base.is_kind(
-        checker = inspect.ismethod,
-        raise_error = raise_error,
-        item = getattr(item, attribute))    
-  
-def is_property(
-    item: object | Type[Any],
-    attribute: str, 
-    raise_error: Optional[bool] = None) -> bool:
-    """Returns if 'attribute' is a property of 'item'.
-
-    Args:
-        item (object | Type[Any]): class or instance of which 'attribute' is an
-            attribute.
-        attribute (str): name of attribute to examine.
-        raise_error (Optional[bool]): whether to raise an error if 'attribute' 
-            is not an attribute of 'item' (True) or to simply return False in
-            such situations. Defaults to None, which means the global 
-            'miller.RAISE_ERRORS' setting will be used.
-    
-    Raises:
-        AttributeError: if 'attribute' is not an attribute of 'item' and 
-            'raise_error' is True (or if it is None and the global setting is
-            True).
-                  
-    Returns:
-        bool: whether 'attribute' is a property of 'item'.
-        
-    """
-    if raise_error is None:
-        raise_error = configuration.RAISE_ERRORS    
-    item = item if inspect.isclass(item) else item.__class__
-    if not hasattr(item, attribute) and raise_error:
-        raise AttributeError(f'{attribute} is not an attribute of {item}')
-    else:
-        return (
-            hasattr(item, attribute) 
-            and isinstance(getattr(item, attribute), property))
-
-def is_variable(
-    item: object | Type[Any],
-    attribute: str, 
-    raise_error: Optional[bool] = None) -> bool:
-    """Returns if 'attribute' is a data attribute of 'item'.
-
-    Args:
-        item (object | Type[Any]): class or instance of which 'attribute' is an
-            attribute.
-        attribute (str): name of attribute to examine.
-        raise_error (Optional[bool]): whether to raise an error if 'attribute' 
-            is not an attribute of 'item' (True) or to simply return False in
-            such situations. Defaults to None, which means the global 
-            'miller.RAISE_ERRORS' setting will be used.
-    
-    Raises:
-        AttributeError: if 'attribute' is not an attribute of 'item' and 
-            'raise_error' is True (or if it is None and the global setting is
-            True).
-                  
-    Returns:
-        bool: whether 'attribute' is a data attribute.
-        
-    """
-    if raise_error is None:
-        raise_error = configuration.RAISE_ERRORS    
-    if not hasattr(item, attribute) and raise_error:
-        raise AttributeError(f'{attribute} is not an attribute of {item}')
-    else:
-        return(
-            hasattr(item, attribute)
-            and not is_method(item, attribute, raise_error = False)
-            and not is_property(item, attribute, raise_error = False))
-
 def is_class_attribute(
-    item: object | Type[Any],
+    item: Any,
     attribute: str, 
     raise_error: Optional[bool] = None) -> bool:
     """Returns if 'attribute' is a class attribute of 'item'.
 
     Args:
-        item (object | Type[Any]): class or instance of which 'attribute' is an
-            attribute.
+        item (Any): class or instance to examine.
         attribute (str): name of attribute to examine.
         raise_error (Optional[bool]): whether to raise an error if 'attribute' 
             is not an attribute of 'item' (True) or to simply return False in
@@ -386,12 +519,11 @@ def is_class_attribute(
             'miller.RAISE_ERRORS' setting will be used.
     
     Raises:
-        AttributeError: if 'attribute' is not an attribute of 'item' and 
-            'raise_error' is True (or if it is None and the global setting is
-            True).
+        TypeError: if 'item' is not the appropriate type and 'raise_error' is 
+            True (or if it is None and the global setting is True).
                   
     Returns:
-        bool: whether 'attribute' is a class attribute.
+        bool: whether 'attribute' is an attribute and the appropriate type.
         
     """
     if raise_error is None:
@@ -401,9 +533,9 @@ def is_class_attribute(
         raise AttributeError(f'{attribute} is not an attribute of {item}')
     else:
         return hasattr(item, attribute)
-    
+
 def is_class_method(
-    item: object | Type[Any],
+    item: Any,
     attribute: str, 
     raise_error: Optional[bool] = None) -> bool:
     """Returns if 'attribute' is a class method of 'item'.
@@ -412,21 +544,19 @@ def is_class_method(
     https://stackoverflow.com/questions/19227724/check-if-a-function-uses-classmethod
     
     Args:
-        attribute (str): name of method to examine.
-        item (object | Type[Any]): class or instance of which 'attribute' is a
-            method.
-        raise_error (Optional[bool]): whether to raise an error if 'attribute' is
-            not a method of 'item' (True) or to simply return False in
+        item (Any): class or instance to examine.
+        attribute (str): name of attribute to examine.
+        raise_error (Optional[bool]): whether to raise an error if 'attribute' 
+            is not an attribute of 'item' (True) or to simply return False in
             such situations. Defaults to None, which means the global 
             'miller.RAISE_ERRORS' setting will be used.
     
     Raises:
-        AttributeError: if 'attribute' is not an method of 'item' and 
-            'raise_error' is True (or if it is None and the global setting is
-            True).
+        TypeError: if 'item' is not the appropriate type and 'raise_error' is 
+            True (or if it is None and the global setting is True).
                   
     Returns:
-        bool: whether 'attribute' is a class method.
+        bool: whether 'attribute' is an attribute and the appropriate type.
         
     """
     if raise_error is None:
@@ -447,14 +577,13 @@ def is_class_method(
     return False    
        
 def is_class_variable(
-    item: object | Type[Any],
+    item: Any,
     attribute: str, 
     raise_error: Optional[bool] = None) -> bool:
-    """Returns if 'attribute' is a class attribute of 'item'.
+    """Returns if 'attribute' is a class variable of 'item'.
 
     Args:
-        item (object | Type[Any]): class or instance of which 'attribute' is an
-            attribute.
+        item (Any): class or instance to examine.
         attribute (str): name of attribute to examine.
         raise_error (Optional[bool]): whether to raise an error if 'attribute' 
             is not an attribute of 'item' (True) or to simply return False in
@@ -462,12 +591,11 @@ def is_class_variable(
             'miller.RAISE_ERRORS' setting will be used.
     
     Raises:
-        AttributeError: if 'attribute' is not an attribute of 'item' and 
-            'raise_error' is True (or if it is None and the global setting is
-            True).
+        TypeError: if 'item' is not the appropriate type and 'raise_error' is 
+            True (or if it is None and the global setting is True).
                   
     Returns:
-        bool: whether 'attribute' is a class attribute.
+        bool: whether 'attribute' is an attribute and the appropriate type.
         
     """
     if raise_error is None:
@@ -480,15 +608,16 @@ def is_class_variable(
             hasattr(owner, attribute)
             and not is_method(item, attribute, raise_error = False)
             and not is_property(owner, attribute, raise_error = False))
-
-def is_instance_attribute(
-    item: object,
+    
+def is_field(
+    item: Any,
     attribute: str, 
     raise_error: Optional[bool] = None) -> bool:
-    """Returns if 'attribute' is an attribute of 'item'.
+    """Returns if 'attribute' is a field of 'item'.
 
     Args:
-        item (object): instance of which 'attribute' is an attribute.
+        item (dataclasses.dataclass | Type[dataclasses.dataclass]): dataclass or 
+            dataclass instance to examine.
         attribute (str): name of attribute to examine.
         raise_error (Optional[bool]): whether to raise an error if 'attribute' 
             is not an attribute of 'item' (True) or to simply return False in
@@ -496,12 +625,42 @@ def is_instance_attribute(
             'miller.RAISE_ERRORS' setting will be used.
     
     Raises:
-        AttributeError: if 'attribute' is not an attribute of 'item' and 
-            'raise_error' is True (or if it is None and the global setting is
-            True).
+        TypeError: if 'item' is not the appropriate type and 'raise_error' is 
+            True (or if it is None and the global setting is True).
+        TypeError: if 'item' is not a dataclass.
                   
     Returns:
-        bool: whether 'attribute' is an attribute.
+        bool: whether 'attribute' is an attribute and the appropriate type.
+        
+    """
+    if dataclasses.identity.is_dataclass(item):
+        return base.is_kind(
+            checker = dataclasses.fields,
+            raise_error = raise_error,
+            item = getattr(item, attribute))
+    else:
+        raise TypeError('item must be a dataclass')
+
+def is_instance_attribute(
+    item: object,
+    attribute: str, 
+    raise_error: Optional[bool] = None) -> bool:
+    """Returns if 'attribute' is an instance attribute of 'item'.
+
+    Args:
+        item (Any): class or instance to examine.
+        attribute (str): name of attribute to examine.
+        raise_error (Optional[bool]): whether to raise an error if 'attribute' 
+            is not an attribute of 'item' (True) or to simply return False in
+            such situations. Defaults to None, which means the global 
+            'miller.RAISE_ERRORS' setting will be used.
+    
+    Raises:
+        TypeError: if 'item' is not the appropriate type and 'raise_error' is 
+            True (or if it is None and the global setting is True).
+                  
+    Returns:
+        bool: whether 'attribute' is an attribute and the appropriate type.
         
     """
     if raise_error is None:
@@ -521,20 +680,19 @@ def is_instance_method(
     """Returns if 'attribute' is an instance method of 'item'.
 
     Args:
-        item (object): instance of which 'attribute' is an attribute.
-        attribute (str): name of method to examine.
-        raise_error (Optional[bool]): whether to raise an error if 'attribute' is
-            not a method of 'item' (True) or to simply return False in
+        item (Any): class or instance to examine.
+        attribute (str): name of attribute to examine.
+        raise_error (Optional[bool]): whether to raise an error if 'attribute' 
+            is not an attribute of 'item' (True) or to simply return False in
             such situations. Defaults to None, which means the global 
             'miller.RAISE_ERRORS' setting will be used.
     
     Raises:
-        AttributeError: if 'attribute' is not an method of 'item' and 
-            'raise_error' is True (or if it is None and the global setting is
-            True).
+        TypeError: if 'item' is not the appropriate type and 'raise_error' is 
+            True (or if it is None and the global setting is True).
                   
     Returns:
-        bool: whether 'attribute' is an instance method.
+        bool: whether 'attribute' is an attribute and the appropriate type.
         
     """
     if raise_error is None:
@@ -551,10 +709,10 @@ def is_instance_variable(
     item: object,
     attribute: str, 
     raise_error: Optional[bool] = None) -> bool:
-    """Returns if 'attribute' is an instance attribute of 'item'.
+    """Returns if 'attribute' is an instance variable of 'item'.
 
     Args:
-        item (object): instance of which 'attribute' is an attribute.
+        item (Any): class or instance to examine.
         attribute (str): name of attribute to examine.
         raise_error (Optional[bool]): whether to raise an error if 'attribute' 
             is not an attribute of 'item' (True) or to simply return False in
@@ -562,12 +720,11 @@ def is_instance_variable(
             'miller.RAISE_ERRORS' setting will be used.
     
     Raises:
-        AttributeError: if 'attribute' is not an attribute of 'item' and 
-            'raise_error' is True (or if it is None and the global setting is
-            True).
+        TypeError: if 'item' is not the appropriate type and 'raise_error' is 
+            True (or if it is None and the global setting is True).
                   
     Returns:
-        bool: whether 'attribute' is an instance attribute.
+        bool: whether 'attribute' is an attribute and the appropriate type.
         
     """
     if raise_error is None:
@@ -581,19 +738,119 @@ def is_instance_variable(
             and not is_class_attribute(owner, attribute, raise_error = False)
             and not is_method(item, attribute, raise_error = False)
             and not is_property(item, attribute, raise_error = False))
- 
+         
+def is_method(
+    item: Any,
+    attribute: str, 
+    raise_error: Optional[bool] = None) -> bool:
+    """Returns if 'attribute' is a method of 'item'.
+
+    Args:
+        item (Any): class or instance to examine.
+        attribute (str): name of attribute to examine.
+        raise_error (Optional[bool]): whether to raise an error if 'attribute' 
+            is not an attribute of 'item' (True) or to simply return False in
+            such situations. Defaults to None, which means the global 
+            'miller.RAISE_ERRORS' setting will be used.
+    
+    Raises:
+        TypeError: if 'item' is not the appropriate type and 'raise_error' is 
+            True (or if it is None and the global setting is True).
+                  
+    Returns:
+        bool: whether 'attribute' is an attribute and the appropriate type.
+        
+    """
+    return base.is_kind(
+        checker = inspect.ismethod,
+        raise_error = raise_error,
+        item = getattr(item, attribute))    
+  
+def is_property(
+    item: Any,
+    attribute: str, 
+    raise_error: Optional[bool] = None) -> bool:
+    """Returns if 'attribute' is a property of 'item'.
+
+    Args:
+        item (Any): class or instance to examine.
+        attribute (str): name of attribute to examine.
+        raise_error (Optional[bool]): whether to raise an error if 'attribute' 
+            is not an attribute of 'item' (True) or to simply return False in
+            such situations. Defaults to None, which means the global 
+            'miller.RAISE_ERRORS' setting will be used.
+    
+    Raises:
+        TypeError: if 'item' is not the appropriate type and 'raise_error' is 
+            True (or if it is None and the global setting is True).
+                  
+    Returns:
+        bool: whether 'attribute' is an attribute and the appropriate type.
+        
+    """
+    if raise_error is None:
+        raise_error = configuration.RAISE_ERRORS    
+    item = item if inspect.isclass(item) else item.__class__
+    if not hasattr(item, attribute) and raise_error:
+        raise AttributeError(f'{attribute} is not an attribute of {item}')
+    else:
+        return (
+            hasattr(item, attribute) 
+            and isinstance(getattr(item, attribute), property))
+
+def is_variable(
+    item: Any,
+    attribute: str, 
+    raise_error: Optional[bool] = None) -> bool:
+    """Returns if 'attribute' is a data variable of 'item'.
+
+    Args:
+        item (Any): class or instance to examine.
+        attribute (str): name of attribute to examine.
+        raise_error (Optional[bool]): whether to raise an error if 'attribute' 
+            is not an attribute of 'item' (True) or to simply return False in
+            such situations. Defaults to None, which means the global 
+            'miller.RAISE_ERRORS' setting will be used.
+    
+    Raises:
+        TypeError: if 'item' is not the appropriate type and 'raise_error' is 
+            True (or if it is None and the global setting is True).
+                  
+    Returns:
+        bool: whether 'attribute' is an attribute and the appropriate type.
+        
+    """
+    if raise_error is None:
+        raise_error = configuration.RAISE_ERRORS    
+    if not hasattr(item, attribute) and raise_error:
+        raise AttributeError(f'{attribute} is not an attribute of {item}')
+    else:
+        return(
+            hasattr(item, attribute)
+            and not is_method(item, attribute, raise_error = False)
+            and not is_property(item, attribute, raise_error = False))
+
 def list_annotations(
-    item: object | types.ModuleType, 
-    include_private: bool = False) -> list[Any]:
-    """Returns list of type annotations.
+    item: Any, 
+    include_private: bool = False, 
+    raise_error: Optional[bool] = None) -> list[Any]:
+    """Returns list of type annotations in 'item'.
     
     Args:
-        item (object): instance to examine.
+        item (Any): class or instance to examine.
         include_private (bool): whether to include items that begin with '_'
             (True) or to exclude them (False). Defauls to False.
-                        
+        raise_error (Optional[bool]): whether to raise an error if no matches
+            are found in 'item' or to simply return False in such situations. 
+            Defaults to None, which means the global 'miller.RAISE_ERRORS' 
+            setting will be used.
+
+    Raises:
+        AttributeError: if there are no matches in 'item' and 'raise_error' is 
+            True (or if it is None and the global setting is True).    
+                                            
     Returns:
-        list[Any]: list of annotations of 'item'.
+        list[Any]: list of the appropriate types in 'item'.
             
     """
     return list(map_annotations(
@@ -758,7 +1015,7 @@ def name_attributes(
     """Returns attribute names of 'item'.
     
     Args:
-        item (object | Type[Any]): item to examine.
+        item (Any): item to examine.
         include_private (bool): whether to include items that begin with '_'
             (True) or to exclude them (False). Defauls to False.
                         
@@ -802,7 +1059,7 @@ def name_methods(
     """Returns method names of 'item'.
     
     Args:
-        item (object | Type[Any]): item to examine.
+        item (Any): item to examine.
         include_private (bool): whether to include items that begin with '_'
             (True) or to exclude them (False). Defauls to False.
                         
@@ -835,7 +1092,7 @@ def name_properties(
     """Returns method names of 'item'.
     
     Args:
-        item (object | Type[Any]): item to examine.
+        item (Any): item to examine.
         include_private (bool): whether to include items that begin with '_'
             (True) or to exclude them (False). Defauls to False.
                         
@@ -863,10 +1120,10 @@ def _check_trait(
     """Returns whether 'attributes' exist in 'item'.
 
     Args:
-        item (object | Type[Any]): class or instance to examine.
+        item (Any): class or instance to examine.
         attributes (MutableSequence[str]): names of attributes to check.
         raise_error (Optional[bool]): whether to raise an error if any 
-            'attributes' are not an attribute of 'item' (True) or to simply 
+            'attributes' are not attributes of 'item' (True) or to simply 
             return False in such situations. Defaults to None, which means the 
             global 'miller.RAISE_ERRORS' setting will be used.
         match_all (Optional[bool]): whether all items in 'attributes' must match
@@ -876,7 +1133,7 @@ def _check_trait(
             'attributes' qualifies as the desired type.
             
     Raises:
-        AttributeError: if some 'attributes' are not an attribute of 'item' and 
+        AttributeError: if some 'attributes' are not attributes of 'item' and 
             'raise_error' is True (or if it is None and the global setting is
             True).
                                  

@@ -53,6 +53,7 @@ __author__ = 'Corey Rayburn Yung'
 
 
 from .attributes import *
+from .base import *
 from .configuration import *
 from .containers import *
 from .disks import *

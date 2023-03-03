@@ -24,16 +24,10 @@ ToDo:
 
 """
 from __future__ import annotations
-from collections.abc import Callable, MutableSequence
-import inspect
-import sys
-import types
+from collections.abc import Callable, MutableMapping, MutableSequence
 from typing import Any, Optional, Type
 
-import camina
-
 from . import configuration
-from . import result
 
 
 def has_elements(
@@ -41,63 +35,65 @@ def has_elements(
     raise_error: bool,
     match_all: bool,
     item: Any, 
-    elements: MutableSequence[Any]) -> bool:
-    """Returns error or value.
+    attributes: MutableSequence[str]) -> bool:
+    """Returns whether 'item' has 'elements' or an error.
 
     Args:
+        checker (Callable[[Any, Any, bool], bool]): function to call to 
+            determine if an attribute in 'attributes' qualifies as the 
+            appropriate type.
         raise_error (Optional[bool]): whether to raise an error if any 
-            'attributes' are not an attribute of 'item' (True) or to simply 
+            'attributes' are not attributes of 'item' (True) or to simply 
             return False in such situations. Defaults to None, which means the 
             global 'miller.RAISE_ERRORS' setting will be used.
         match_all (Optional[bool]): whether all items in 'attributes' must match
             (True) or any of the items must match (False). Defaults to None,
             which means the global 'miller.MATCH_ALL' will be used.
-        checker (Callable): function to call to determine if an attribute in
-            'attributes' qualifies as the desired type.
-            
+        item (Any): class or instance to examine.
+        attributes (MutableSequence[str]): names of attributes to check.
+ 
     Raises:
-        AttributeError: if some  or all 'elements' are not an attribute of 
-            'item' and 'raise_error' is True (or if it is None and the global 
-            setting is True).
+        AttributeError: if 'attributes' are not attributes of 'item' and 
+            'raise_error' is True (or if it is None and the global setting is
+            True).
                                  
     Returns:
-        bool: whether all 'attributes' exist in 'item'.
+        bool: whether some or all (depending on 'match_all') of 'attributes' 
+            exist in 'item' and are the appropriate type.
     
     """
     raise_error = configuration.RAISE_ERRORS if None else raise_error
     match_all = configuration.MATCH_ALL if None else match_all 
     scope = all if match_all else any
     kwargs = dict(raise_error = False)
-    value = scope(checker(item, a, **kwargs) for a in elements)  
-    return result.report_has(
+    value = scope(checker(item, a, **kwargs) for a in attributes)  
+    return report_has(
         value = value,
         raise_error = raise_error,
         match_all = match_all,
         item = item,
-        elements = elements)
+        attributes = attributes)
  
 def is_kind(
     checker: Callable[[Any, Type[Any]], bool] | Callable[[Any], bool],
     raise_error: bool,
     item: Any,
-    kind: Optional[Type[Any]]) -> bool:
-    """Returns error or value.
+    kind: Type[Any]) -> bool:
+    """Returns whether 'item' is 'kind' or an error.
 
     Args:
-        raise_error (Optional[bool]): whether to raise an error if any 
-            'attributes' are not an attribute of 'item' (True) or to simply 
-            return False in such situations. Defaults to None, which means the 
-            global 'miller.RAISE_ERRORS' setting will be used.
-        match_all (Optional[bool]): whether all items in 'attributes' must match
-            (True) or any of the items must match (False). Defaults to None,
-            which means the global 'miller.MATCH_ALL' will be used.
-        checker (Callable): function to call to determine if an attribute in
-            'attributes' qualifies as the desired type.
+        checker (Callable[[Any, Type[Any]], bool] | Callable[[Any], bool],): 
+            function to call to determine if 'item' is the appropriate type.
+        raise_error (Optional[bool]): whether to raise an error if 'attribute' 
+            is not an attribute of 'item' (True) or to simply return False in
+            such situations. Defaults to None, which means the global 
+            'miller.RAISE_ERRORS' setting will be used.
+        item (Any): class or instance to examine.
+        kind (Type[Any]): type to check if 'item' is.
             
     Raises:
-        AttributeError: if some  or all 'elements' are not an attribute of 
-            'item' and 'raise_error' is True (or if it is None and the global 
-            setting is True).
+        TypeError: if 'item' is not the appropriate type and 'raise_error' is 
+            True (or if it is None and the global setting is True).
                                  
     Returns:
         bool: whether all 'attributes' exist in 'item'.
@@ -105,18 +101,46 @@ def is_kind(
     """
     raise_error = configuration.RAISE_ERRORS if None else raise_error
     value = checker(item) if kind is None else checker(item, kind)  
-    return result.report_is(
+    return report_is(
         value = value,
         raise_error = raise_error,
         item = item,
         kind = kind)
 
+def list_elements(
+    checker: Callable[[Any, Any, bool], bool],
+    raise_error: bool,
+    match_all: bool,
+    item: Any) -> MutableSequence[Any]:
+    """_summary_
+
+    Args:
+        checker (Callable[[Any, Any, bool], bool]): _description_
+        raise_error (bool): _description_
+        match_all (bool): _description_
+        item (Any): _description_
+        elements (MutableSequence[Any]): _description_
+
+    Returns:
+        bool: _description_
+        
+    """
+    match_all = configuration.MATCH_ALL if None else match_all 
+    scope = all if match_all else any
+    kwargs = dict(raise_error = False)
+    value = scope(checker(item, a, **kwargs) for a in elements)  
+    return report_map(
+        value = value,
+        raise_error = raise_error,
+        match_all = match_all,
+        item = item,
+        elements = elements)
+    
 def map_elements(
     checker: Callable[[Any, Any, bool], bool],
     raise_error: bool,
     match_all: bool,
-    item: Any, 
-    elements: MutableSequence[Any]) -> bool:
+    item: Any) -> MutableMapping[str, Any]:
     """_summary_
 
     Args:
@@ -133,10 +157,178 @@ def map_elements(
     scope = all if match_all else any
     kwargs = dict(raise_error = False)
     value = scope(checker(item, a, **kwargs) for a in elements)  
-    return result.report_map(
+    return report_map(
         value = value,
         raise_error = raise_error,
         match_all = match_all,
         item = item,
         elements = elements)
+
+def name_elements(
+    checker: Callable[[Any, Any, bool], bool],
+    raise_error: bool,
+    match_all: bool,
+    item: Any) -> MutableSequence[str]:
+    """_summary_
+
+    Args:
+        checker (Callable[[Any, Any, bool], bool]): _description_
+        raise_error (bool): _description_
+        match_all (bool): _description_
+        item (Any): _description_
+        elements (MutableSequence[Any]): _description_
+
+    Returns:
+        bool: _description_
+    """
+    match_all = configuration.MATCH_ALL if None else match_all 
+    scope = all if match_all else any
+    kwargs = dict(raise_error = False)
+    value = scope(checker(item, a, **kwargs) for a in elements)  
+    return report_map(
+        value = value,
+        raise_error = raise_error,
+        match_all = match_all,
+        item = item,
+        elements = elements)    
+
+def report_has(
+    value: bool,
+    raise_error: bool,
+    match_all: bool,
+    item: Any, 
+    attributes: MutableSequence[Any]) -> bool:
+    """_summary_
+
+    Args:
+        value (bool): _description_
+        raise_error (bool): _description_
+        match_all (bool): _description_
+        item (Any): _description_
+        elements (MutableSequence[Any]): _description_
+
+    Returns:
+        bool: _description_
+        
+    """
+    if not value and raise_error and match_all:
+        raise AttributeError(
+            f'At least one of {attributes} is not in {item}')
+    elif not value and raise_error:
+        raise AttributeError(
+            f'Some of {attributes} are not in {item}')
+    elif not value:
+        return configuration.DEFAULT_HAS
+    else:
+        return value
+    
+def report_is(
+    value: bool,
+    raise_error: bool,
+    item: Any, 
+    kind: Optional[Type[Any]]) -> bool:
+    """_summary_
+
+    Args:
+ 
+
+    Returns:
+        bool: _description_
+        
+    """
+    if not value and raise_error and kind is None:
+        raise TypeError(f'{item} failed the type check')
+    elif not value and raise_error:
+        raise TypeError(f'{item} is not {kind} type')
+    elif not value:
+        return configuration.DEFAULT_IS
+    else:
+        return value
+
+def report_list(
+    value: MutableSequence[Any],
+    raise_error: bool,
+    match_all: bool,
+    item: Any, 
+    elements: MutableSequence[Any]) -> bool:
+    """_summary_
+
+    Args:
+        value (bool): _description_
+        raise_error (bool): _description_
+        match_all (bool): _description_
+        item (Any): _description_
+        elements (MutableSequence[Any]): _description_
+
+    Returns:
+        bool: _description_
+    """
+    if not value and raise_error and match_all:
+        raise AttributeError(
+            f'At least one of {elements} is not in {item}')
+    elif not value and raise_error:
+        raise AttributeError(
+            f'Some of {elements} are not in {item}')
+    elif not value:
+        return configuration.DEFAULT_LIST
+    else:
+        return value
+
+def report_map(
+    value: MutableMapping[Hashable, Any],
+    raise_error: bool,
+    match_all: bool,
+    item: Any, 
+    elements: MutableSequence[Any]) -> bool:
+    """_summary_
+
+    Args:
+        value (bool): _description_
+        raise_error (bool): _description_
+        match_all (bool): _description_
+        item (Any): _description_
+        elements (MutableSequence[Any]): _description_
+
+    Returns:
+        bool: _description_
+    """
+    if not value and raise_error and match_all:
+        raise AttributeError(
+            f'At least one of {elements} is not in {item}')
+    elif not value and raise_error:
+        raise AttributeError(
+            f'Some of {elements} are not in {item}')
+    elif not value:
+        return configuration.DEFAULT_MAP
+    else:
+        return value
+
+def report_name(
+    value: MutableSequence[str],
+    raise_error: bool,
+    match_all: bool,
+    item: Any, 
+    elements: MutableSequence[Any]) -> bool:
+    """_summary_
+
+    Args:
+        value (bool): _description_
+        raise_error (bool): _description_
+        match_all (bool): _description_
+        item (Any): _description_
+        elements (MutableSequence[Any]): _description_
+
+    Returns:
+        bool: _description_
+    """
+    if not value and raise_error and match_all:
+        raise AttributeError(
+            f'At least one of {elements} is not in {item}')
+    elif not value and raise_error:
+        raise AttributeError(
+            f'Some of {elements} are not in {item}')
+    elif not value:
+        return configuration.DEFAULT_NAME
+    else:
+        return value
             
