@@ -43,6 +43,9 @@ from typing import Any, Optional, Type
 
 import camina
 
+from . import base
+from . import identity
+
 
 def has_classes(
     item: types.ModuleType | str, 
@@ -63,54 +66,83 @@ def has_classes(
             which means the global 'miller.MATCH_ALL' will be used.
                         
     Returns:
-        bool: whether all 'classes' exist in 'item'.
+        bool: whether some or all (depending on 'match_all') of 'classes' exist 
+            in 'item'.
     
     """
-    if isinstance(item, str):
-        item = sys.modules[item]
-    module_classes = list_classes(item = item, include_private = True)
-    return all(c in module_classes for c in classes)
+    item = sys.modules[item] if isinstance(item, str) else item
+    return base.has_elements(
+        checker = identity.is_class,
+        raise_error = raise_error,
+        match_all = match_all,
+        item = item,
+        attributes = classes)
 
 def has_functions(
     item: types.ModuleType | str, 
-    functions: MutableSequence[str]) -> bool:
+    functions: MutableSequence[str], 
+    raise_error: Optional[bool] = None,
+    match_all: Optional[bool] = None) -> bool:
     """Returns whether 'functions' exist in 'item'.
 
     Args:
         item (types.ModuleType | str): module or its name to inspect.
-        functions (MutableSequence[str]): names of functions to check to see if 
-            they exist in 'item'.
-            
+        functions (MutableSequence[str]): names of functions to check.
+        raise_error (Optional[bool]): whether to raise an error if any 
+            'functions' are not an attribute of 'item' (True) or to simply 
+            return False in such situations. Defaults to None, which means the 
+            global 'miller.RAISE_ERRORS' setting will be used.
+        match_all (Optional[bool]): whether all items in 'functions' must match
+            (True) or any of the items must match (False). Defaults to None,
+            which means the global 'miller.MATCH_ALL' will be used.
+                        
     Returns:
-        bool: whether all 'functions' exist in 'item'.
+        bool: whether some or all (depending on 'match_all') of 'functions' 
+            exist in 'item'.
     
     """
-    if isinstance(item, str):
-        item = sys.modules[item]
-    module_functions = list_functions(item = item, include_private = True)
-    return all(c in module_functions for c in functions)
+    item = sys.modules[item] if isinstance(item, str) else item
+    return base.has_elements(
+        checker = identity.is_function,
+        raise_error = raise_error,
+        match_all = match_all,
+        item = item,
+        attributes = functions)
 
 def has_objects(
     item: types.ModuleType | str, 
-    objects: MutableSequence[str]) -> bool:
+    objects: MutableSequence[str], 
+    raise_error: Optional[bool] = None,
+    match_all: Optional[bool] = None) -> bool:
     """Returns whether 'objects' exist in 'item'.
 
     Args:
         item (types.ModuleType | str): module or its name to inspect.
-        objects (MutableSequence[str]): names of objects to check to see if 
-            they exist in 'item'.
-            
+        objects (MutableSequence[str]): names of objects to check.
+        raise_error (Optional[bool]): whether to raise an error if any 
+            'objects' are not an attribute of 'item' (True) or to simply 
+            return False in such situations. Defaults to None, which means the 
+            global 'miller.RAISE_ERRORS' setting will be used.
+        match_all (Optional[bool]): whether all items in 'objects' must match
+            (True) or any of the items must match (False). Defaults to None,
+            which means the global 'miller.MATCH_ALL' will be used.
+                        
     Returns:
-        bool: whether all 'objects' exist in 'item'.
+        bool: whether some or all (depending on 'match_all') of 'objects' exist 
+            in 'item'.
     
     """
-    if isinstance(item, str):
-        item = sys.modules[item]
-    module_objects = list_objects(item = item, include_private = True)
-    return all(c in module_objects for c in objects)
+    item = sys.modules[item] if isinstance(item, str) else item
+    return base.has_elements(
+        checker = identity.is_object,
+        raise_error = raise_error,
+        match_all = match_all,
+        item = item,
+        attributes = objects)
    
 def list_classes(
     item: types.ModuleType | str, 
+    raise_error: Optional[bool] = None,
     include_private: bool = False) -> list[Type[Any]]:
     """Returns list of classes in 'item'.
     

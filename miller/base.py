@@ -31,14 +31,16 @@ from . import configuration
 
 
 def has_elements(
+    item: Any,
+    attributes: MutableSequence[str],
     checker: Callable[[Any, Any, bool], bool],
-    raise_error: bool,
-    match_all: bool,
-    item: Any, 
-    attributes: MutableSequence[str]) -> bool:
+    raise_error: Optional[bool] = None,
+    match_all: Optional[bool] = None) -> bool:
     """Returns whether 'item' has 'elements' or an error.
 
     Args:
+        item (Any): class or instance to examine.
+        attributes (MutableSequence[str]): names of attributes to check.
         checker (Callable[[Any, Any, bool], bool]): function to call to 
             determine if an attribute in 'attributes' qualifies as the 
             appropriate type.
@@ -49,8 +51,6 @@ def has_elements(
         match_all (Optional[bool]): whether all items in 'attributes' must match
             (True) or any of the items must match (False). Defaults to None,
             which means the global 'miller.MATCH_ALL' will be used.
-        item (Any): class or instance to examine.
-        attributes (MutableSequence[str]): names of attributes to check.
  
     Raises:
         AttributeError: if 'attributes' are not attributes of 'item' and 
@@ -73,11 +73,44 @@ def has_elements(
         match_all = match_all,
         item = item,
         attributes = attributes)
- 
+
 def is_kind(
+    item: Any,
+    checker: Callable[[Any, Type[Any]], bool] | Callable[[Any], bool],
+    raise_error: Optional[bool] = None,
+    kind: Optional[Type[Any] | str] = None) -> bool:
+    """Returns whether 'item' is 'kind' or an error.
+
+    Args:
+        item (Any): class or instance to examine.
+        checker (Callable[[Any, Type[Any]], bool] | Callable[[Any], bool],): 
+            function to call to determine if 'item' is the appropriate type.
+        raise_error (Optional[bool]): whether to raise an error if 'attribute' 
+            is not an attribute of 'item' (True) or to simply return False in
+            such situations. Defaults to None, which means the global 
+            'miller.RAISE_ERRORS' setting will be used.
+        kind (Type[Any]): type to check if 'item' is.
+            
+    Raises:
+        TypeError: if 'item' is not the appropriate type and 'raise_error' is 
+            True (or if it is None and the global setting is True).
+                                 
+    Returns:
+        bool: whether 'item' is a 'kind'.
+    
+    """
+    raise_error = configuration.RAISE_ERRORS if None else raise_error
+    value = checker(item) if kind is None else checker(item, kind)  
+    return report_is(
+        value = value,
+        raise_error = raise_error,
+        item = item,
+        kind = kind) 
+
+def is_kind_class(
+    item: Any,
     checker: Callable[[Any, Type[Any]], bool] | Callable[[Any], bool],
     raise_error: bool,
-    item: Any,
     kind: Type[Any]) -> bool:
     """Returns whether 'item' is 'kind' or an error.
 
@@ -96,7 +129,7 @@ def is_kind(
             True (or if it is None and the global setting is True).
                                  
     Returns:
-        bool: whether all 'attributes' exist in 'item'.
+        bool: whether 'item' is a 'kind'.
     
     """
     raise_error = configuration.RAISE_ERRORS if None else raise_error
@@ -106,6 +139,43 @@ def is_kind(
         raise_error = raise_error,
         item = item,
         kind = kind)
+
+def is_kind_container(
+    item: Any,
+    checker: Callable[[Any, Type[Any]], bool] | Callable[[Any], bool],
+    raise_error: Optional[bool] = None,
+    include_str: Optional[bool] = None,
+    kind: Optional[Type[Any] | str] = None) -> bool:
+    """Returns whether 'item' is 'kind' or an error.
+
+    Args:
+        item (Any): class or instance to examine.
+        checker (Callable[[Any, Type[Any]], bool] | Callable[[Any], bool],): 
+            function to call to determine if 'item' is the appropriate type.
+        raise_error (Optional[bool]): whether to raise an error if 'attribute' 
+            is not an attribute of 'item' (True) or to simply return False in
+            such situations. Defaults to None, which means the global 
+            'miller.RAISE_ERRORS' setting will be used.
+        kind (Type[Any]): type to check if 'item' is.
+            
+    Raises:
+        TypeError: if 'item' is not the appropriate type and 'raise_error' is 
+            True (or if it is None and the global setting is True).
+                                 
+    Returns:
+        bool: whether 'item' is a 'kind'.
+    
+    """
+    raise_error = configuration.RAISE_ERRORS if None else raise_error
+    include_str = configuration.INCLUDE_STR if None else include_str
+    value = checker(item) if kind is None else checker(item, kind)  
+    if not include_str and isinstance(item, str):
+        value = False
+    return report_is(
+        value = value,
+        raise_error = raise_error,
+        item = item,
+        kind = kind) 
 
 def list_elements(
     checker: Callable[[Any, Any, bool], bool],
@@ -137,26 +207,17 @@ def list_elements(
         elements = elements)
     
 def map_elements(
-    checker: Callable[[Any, Any, bool], bool],
-    raise_error: bool,
-    match_all: bool,
-    item: Any) -> MutableMapping[str, Any]:
+    item: Any,
+    mapper: Callable[[Any, Any, bool], bool],
+    checker: Optional[Callable[[Any, Type[Any]], bool] | 
+                      Callable[[Any], bool]] = None,
+    raise_error: Optional[bool] = None,
+    include_private: Optional[bool] = None) -> MutableMapping[str, Any]:
     """_summary_
 
-    Args:
-        checker (Callable[[Any, Any, bool], bool]): _description_
-        raise_error (bool): _description_
-        match_all (bool): _description_
-        item (Any): _description_
-        elements (MutableSequence[Any]): _description_
-
-    Returns:
-        bool: _description_
     """
-    match_all = configuration.MATCH_ALL if None else match_all 
-    scope = all if match_all else any
-    kwargs = dict(raise_error = False)
-    value = scope(checker(item, a, **kwargs) for a in elements)  
+    raise_error = configuration.RAISE_ERRORS if None else raise_error
+    include_private = configuration.INCLUDE_PRIVATE if None else include_private 
     return report_map(
         value = value,
         raise_error = raise_error,

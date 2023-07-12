@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "miller"
-version = "0.1.8"
+version = "0.1.9"
 description = "introspection tools using consistent, accessible syntax"
 authors = ["Corey Rayburn Yung <coreyrayburnyung@gmail.com>"]
 license = "Apache-2.0"
@@ -10,8 +10,8 @@ repository = "https://github.com/WithPrecedent/miller"
 
 [tool.poetry.dependencies]
 python = "^3.9"
-camina = "^0.1.15"
-nagata = "^0.1.5"
+camina = "^0.1.16"
+nagata = "^0.1.6"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"

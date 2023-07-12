@@ -31,21 +31,20 @@ Contents:
         traits
    
 ToDo:
-    
+    Add functions for annotation instrospection.
 
 """
 from __future__ import annotations
-from collections.abc import Callable, MutableSequence
+from collections.abc import MutableSequence
 import dataclasses
 import inspect
 import types
-from typing import Any, Optional, Type
+from typing import Any, Optional
 
 import camina 
 
 from . import base
 from . import configuration
-from . import result
 
 
 def has_attributes(
@@ -77,11 +76,11 @@ def has_attributes(
     
     """
     return base.has_elements(
+        item = item,
+        attributes = attributes,
         checker = is_attribute,
         raise_error = raise_error,
-        match_all = match_all,
-        item = item,
-        attributes = attributes)
+        match_all = match_all)
 
 def has_class_attributes(
     item: Any, 
@@ -112,11 +111,11 @@ def has_class_attributes(
     
     """
     return base.has_elements(
+        item = item,
+        attributes = attributes,
         checker = is_class_attribute,
         raise_error = raise_error,
-        match_all = match_all,
-        item = item,
-        attributes = attributes)
+        match_all = match_all)
 
 def has_class_methods(
     item: Any, 
@@ -147,18 +146,18 @@ def has_class_methods(
     
     """
     return base.has_elements(
+        item = item,
+        attributes = attributes,
         checker = is_class_method,
         raise_error = raise_error,
-        match_all = match_all,
-        item = item,
-        attributes = attributes)
+        match_all = match_all)
 
-def has_class_variables(
+def has_class_objects(
     item: Any, 
     attributes: MutableSequence[str], 
     raise_error: Optional[bool] = None,
     match_all: Optional[bool] = None) -> bool:
-    """Returns whether 'attributes' exist in 'item' as class variables.
+    """Returns whether 'attributes' exist in 'item' as class objects.
 
     Args:
         item (Any): class or instance to examine.
@@ -182,14 +181,14 @@ def has_class_variables(
     
     """
     return base.has_elements(
-        checker = is_class_variable,
-        raise_error = raise_error,
-        match_all = match_all,
         item = item,
-        attributes = attributes)
+        attributes = attributes,
+        checker = is_class_object,
+        raise_error = raise_error,
+        match_all = match_all)
                
 def has_fields(
-    item: dataclasses.dataclass | Type[dataclasses.dataclass], 
+    item: dataclasses.dataclass | type[dataclasses.dataclass], 
     attributes: MutableSequence[str], 
     raise_error: Optional[bool] = None,
     match_all: Optional[bool] = None) -> bool:
@@ -219,11 +218,11 @@ def has_fields(
     """
     if dataclasses.identity.is_dataclass(item):
         return base.has_elements(
+            item = item,
+            attributes = attributes,
             checker = is_field,
             raise_error = raise_error,
-            match_all = match_all,
-            item = item,
-            attributes = attributes)
+            match_all = match_all)
     else:
         raise TypeError('item must be a dataclass')
 
@@ -256,11 +255,11 @@ def has_instance_attributes(
     
     """
     return base.has_elements(
+        item = item,
+        attributes = attributes,
         checker = is_instance_attribute,
         raise_error = raise_error,
-        match_all = match_all,
-        item = item,
-        attributes = attributes)
+        match_all = match_all)
 
 def has_instance_methods(
     item: Any, 
@@ -291,18 +290,18 @@ def has_instance_methods(
     
     """
     return base.has_elements(
+        item = item,
+        attributes = attributes,
         checker = is_instance_method,
         raise_error = raise_error,
-        match_all = match_all,
-        item = item,
-        attributes = attributes)
+        match_all = match_all)
 
-def has_instance_variables(
+def has_instance_objects(
     item: Any, 
     attributes: MutableSequence[str], 
     raise_error: Optional[bool] = None,
     match_all: Optional[bool] = None) -> bool:
-    """Returns whether 'attributes' exist in 'item' as instance variables.
+    """Returns whether 'attributes' exist in 'item' as instance objects.
 
     Args:
         item (Any): class or instance to examine.
@@ -326,11 +325,11 @@ def has_instance_variables(
     
     """
     return base.has_elements(
-        checker = is_instance_variable,
-        raise_error = raise_error,
-        match_all = match_all,
         item = item,
-        attributes = attributes)
+        attributes = attributes,
+        checker = is_instance_object,
+        raise_error = raise_error,
+        match_all = match_all)
         
 def has_methods(
     item: Any, 
@@ -361,11 +360,11 @@ def has_methods(
         
     """
     return base.has_elements(
+        item = item,
+        attributes = attributes,
         checker = is_method,
         raise_error = raise_error,
-        match_all = match_all,
-        item = item,
-        attributes = attributes)
+        match_all = match_all)
   
 def has_properties(
     item: Any, 
@@ -396,18 +395,18 @@ def has_properties(
         
     """
     return base.has_elements(
+        item = item,
+        attributes = attributes,
         checker = is_property,
         raise_error = raise_error,
-        match_all = match_all,
-        item = item,
-        attributes = attributes)
+        match_all = match_all)
         
 def has_traits(
     item: Any,
     attributes: Optional[MutableSequence[str]] = None,
     methods: Optional[MutableSequence[str]] = None,
     properties: Optional[MutableSequence[str]] = None, 
-    variables: Optional[MutableSequence[str]] = None,
+    objects: Optional[MutableSequence[str]] = None,
     raise_error: Optional[bool] = None,
     match_all: Optional[bool] = None) -> bool:
     """Returns if 'item' has all or some of the passed traits.
@@ -417,7 +416,7 @@ def has_traits(
         attributes (MutableSequence[str]): names of attributes to check.
         methods (MutableSequence[str]): name(s) of methods to check.       
         properties (MutableSequence[str]): names of properties to check.
-        variables (MutableSequence[str]): names of variables to check.
+        objects (MutableSequence[str]): names of objects to check.
         raise_error (Optional[bool]): whether to raise an error if any of the 
             traits are not an attribute of 'item' (True) or to simply 
             return False in such situations. Defaults to None, which means the 
@@ -433,20 +432,20 @@ def has_traits(
     attributes = attributes or []
     methods = methods or []
     properties = properties or []
-    variables = variables or []
+    objects = objects or []
     kwargs = dict(raise_error = raise_error, match_all = match_all)
     return (
         has_attributes(item, attributes = attributes, **kwargs)
         and has_methods(item, attributes = methods, **kwargs)
         and has_properties(item, attributes = properties, **kwargs)
-        and has_variables(item, attributes = variables, **kwargs))
+        and has_objects(item, attributes = objects, **kwargs))
   
-def has_variables(
+def has_objects(
     item: Any, 
     attributes: MutableSequence[str], 
     raise_error: Optional[bool] = None,
     match_all: Optional[bool] = None) -> bool:
-    """Returns whether 'attributes' exist in 'item' as simple data variables.
+    """Returns whether 'attributes' exist in 'item' as simple data objects.
 
     Args:
         item (Any): class or instance to examine.
@@ -470,11 +469,11 @@ def has_variables(
         
     """
     return base.has_elements(
-        checker = is_variable,
-        raise_error = raise_error,
-        match_all = match_all,
         item = item,
-        attributes = attributes)
+        attributes = attributes,
+        checker = is_object,
+        raise_error = raise_error,
+        match_all = match_all)
              
 def is_attribute(
     item: Any,
@@ -498,11 +497,11 @@ def is_attribute(
         bool: whether 'attribute' is an attribute.
         
     """
-    return base.is_kind(
-        checker = isinstance,
-        raise_error = raise_error,
+    return base.is_kind_class(
         item = item,
-        kind = attribute)
+        kind = attribute,
+        checker = hasattr,
+        raise_error = raise_error)
 
 def is_class_attribute(
     item: Any,
@@ -525,14 +524,13 @@ def is_class_attribute(
     Returns:
         bool: whether 'attribute' is an attribute and the appropriate type.
         
-    """
-    if raise_error is None:
-        raise_error = configuration.RAISE_ERRORS    
+    """ 
     item = item if inspect.isclass(item) else item.__class__
-    if not hasattr(item, attribute) and raise_error:
-        raise AttributeError(f'{attribute} is not an attribute of {item}')
-    else:
-        return hasattr(item, attribute)
+    return base.is_kind_class(
+        item = item,
+        kind = attribute,
+        checker = hasattr,
+        raise_error = raise_error)
 
 def is_class_method(
     item: Any,
@@ -576,11 +574,11 @@ def is_class_method(
                 return isinstance(descriptor, classmethod)
     return False    
        
-def is_class_variable(
+def is_class_object(
     item: Any,
     attribute: str, 
     raise_error: Optional[bool] = None) -> bool:
-    """Returns if 'attribute' is a class variable of 'item'.
+    """Returns if 'attribute' is a class object of 'item'.
 
     Args:
         item (Any): class or instance to examine.
@@ -616,7 +614,7 @@ def is_field(
     """Returns if 'attribute' is a field of 'item'.
 
     Args:
-        item (dataclasses.dataclass | Type[dataclasses.dataclass]): dataclass or 
+        item (dataclasses.dataclass | type[dataclasses.dataclass]): dataclass or 
             dataclass instance to examine.
         attribute (str): name of attribute to examine.
         raise_error (Optional[bool]): whether to raise an error if 'attribute' 
@@ -634,7 +632,7 @@ def is_field(
         
     """
     if dataclasses.identity.is_dataclass(item):
-        return base.is_kind(
+        return base.is_kind_class(
             checker = dataclasses.fields,
             raise_error = raise_error,
             item = getattr(item, attribute))
@@ -705,11 +703,11 @@ def is_instance_method(
             and is_method(item, attribute, raise_error = False)
             and not is_class_method(item, attribute, raise_error = False))
   
-def is_instance_variable(
+def is_instance_object(
     item: object,
     attribute: str, 
     raise_error: Optional[bool] = None) -> bool:
-    """Returns if 'attribute' is an instance variable of 'item'.
+    """Returns if 'attribute' is an instance object of 'item'.
 
     Args:
         item (Any): class or instance to examine.
@@ -761,7 +759,7 @@ def is_method(
         bool: whether 'attribute' is an attribute and the appropriate type.
         
     """
-    return base.is_kind(
+    return base.is_kind_class(
         checker = inspect.ismethod,
         raise_error = raise_error,
         item = getattr(item, attribute))    
@@ -798,11 +796,11 @@ def is_property(
             hasattr(item, attribute) 
             and isinstance(getattr(item, attribute), property))
 
-def is_variable(
+def is_object(
     item: Any,
     attribute: str, 
     raise_error: Optional[bool] = None) -> bool:
-    """Returns if 'attribute' is a data variable of 'item'.
+    """Returns if 'attribute' is a data object of 'item'.
 
     Args:
         item (Any): class or instance to examine.
@@ -830,61 +828,6 @@ def is_variable(
             and not is_method(item, attribute, raise_error = False)
             and not is_property(item, attribute, raise_error = False))
 
-def list_annotations(
-    item: Any, 
-    include_private: bool = False, 
-    raise_error: Optional[bool] = None) -> list[Any]:
-    """Returns list of type annotations in 'item'.
-    
-    Args:
-        item (Any): class or instance to examine.
-        include_private (bool): whether to include items that begin with '_'
-            (True) or to exclude them (False). Defauls to False.
-        raise_error (Optional[bool]): whether to raise an error if no matches
-            are found in 'item' or to simply return False in such situations. 
-            Defaults to None, which means the global 'miller.RAISE_ERRORS' 
-            setting will be used.
-
-    Raises:
-        AttributeError: if there are no matches in 'item' and 'raise_error' is 
-            True (or if it is None and the global setting is True).    
-                                            
-    Returns:
-        list[Any]: list of the appropriate types in 'item'.
-            
-    """
-    return list(map_annotations(
-        item = item, 
-        include_private = include_private).values())
-   
-def map_annotations(
-    item: object | types.ModuleType, 
-    include_private: bool = False) -> dict[str, Any]:
-    """Returns dict of attributes of 'item' with type annotations.
-    
-    This function follows the best practices suggested for compatibility with
-    Python 3.9 and before (without relying on the newer functionality of 3.10):
-    https://docs.python.org/3/howto/annotations.html
-    
-    Args:
-        item (object): instance to examine.
-        include_private (bool): whether to include items that begin with '_'
-            (True) or to exclude them (False). Defauls to False.
-                        
-    Returns:
-        dict[str, Any]: dict of attributes in 'item' (keys are attribute names 
-            and values are type annotations) that are type annotated.
-            
-    """
-    if isinstance(item, type):
-        annotations = item.__dict__.get('__annotations__', None)
-    else:
-        annotations = getattr(item, '__annotations__', None)
-    if include_private:
-        return annotations
-    else:
-        return camina.drop_privates_dict(annotations)
-   
 def map_attributes(
     item: object, 
     include_private: bool = False) -> dict[str, Any]:
@@ -905,12 +848,12 @@ def map_attributes(
     return dict(zip(attributes, values))
 
 def map_fields(
-    item: dataclasses.dataclass | Type[dataclasses.dataclass], 
+    item: dataclasses.dataclass | type[dataclasses.dataclass], 
     include_private: bool = False) -> dict[str, dataclasses.Field]:
     """Returns whether 'attributes' exist in dataclass 'item'.
 
     Args:
-        item (dataclasses.dataclass | Type[dataclasses.dataclass]): dataclass or 
+        item (dataclasses.dataclass | type[dataclasses.dataclass]): dataclass or 
             dataclass instance to examine.
         include_private (bool): whether to include items that begin with '_'
             (True) or to exclude them (False). Defauls to False.    
@@ -986,7 +929,7 @@ def map_signatures(
     signatures = [inspect.signature(getattr(item, m)) for m in methods]
     return dict(zip(methods, signatures))
 
-def map_variables(
+def map_objects(
     item: object, 
     include_private: bool = False) -> dict[str, Any]:
     """Returns dict of attributes of 'item' that are not methods or properties.
@@ -1004,10 +947,10 @@ def map_variables(
     attributes = name_attributes(item, include_private = include_private)
     methods = name_methods(item, include_private = include_private)
     properties = name_properties(item, include_private = include_private)
-    variables = [
+    objects = [
         a for a in attributes if a not in methods and a not in properties]
-    values = [getattr(item, m) for m in variables]
-    return dict(zip(variables, values))
+    values = [getattr(item, m) for m in objects]
+    return dict(zip(objects, values))
 
 def name_attributes(
     item: Any, 
@@ -1029,12 +972,12 @@ def name_attributes(
     return names
       
 def name_fields(
-    item: dataclasses.dataclass | Type[dataclasses.dataclass], 
+    item: dataclasses.dataclass | type[dataclasses.dataclass], 
     include_private: bool = False) -> list[str]:
     """Returns whether 'attributes' exist in dataclass 'item'.
 
     Args:
-        item (dataclasses.dataclass | Type[dataclasses.dataclass]): dataclass or 
+        item (dataclasses.dataclass | type[dataclasses.dataclass]): dataclass or 
             dataclass instance to examine.
         include_private (bool): whether to include items that begin with '_'
             (True) or to exclude them (False). Defauls to False.    
@@ -1074,11 +1017,11 @@ def name_methods(
         methods = camina.drop_privates(methods)
     return methods
   
-def name_parameters(item: Type[Any]) -> list[str]:
+def name_parameters(item: type[Any]) -> list[str]:
     """Returns list of parameters based on annotations of 'item'.
 
     Args:
-        item (Type[Any]): class to get parameters to.
+        item (type[Any]): class to get parameters to.
 
     Returns:
         list[str]: names of parameters in 'item'.
@@ -1104,51 +1047,64 @@ def name_properties(
         item.__class__
     properties = [
         a for a in dir(item)
-        if identify.identity.is_property(item, attribute = a)]
+        if is_property(item, attribute = a)]
     if not include_private:
         properties = camina.drop_privates(properties)
     return properties
 
-""" Private Functions """
 
-def _check_trait(
-    item: Any,
-    attributes: MutableSequence[Any],
-    raise_error: bool,
-    match_all: bool,
-    checker: Callable) -> bool:
-    """Returns whether 'attributes' exist in 'item'.
-
-    Args:
-        item (Any): class or instance to examine.
-        attributes (MutableSequence[str]): names of attributes to check.
-        raise_error (Optional[bool]): whether to raise an error if any 
-            'attributes' are not attributes of 'item' (True) or to simply 
-            return False in such situations. Defaults to None, which means the 
-            global 'miller.RAISE_ERRORS' setting will be used.
-        match_all (Optional[bool]): whether all items in 'attributes' must match
-            (True) or any of the items must match (False). Defaults to None,
-            which means the global 'miller.MATCH_ALL' will be used.
-        checker (Callable): function to call to determine if an attribute in
-            'attributes' qualifies as the desired type.
-            
-    Raises:
-        AttributeError: if some 'attributes' are not attributes of 'item' and 
-            'raise_error' is True (or if it is None and the global setting is
-            True).
-                                 
-    Returns:
-        bool: whether all 'attributes' exist in 'item'.
+# def list_annotations(
+#     item: Any, 
+#     include_private: bool = False, 
+#     raise_error: Optional[bool] = None) -> list[Any]:
+#     """Returns list of type annotations in 'item'.
     
-    """
-    match_all = configuration.MATCH_ALL if None else match_all 
-    scope = all if match_all else any
-    kwargs = dict(raise_error = False)
-    check = scope(checker(item, a, **kwargs) for a in attributes)  
-    if not check and raise_error:
-        raise AttributeError(
-            f'Some of {attributes} are not attributes of {item}')
-    elif not check:
-        return False
-    else:
-        return True
+#     Args:
+#         item (Any): class or instance to examine.
+#         include_private (bool): whether to include items that begin with '_'
+#             (True) or to exclude them (False). Defauls to False.
+#         raise_error (Optional[bool]): whether to raise an error if no matches
+#             are found in 'item' or to simply return False in such situations. 
+#             Defaults to None, which means the global 'miller.RAISE_ERRORS' 
+#             setting will be used.
+
+#     Raises:
+#         AttributeError: if there are no matches in 'item' and 'raise_error' is 
+#             True (or if it is None and the global setting is True).    
+                                            
+#     Returns:
+#         list[Any]: list of the appropriate types in 'item'.
+            
+#     """
+#     return list(map_annotations(
+#         item = item, 
+#         include_private = include_private).values())
+   
+# def map_annotations(
+#     item: object | types.ModuleType, 
+#     include_private: bool = False) -> dict[str, Any]:
+#     """Returns dict of attributes of 'item' with type annotations.
+    
+#     This function follows the best practices suggested for compatibility with
+#     Python 3.9 and before (without relying on the newer functionality of 3.10):
+#     https://docs.python.org/3/howto/annotations.html
+    
+#     Args:
+#         item (object): instance to examine.
+#         include_private (bool): whether to include items that begin with '_'
+#             (True) or to exclude them (False). Defauls to False.
+                        
+#     Returns:
+#         dict[str, Any]: dict of attributes in 'item' (keys are attribute names 
+#             and values are type annotations) that are type annotated.
+            
+#     """
+#     if isinstance(item, type):
+#         annotations = item.__dict__.get('__annotations__', None)
+#     else:
+#         annotations = getattr(item, '__annotations__', None)
+#     if include_private:
+#         return annotations
+#     else:
+#         return camina.drop_privates_dict(annotations)
+   

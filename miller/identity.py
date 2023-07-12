@@ -56,10 +56,11 @@ from typing import Any, Optional, Type
 
 import camina
 
+from . import base
 from . import configuration
 
      
-def is_class(item: Any) -> bool:
+def is_class(item: Any, raise_error: Optional[bool] = None) -> bool:
     """Returns if 'item' is a class (and not an instance).
     
     Args:
@@ -68,10 +69,17 @@ def is_class(item: Any) -> bool:
     Returns:
         bool: if 'item' is a class (and not an instance).
         
-    """  
-    return inspect.isclass(item)
+    """
+    return base.is_kind(
+        item = item,
+        checker = inspect.isclass,
+        raise_error = raise_error,
+        kind = 'class')
  
-def is_container(item: Any, include_str: bool = False) -> bool:
+def is_container(
+    item: Any, 
+    include_str: bool = False, 
+    raise_error: Optional[bool] = None) -> bool:
     """Returns if 'item' is a container.
     
     If 'exclude_str' is True (the default) and 'item' is a str, False will be
@@ -84,14 +92,24 @@ def is_container(item: Any, include_str: bool = False) -> bool:
     Returns:
         bool: if 'item' is a container.
         
-    """  
+    """
+    item = item.__class__ if inspect.isclass(item) else item
+    if not isinstance(item, Container):
+        return False
+    if include_str and isinstance(item, str):
+        return True
+    return base.is_kind(
+        item = item,
+        checker = inspect.isclass,
+        raise_error = raise_error,
+        kind = 'container')  
     if not inspect.isclass(item):
         item = item.__class__
     return (
         issubclass(item, Container)
         and (not issubclass(item, str) or include_str))
 
-def is_dict(item: Any) -> bool:
+def is_dict(item: Any, raise_error: Optional[bool] = None) -> bool:
     """Returns if 'item' is a mutable mapping (generic dict type).
     
     Args:
@@ -105,7 +123,9 @@ def is_dict(item: Any) -> bool:
         item = item.__class__
     return isinstance(item, MutableMapping) 
   
-def is_file(item: str | pathlib.Path) -> bool:
+def is_file(
+    item: str | pathlib.Path, 
+    raise_error: Optional[bool] = None) -> bool:
     """Returns whether 'item' is a file.
     
     Args:
@@ -118,7 +138,9 @@ def is_file(item: str | pathlib.Path) -> bool:
     item = camina.pathlibify(item)
     return item.exists() and item.is_file()
 
-def is_folder(item: str | pathlib.Path) -> bool:
+def is_folder(
+    item: str | pathlib.Path, 
+    raise_error: Optional[bool] = None) -> bool:
     """Returns whether 'item' is a path to a folder.
     
     Args:
@@ -131,7 +153,7 @@ def is_folder(item: str | pathlib.Path) -> bool:
     item = camina.pathlibify(item)
     return item.exists() and item.is_dir()
  
-def is_function(item: Any) -> bool:
+def is_function(item: Any, raise_error: Optional[bool] = None) -> bool:
     """Returns if 'item' is a function.
     
     Args:
@@ -143,7 +165,7 @@ def is_function(item: Any) -> bool:
     """  
     return isinstance(item, types.FunctionType)
         
-def is_instance(item: Any) -> bool:
+def is_instance(item: Any, raise_error: Optional[bool] = None) -> bool:
     """Returns if 'item' is an instance (and not a class).
     
     To rule out edge cases, this function checks that 'item' is not a class and
@@ -158,7 +180,10 @@ def is_instance(item: Any) -> bool:
     """  
     return hasattr(item, '__class__') and not is_class(item)
 
-def is_iterable(item: Any, include_str: bool = False) -> bool:
+def is_iterable(
+    item: Any, 
+    include_str: bool = False, 
+    raise_error: Optional[bool] = None) -> bool:
     """Returns if 'item' is iterable.
     
     If 'exclude_str' is True (the default) and 'item' is a str, False will be
@@ -178,7 +203,7 @@ def is_iterable(item: Any, include_str: bool = False) -> bool:
         issubclass(item, Iterable) 
         and (not issubclass(item, str) or include_str))
 
-def is_list(item: Any) -> bool:
+def is_list(item: Any, raise_error: Optional[bool] = None) -> bool:
     """Returns if 'item' is a mutable sequence (generic list type).
     
     Args:
@@ -192,7 +217,9 @@ def is_list(item: Any) -> bool:
         item = item.__class__
     return isinstance(item, MutableSequence)
    
-def is_module(item: str | pathlib.Path) -> bool:
+def is_module(
+    item: str | pathlib.Path, 
+    raise_error: Optional[bool] = None) -> bool:
     """Returns whether 'item' is a python-module file.
     
     Args:
@@ -209,7 +236,7 @@ def is_module(item: str | pathlib.Path) -> bool:
         and item.suffix in configuration.MODULE_EXTENSIONS)
   
 @functools.singledispatch
-def is_nested(item: object, /) -> bool:
+def is_nested(item: object, /, raise_error: Optional[bool] = None) -> bool:
     """Returns if 'item' is nested at least one-level.
     
     Args:
@@ -225,7 +252,9 @@ def is_nested(item: object, /) -> bool:
     raise TypeError(f'item {item} is not supported by {__name__}')
 
 @is_nested.register(Mapping)   
-def is_nested_dict(item: Mapping[Any, Any], /) -> bool:
+def is_nested_dict(
+    item: Mapping[Any, Any], /, 
+    raise_error: Optional[bool] = None) -> bool:
     """Returns if 'item' is nested at least one-level.
     
     Args:
@@ -240,7 +269,9 @@ def is_nested_dict(item: Mapping[Any, Any], /) -> bool:
         and any(isinstance(v, Mapping) for v in item.values()))
 
 @is_nested.register(MutableSequence)     
-def is_nested_list(item: MutableSequence[Any], /) -> bool:
+def is_nested_list(
+    item: MutableSequence[Any], /, 
+    raise_error: Optional[bool] = None) -> bool:
     """Returns if 'item' is nested at least one-level.
     
     Args:
@@ -253,7 +284,9 @@ def is_nested_list(item: MutableSequence[Any], /) -> bool:
     return is_sequence(item)and any(is_sequence(item = v) for v in item)
 
 @is_nested.register(Set)         
-def is_nested_set(item: Set[Any], /) -> bool:
+def is_nested_set(
+    item: Set[Any], /, 
+    raise_error: Optional[bool] = None) -> bool:
     """Returns if 'item' is nested at least one-level.
     
     Args:
@@ -266,7 +299,9 @@ def is_nested_set(item: Set[Any], /) -> bool:
     return is_set(item) and any(is_set(item = v) for v in item)
 
 @is_nested.register(tuple)     
-def is_nested_tuple(item: tuple[Any, ...], /) -> bool:
+def is_nested_tuple(
+    item: tuple[Any, ...], /, 
+    raise_error: Optional[bool] = None) -> bool:
     """Returns if 'item' is nested at least one-level.
     
     Args:
@@ -278,7 +313,7 @@ def is_nested_tuple(item: tuple[Any, ...], /) -> bool:
     """ 
     return is_sequence(item) and any(is_sequence(item = v) for v in item)
 
-def is_object(item: Any) -> bool:
+def is_object(item: Any, raise_error: Optional[bool] = None) -> bool:
     """Returns if 'item' is an object (and not a class or function).
 
     Args:
@@ -290,7 +325,9 @@ def is_object(item: Any) -> bool:
     """ 
     return not is_function(item) and not is_class(item)
   
-def is_path(item: str | pathlib.Path) -> bool:
+def is_path(
+    item: str | pathlib.Path, 
+    raise_error: Optional[bool] = None) -> bool:
     """Returns whether 'item' is a currently existing path.
     
     Args:
@@ -303,7 +340,10 @@ def is_path(item: str | pathlib.Path) -> bool:
     item = camina.pathlibify(item)
     return item.exists()
   
-def is_sequence(item: Any, include_str: bool = False) -> bool:
+def is_sequence(
+    item: Any, 
+    include_str: bool = False, 
+    raise_error: Optional[bool] = None) -> bool:
     """Returns if 'item' is a sequence.
     
     If 'exclude_str' is True (the default) and 'item' is a str, False will be
@@ -323,7 +363,7 @@ def is_sequence(item: Any, include_str: bool = False) -> bool:
         issubclass(item, Sequence)
         and (not issubclass(item, str) or include_str))
         
-def is_set(item: Any) -> bool:
+def is_set(item: Any, raise_error: Optional[bool] = None) -> bool:
     """Returns if 'item' is a Set (generic type set).
     
     Args:
