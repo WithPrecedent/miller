@@ -1,12 +1,13 @@
-"""Introspection tools using a consistent and intuitive syntax."""
+"""Introspection tools using a consistent and intuitive syntax"""
 
 from __future__ import annotations
 
+
 __version__ = '0.1.10'
 
-__package__ = 'miller'
+__author__: str = 'Corey Rayburn Yung'
 
-__author__ = 'Corey Rayburn Yung'
+__all__: list[str] = []
 
 
 from .attributes import *
@@ -18,6 +19,3 @@ from .examiners import *
 from .framework import *
 from .identity import *
 from .modules import *
-
-
-__all__: list[str] = []

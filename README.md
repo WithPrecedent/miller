@@ -2,17 +2,19 @@
 
 | | |
 | --- | --- |
-| Version | [![PyPI Latest Release](https://img.shields.io/pypi/v/miller.svg?style=for-the-badge&label=pypi&logo=PyPI&color=darkorange)](https://pypi.org/project/miller/) [![GitHub Latest Release](https://img.shields.io/github/v/tag/WithPrecedent/miller?style=for-the-badge&label=branch&logo=github&color=navy)](https://github.com/WithPrecedent/miller/releases)
-| Status | [![Build Status](https://img.shields.io/github/actions/workflow/status/WithPrecedent/miller/ci.yml?branch=main&label=tests&style=for-the-badge&logo=pytest&color=cadetblue)](https://github.com/WithPrecedent/miller/actions/workflows/ci.yml?query=branch%3Amain) [![Development Status](https://img.shields.io/badge/Development-Active-Green?style=for-the-badge&logo=git)](https://www.repostatus.org/#active) [![Project Stability](https://img.shields.io/badge/stability-beta-firebrick?style=for-the-badge&logo=git)](https://www.repostatus.org/#active) [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg?style=for-the-badge&logo=apache&color=goldenrod)](https://opensource.org/licenses/Apache-2.0)
-| Docs | [![Hosted By](https://img.shields.io/badge/hosted_by-github_pages-blue?style=for-the-badge&logo=github&color=navy)](https://WithPrecedent.github.io/miller)
-| Compatibility | [![Compatible Python Versions](https://img.shields.io/pypi/pyversions/miller?style=for-the-badge&logo=python&color=darkorange)](https://pypi.python.org/pypi/miller/) [![Linux](https://img.shields.io/badge/linux-maroon?style=for-the-badge&logo=linux&labelColor=gray)](https://www.linux.org/) [![MacOS](https://img.shields.io/badge/macos-yellow?style=for-the-badge&logo=apple&labelColor=gray)](https://www.apple.com/macos/) [![Windows](https://img.shields.io/badge/windows-blue?style=for-the-badge&logo=windows&labelColor=gray)](https://www.microsoft.com/en-us/windows?r=1)
-| Stats | [![PyPI Download Rate (per month)](https://img.shields.io/pypi/dm/miller?style=for-the-badge&logo=pypi&color=darkorange)](https://pypi.org/project/miller) [![GitHub Contributors](https://img.shields.io/github/contributors/WithPrecedent/miller?style=for-the-badge&label=contributors&logo=github&color=darksalmon)](https://github.com/WithPrecedent/miller/graphs/contributors) [![GitHub Contributors](https://img.shields.io/github/issues/WithPrecedent/miller?style=for-the-badge&label=issues&logo=github&color=deeppink)](https://github.com/WithPrecedent/miller/graphs/contributors) [![GitHub Stars](https://img.shields.io/github/stars/WithPrecedent/miller?style=for-the-badge&label=Stars&logo=github&color=firebrick)](https://github.com/WithPrecedent/miller/stargazers) [![GitHub Forks](https://img.shields.io/github/forks/WithPrecedent/miller?style=for-the-badge&label=forks&logo=github&color=coral)](https://github.com/WithPrecedent/miller/forks)
-| Tools | [![Documentation](https://img.shields.io/badge/MkDocs-magenta?style=for-the-badge&logo=markdown&labelColor=gray)](https://squidfunk.github.io/mkdocs-material/) [![Linter](https://img.shields.io/endpoint?style=for-the-badge&url=https://raw.githubusercontent.com/charliermarsh/Ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/Ruff) [![Dependency Manager](https://img.shields.io/badge/PDM-blueviolet?style=for-the-badge&logo=affinity&labelColor=gray)](https://PDM.fming.dev) [![Pre-commit](https://img.shields.io/badge/pre--commit-brightgreen?style=for-the-badge&logo=pre-commit&logoColor=white&labelColor=gray)](https://github.com/TezRomacH/python-package-template/blob/master/.pre-commit-config.yaml) [![CI](https://img.shields.io/badge/github_actions-yellow?style=for-the-badge&logo=githubactions&labelColor=gray)](https://github.com/features/actions) [![Editor Settings](https://img.shields.io/badge/editor_config-blue?style=for-the-badge&logo=editorconfig&labelColor=gray)](https://github.com/features/actions) [![Template](https://img.shields.io/badge/snickerdoodle-brown?style=for-the-badge&logo=cookiecutter&labelColor=gray)](https://www.github.com/WithPrecedent/snickerdoodle)
+| Version | [![PyPI Latest Release](https://img.shields.io/pypi/v/miller.svg?style=for-the-badge&color=steelblue&label=PyPI&logo=PyPI&logoColor=yellow)](https://pypi.org/project/miller/) [![GitHub Latest Release](https://img.shields.io/github/v/tag/WithPrecedent/miller?style=for-the-badge&color=navy&label=GitHub&logo=github)](https://github.com/WithPrecedent/miller/releases)
+| Status | [![Build Status](https://img.shields.io/github/actions/workflow/status/WithPrecedent/miller/ci.yml?branch=main&style=for-the-badge&color=cadetblue&label=Tests&logo=pytest)](https://github.com/WithPrecedent/miller/actions/workflows/ci.yml?query=branch%3Amain) [![Development Status](https://img.shields.io/badge/Development-Active-seagreen?style=for-the-badge&logo=git)](https://www.repostatus.org/#active) [![Project Stability](https://img.shields.io/pypi/status/miller?style=for-the-badge&logo=pypi&label=Stability&logoColor=yellow)](https://pypi.org/project/miller/)
+| Documentation | [![Hosted By](https://img.shields.io/badge/Hosted_by-Github_Pages-blue?style=for-the-badge&color=navy&logo=github)](https://WithPrecedent.github.io/miller)
+| Tools | [![Documentation](https://img.shields.io/badge/MkDocs-magenta?style=for-the-badge&color=deepskyblue&logo=markdown&labelColor=gray)](https://squidfunk.github.io/mkdocs-material/) [![Linter](https://img.shields.io/endpoint?style=for-the-badge&url=https://raw.githubusercontent.com/charliermarsh/Ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/Ruff) [![Dependency Manager](https://img.shields.io/badge/PDM-mediumpurple?style=for-the-badge&logo=affinity&labelColor=gray)](https://PDM.fming.dev) [![Pre-commit](https://img.shields.io/badge/pre--commit-darkolivegreen?style=for-the-badge&logo=pre-commit&logoColor=white&labelColor=gray)](https://github.com/TezRomacH/python-package-template/blob/master/.pre-commit-config.yaml) [![CI](https://img.shields.io/badge/GitHub_Actions-navy?style=for-the-badge&logo=githubactions&labelColor=gray&logoColor=white)](https://github.com/features/actions) [![Editor Settings](https://img.shields.io/badge/Editor_Config-paleturquoise?style=for-the-badge&logo=editorconfig&labelColor=gray)](https://editorconfig.org/) [![Repository Template](https://img.shields.io/badge/snickerdoodle-bisque?style=for-the-badge&logo=cookiecutter&labelColor=gray)](https://www.github.com/WithPrecedent/miller) [![Dependency Maintainer](https://img.shields.io/badge/dependabot-navy?style=for-the-badge&logo=dependabot&logoColor=white&labelColor=gray)](https://github.com/dependabot)
+| Compatibility | [![Compatible Python Versions](https://img.shields.io/pypi/pyversions/miller?style=for-the-badge&color=steelblue&label=Python&logo=python&logoColor=yellow)](https://pypi.python.org/pypi/miller/) [![Linux](https://img.shields.io/badge/Linux-lightseagreen?style=for-the-badge&logo=linux&labelColor=gray&logoColor=white)](https://www.linux.org/) [![MacOS](https://img.shields.io/badge/MacOS-snow?style=for-the-badge&logo=apple&labelColor=gray)](https://www.apple.com/macos/) [![Windows](https://img.shields.io/badge/windows-blue?style=for-the-badge&logo=Windows&labelColor=gray&color=orangered)](https://www.microsoft.com/en-us/windows?r=1)
+| Stats | [![PyPI Download Rate (per month)](https://img.shields.io/pypi/dm/miller?style=for-the-badge&color=steelblue&label=Downloads%20💾&logo=pypi&logoColor=yellow)](https://pypi.org/project/miller) [![GitHub Stars](https://img.shields.io/github/stars/WithPrecedent/miller?style=for-the-badge&color=navy&label=Stars%20⭐&logo=github)](https://github.com/WithPrecedent/miller/stargazers) [![GitHub Contributors](https://img.shields.io/github/contributors/WithPrecedent/miller?style=for-the-badge&color=navy&label=Contributors%20🙋&logo=github)](https://github.com/WithPrecedent/miller/graphs/contributors) [![GitHub Issues](https://img.shields.io/github/issues/WithPrecedent/miller?style=for-the-badge&color=navy&label=Issues%20📘&logo=github)](https://github.com/WithPrecedent/miller/graphs/contributors) [![GitHub Forks](https://img.shields.io/github/forks/WithPrecedent/miller?style=for-the-badge&color=navy&label=Forks%20🍴&logo=github)](https://github.com/WithPrecedent/miller/forks)
 | | |
 
 -----
 
 ## What is miller?
+
+*This package is under heavy construction. Use at your own risk*
 
 *"I'm a tool that finds things."* - Detective Josephus Miller
 
@@ -24,9 +26,11 @@ Named after the erstwhile inspector from *The Expanse*, this package provides co
 
 ## Why use miller?
 
-## Universal
+### Universal
 
-Consider the different and often difficult-to-read syntax that Python uses for introspection of different objects.
+Consider the different and often difficult-to-read syntax that Python uses for
+introspection of different objects.
+
 ``` python
 """Returns a list of function names in the module 'item'."""
 [m[0] for m in inspect.getmembers(item, inspect.isfunction) 
@@ -38,6 +42,7 @@ Consider the different and often difficult-to-read syntax that Python uses for i
 """Returns names of fields of the dataclass 'item'."""
 [f.name for f in dataclasses.fields(item)] 
 ```
+
 That code can be difficult to remember, requires importing a range of packages, and is not easy to understand if you are not familiar with the relevant imported packages. 
 
 <p align="center">
@@ -51,9 +56,10 @@ name_functions(item)
 name_properties(item)
 name_fields(item)
 ```
+
 In addition, each of those **miller** functions includes a boolean parameter `include_privates` which indicates whether you want to include any matching items that have str names beginning with an underscore.
 
-## Intuitive
+### Intuitive
 
 <p align="center">
 <img src="https://media.giphy.com/media/PiqvXUF6UI6enzyNY9/giphy.gif" height="300"/>
@@ -105,20 +111,20 @@ Those prefixes are followed by an underscore and a suffix indicating what inform
 The following functions are available in **miller** for the `map`, `get`, `has`, and `name`  suffixes :
 
 | prefix/suffix | `map`  | `get`  | `has`  | `name`  |
-|---|---|---|---|---|---|---|
+|---|---|---|---|---|
 | `annotations` | X | X | X | X |
-| `attributes` | X | X | X | X | 
-| `classes` | X | X | X | X | 
-| `fields` | X | X | X | X | 
-| `file_paths` | X | X | X | X | 
-| `folder_paths` | X | X | X | X | 
-| `functions` | X | X | X | X | 
-| `methods` | X | X | X | X | 
-| `modules` | X | X | X | X |  
-| `paths`  | X | X | X | X | 
-| `properties` | X | X | X | X | 
-| `signatures` | X | X | X | X | 
-| `variables` | X | X | X | X | 
+| `attributes` | X | X | X | X |
+| `classes` | X | X | X | X |
+| `fields` | X | X | X | X |
+| `file_paths` | X | X | X | X |
+| `folder_paths` | X | X | X | X |
+| `functions` | X | X | X | X |
+| `methods` | X | X | X | X |
+| `modules` | X | X | X | X |
+| `paths`  | X | X | X | X |
+| `properties` | X | X | X | X |
+| `signatures` | X | X | X | X |
+| `variables` | X | X | X | X |
 
 For the `is` prefix, functions with the following suffixes are included: 
 
@@ -134,7 +140,12 @@ For the `is` prefix, functions with the following suffixes are included:
 <img src="https://media.giphy.com/media/l0Ex6Yb0meOZQloWs/giphy.gif" height="300"/>
 </p>
 
+
 ## Getting started
+
+*“Go into a room too fast, kid… The room eats you.”*  - Detective Josephus
+Miller
+
 
 ### Requirements
 
@@ -142,7 +153,11 @@ For the `is` prefix, functions with the following suffixes are included:
 
 ### Installation
 
-[TODO: Briefly describe, with code blocks, how to install the project]
+To install `miller`, use `pip`:
+
+```sh
+pip install miller
+```
 
 ### Usage
 
