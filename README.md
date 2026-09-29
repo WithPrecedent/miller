@@ -220,10 +220,6 @@ Contributors are always welcome. Feel free to grab an [issue](https://www.github
 
 The standard library's [`inspect`](https://docs.python.org/3/library/inspect.html) module offers the underlying tools that **miller** wraps in a more consistent syntax.
 
-## Acknowledgments
-
-This project was generated from [@WithPrecedent](https://github.com/WithPrecedent)'s [![cookiecutter Template](https://img.shields.io/badge/snickerdoodle-bisque?style=for-the-badge&logo=cookiecutter&labelColor=gray)](https://www.github.com/WithPrecedent/snickerdoodle) template.
-
 ## License
 
 Use of this repository is authorized under the [Apache Software License 2.0](https://www.github.com/WithPrecedent/miller/blob/main/LICENSE).

@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 <!-- insertion marker -->
 
+## 0.2.1
+
+* Updated README
+* Fixed CI pre-commit and Python 3.10 failures
+* Replaced star imports in `__init__.py` with explicit imports
+
 ## 0.2.0
 
 * Updated repository to snickerdoodle 0.3.3 (`uv`, `hatchling`, new GitHub Actions)
