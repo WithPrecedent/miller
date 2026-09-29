@@ -1,407 +1,522 @@
-"""
-disks: introspection tools for files and folders
-Corey Rayburn Yung <coreyrayburnyung@gmail.com>
-Copyright 2020-2022, Corey Rayburn Yung
-License: Apache-2.0
+"""Introspection of the contents of folders on disk.
 
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+Names in this module are paths relative to the examined folder. For `modules`,
+names are dotted paths without a suffix (for example, `package.module`).
+Anything with a path component that begins with an underscore (including
+`__pycache__` and `__init__.py`) is a "private" and is only included if
+`include_privates` is True.
 
 Contents:
-    has_files
-    has_folders
-    has_modules
-    has_paths
-    list_files
-    list_folders
-    list_modules
-    list_paths
-    map_files
-    map_folders
-    map_modules
-    map_paths
-    name_files
-    name_folders
-    name_modules
-    name_paths   
-    
-ToDo:
-    
+    catalog_file_paths, collect_file_paths, has_file_paths, name_file_paths
+    catalog_folder_paths, collect_folder_paths, has_folder_paths,
+        name_folder_paths
+    catalog_modules, collect_modules, has_modules, name_modules
+    catalog_paths, collect_paths, has_paths, name_paths
 
 """
+
 from __future__ import annotations
+
+import os
 import pathlib
-import types
-from typing import Optional
+from collections.abc import Callable
+from typing import Any
 
-import camina
-import nagata
+from . import base, configuration, utilities
 
-from . import configuration
-from . import identity
+__all__: list[str] = [
+    'catalog_file_paths',
+    'catalog_folder_paths',
+    'catalog_modules',
+    'catalog_paths',
+    'collect_file_paths',
+    'collect_folder_paths',
+    'collect_modules',
+    'collect_paths',
+    'has_file_paths',
+    'has_folder_paths',
+    'has_modules',
+    'has_paths',
+    'name_file_paths',
+    'name_folder_paths',
+    'name_modules',
+    'name_paths']
 
 
-def has_files(
-    item: str | pathlib.Path,
-    elements: list[str | pathlib.Path],
-    recursive: Optional[bool] = None) -> bool:  
-    """Returns whether all 'elements' are in 'item' and are files.
-  
-    Args:
-        item (str | pathlib.Path): path of folder to examine.
-        elements (list[str | pathlib.Path]): list of paths to test whether they 
-            are in 'item'.
-        recursive (Optional[bool]): whether to include subfolders. Defaults to 
-            None. If 'recursive' is None, 'miller.RECURSIVE' is used.
-                    
-    Returns:
-        bool: whether all 'elements' are in 'item' and are files.
-        
-    """ 
-    return (
-        has_paths(item, elements = elements, recursive = recursive)
-        and all(identity.is_file(path) for path in item))
-          
-def has_folders(
-    item: str | pathlib.Path,
-    elements: list[str | pathlib.Path],
-    recursive: Optional[bool] = None) -> bool:  
-    """Returns whether all 'elements' are in 'item' and are folders.
-  
-    Args:
-        item (str | pathlib.Path): path of folder to examine.
-        elements (list[str | pathlib.Path]): list of paths to test whether they 
-            are in 'item'.
-        recursive (Optional[bool]): whether to include subfolders. Defaults to 
-            None. If 'recursive' is None, 'miller.RECURSIVE' is used.
-                    
-    Returns:
-        bool: whether all 'elements' are in 'item' and are folders.
-        
-    """ 
-    return (
-        has_paths(item, elements = elements, recursive = recursive)
-        and all(identity.is_folder(path) for path in item))
-  
-def has_modules(
-    item: str | pathlib.Path,
-    elements: list[str | pathlib.Path],
-    recursive: Optional[bool] = None) -> bool:  
-    """Returns whether all 'elements' are in 'item' and are modules.
-  
-    Args:
-        item (str | pathlib.Path): path of folder to examine.
-        elements (list[str | pathlib.Path]): list of paths to test whether they 
-            are in 'item'.
-        recursive (Optional[bool]): whether to include subfolders. Defaults to 
-            None. If 'recursive' is None, 'miller.RECURSIVE' is used.
-                    
-    Returns:
-        bool: whether all 'elements' are in 'item' and are modules.
-        
-    """ 
-    return (
-        has_paths(item, elements = elements, recursive = recursive)
-        and all(identity.is_module(path) for path in item))
-   
-def has_paths(
-    item: str | pathlib.Path,
-    elements: list[str | pathlib.Path],
-    recursive: Optional[bool] = None) -> bool:  
-    """Returns whether all 'elements' are in 'item' and are paths.
-  
-    Args:
-        item (str | pathlib.Path): path of folder to examine.
-        elements (list[str | pathlib.Path]): list of paths to test whether they 
-            are in 'item'.
-        recursive (Optional[bool]): whether to include subfolders. Defaults to 
-            None. If 'recursive' is None, 'miller.RECURSIVE' is used.
-                    
-    Returns:
-        bool: whether all 'elements' are in 'item' and are paths.
-        
-    """ 
-    paths = list_paths(item, recursive = recursive)
-    elements = [camina.pahlibify(p) for p in elements]
-    return all(elements in paths) and all(identity.is_path(path) for path in item)
+def _relative_paths(
+    item: str | os.PathLike[str],
+    recursive: bool | None,
+    include_privates: bool | None) -> tuple[pathlib.Path, list[pathlib.Path]]:
+    """Returns folder `item` and sorted relative paths of its contents."""
+    folder = utilities.pathlibify(item)
+    if not folder.is_dir():
+        message = f'{item} is not a path to a folder'
+        raise NotADirectoryError(message)
+    recursive = base.resolve(recursive, configuration.RECURSIVE)
+    include_privates = base.resolve(
+        include_privates, configuration.INCLUDE_PRIVATES)
+    paths = folder.rglob('*') if recursive else folder.iterdir()
+    relatives = sorted(p.relative_to(folder) for p in paths)
+    if not include_privates:
+        relatives = [
+            p for p in relatives
+            if not any(utilities.is_private_name(i) for i in p.parts)]
+    return folder, relatives
 
-def list_files(
-    item: str | pathlib.Path, 
-    recursive: Optional[bool] = None,
-    suffix: Optional[str] = '*') -> list[pathlib.Path]:  
-    """Returns list of non-python module file paths in 'item'.
-    
-    Args:
-        item (str | pathlib.Path): path of folder to examine. 
-        recursive (Optional[bool]): whether to include subfolders. Defaults to 
-            None. If 'recursive' is None, 'miller.RECURSIVE' is used.
-        suffix (Optional[str]): file suffix to match. Defaults to '*' (all 
-            suffixes).
-        
-    Returns:
-        list[pathlib.Path]: a list of file paths in 'item'.
-        
-    """
-    if recursive is None:
-        recursive = configuration.RECURSIVE   
-    paths = list_paths(item, recursive = recursive, suffix = suffix)
-    return [p for p in paths if identity.is_file(item = p)]
 
-def list_folders(
-    item: str | pathlib.Path,
-    recursive: Optional[bool] = None) -> list[pathlib.Path]:  
-    """Returns list of folder paths in 'item'.
-    
-    Args:
-        item (str | pathlib.Path): path of folder to examine.
-        recursive (bool): whether to include subfolders. Defaults to None. If
-            'recursive' is None, 'miller.RECURSIVE' is used.
-        
-    Returns:
-        list[pathlib.Path]: a list of folder paths in 'item'.
-        
-    """
-    if recursive is None:
-        recursive = configuration.RECURSIVE   
-    paths = list_paths(item, recursive = recursive)
-    return [p for p in paths if identity.is_folder(item = p)]
+def _catalog(
+    item: str | os.PathLike[str],
+    keep: Callable[[pathlib.Path], bool],
+    namer: Callable[[pathlib.Path], str],
+    recursive: bool | None,
+    include_privates: bool | None) -> dict[str, pathlib.Path]:
+    """Returns dict of names and full paths of contents that pass `keep`."""
+    folder, relatives = _relative_paths(item, recursive, include_privates)
+    return {
+        namer(r): folder / r for r in relatives if keep(folder / r)}
 
-def list_modules(
-    item: str | pathlib.Path,
-    recursive: Optional[bool] = None,
-    import_modules: Optional[bool] = False) -> (
-        list[pathlib.Path |types.ModuleType]):  
-    """Returns list of python module paths in 'item'.
-    
-    Args:
-        item (str | pathlib.Path): path of folder to examine.
-        recursive (bool): whether to include subfolders. Defaults to None. If
-            'recursive' is None, 'miller.RECURSIVE' is used.
-        import_modules (Optional[bool]): whether the values in the returned dict
-            should be imported modules (True) or file paths to modules (False).
-                    
-    Returns:
-        list[pathlib.Path |types.ModuleType]: a list of python module paths in 
-            'item' or imported modules if 'import_modules' is True.
-            
-    """
-    if recursive is None:
-        recursive = configuration.RECURSIVE   
-    paths = list_paths(item, recursive = recursive)
-    modules = [p for p in paths if identity.is_module(item = p)]
-    if import_modules:
-        modules = [nagata.from_file_path(path = p) for p in modules]
-    return modules
-    
-def list_paths(
-    item: str | pathlib.Path, 
-    recursive: Optional[bool] = None,
-    suffix: Optional[str] = '*') -> list[pathlib.Path]:  
-    """Returns list of all paths in 'item'.
-    
-    Args:
-        item (str | pathlib.Path): path of folder to examine. 
-        recursive (Optional[bool]): whether to include subfolders. Defaults to 
-            None. If 'recursive' is None, 'miller.RECURSIVE' is used.
-        suffix (Optional[str]): file suffix to match. Defaults to '*' (all 
-            suffixes).
-        
-    Returns:
-        list[pathlib.Path]: a list of all paths in 'item'.
-        
-    """
-    if recursive is None:
-        recursive = configuration.RECURSIVE   
-    item = camina.pathlibify(item) 
-    if recursive:
-        return list(item.rglob(f'*.{suffix}'))
-    else:
-        return list(item.glob(f'*.{suffix}'))
- 
-def map_files(
-    item: str | pathlib.Path,
-    recursive: Optional[bool] = None) -> dict[str, pathlib.Path]:  
-    """Returns dict of python file names and file paths in 'item'.
-    
-    Args:
-        item (str | pathlib.Path): path of folder to examine.
-        recursive (Optional[bool]): whether to include subfolders. Defaults to 
-            None. If 'recursive' is None, 'miller.RECURSIVE' is used.
-        
-    Returns:
-        dict[str, pathlib.Path]: dict with keys being file names and values
-            being file paths. 
-        
-    """
-    if recursive is None:
-        recursive = configuration.RECURSIVE   
-    kwargs = dict(item = item, recursive = recursive)
-    names = name_files(**kwargs)
-    files = list_files(**kwargs)
-    return dict(zip(names, files))
 
-def map_folders(
-    item: str | pathlib.Path,
-    recursive: Optional[bool] = None) -> dict[str, pathlib.Path]:  
-    """Returns dict of python folder names and folder paths in 'item'.
-    
-    Args:
-        item (str | pathlib.Path): path of folder to examine.
-        recursive (Optional[bool]): whether to include subfolders. Defaults to 
-            None. If 'recursive' is None, 'miller.RECURSIVE' is used.
-        
-    Returns:
-        dict[str, pathlib.Path]: dict with keys being folder names and values 
-            being folder paths. 
-        
-    """
-    if recursive is None:
-        recursive = configuration.RECURSIVE   
-    kwargs = dict(item = item, recursive = recursive)
-    names = name_folders(**kwargs)
-    folders = list_folders(**kwargs)
-    return dict(zip(names, folders))
- 
-def map_modules(
-    item: str | pathlib.Path,
-    recursive: Optional[bool] = None,
-    import_modules: Optional[bool] = False) -> (
-        dict[str, types.ModuleType] | dict[str, pathlib.Path]):  
-    """Returns dict of python module names and modules in 'item'.
-    
-    Args:
-        item (str | pathlib.Path): path of folder to examine.
-        recursive (Optional[bool]): whether to include subfolders. Defaults to 
-            None. If 'recursive' is None, 'miller.RECURSIVE' is used.
-        import_modules (Optional[bool]): whether the values in the returned dict
-            should be imported modules (True) or file paths to modules (False).
-        
-    Returns:
-        dict[str, types.ModuleType] | dict[str, pathlib.Path]: dict with str key 
-            names of python modules and values as the paths to corresponding 
-            modules or the imported modules (if 'import_modules' is True).
-        
-    """
-    if recursive is None:
-        recursive = configuration.RECURSIVE   
-    kwargs = dict(item = item, recursive = recursive)
-    names = name_modules(**kwargs)
-    modules = list_modules(**kwargs, import_modules = import_modules)
-    return dict(zip(names, modules))
+def _has(  # noqa: PLR0917
+    item: str | os.PathLike[str],
+    paths: Any,
+    keep: Callable[[pathlib.Path], bool],
+    namer: Callable[[pathlib.Path], str],
+    recursive: bool | None,
+    raise_error: bool | None,
+    match_all: bool | None) -> bool:
+    """Returns whether `paths` are among the contents of `item` passing `keep`.
 
-def map_paths(
-    item: str | pathlib.Path,
-    recursive: Optional[bool] = None) -> dict[str, pathlib.Path]:  
-    """Returns dict of python path names and paths in 'item'.
-    
-    Args:
-        item (str | pathlib.Path): path of folder to examine.
-        recursive (Optional[bool]): whether to include subfolders. Defaults to 
-            None. If 'recursive' is None, 'miller.RECURSIVE' is used.
-        
-    Returns:
-        dict[str, pathlib.Path]: dict with keys being paht names and values
-            being paths. 
-        
+    Each of `paths` can be a name (as returned by the `name_*` functions), a
+    path relative to `item`, or a full path.
     """
-    if recursive is None:
-        recursive = configuration.RECURSIVE   
-    kwargs = dict(item = item, recursive = recursive)
-    names = name_paths(**kwargs)
-    paths = list_paths(**kwargs)
-    return dict(zip(names, paths))
+    folder = utilities.pathlibify(item)
+    found = _catalog(item, keep, namer, recursive, include_privates = True)
 
-def name_files(
-    item: str | pathlib.Path,
-    recursive: Optional[bool] = None) -> list[str]:  
-    """Returns list of names of file paths in 'item'.
-    
-    The 'stem' property of 'pathlib.Path' is used for the names.
-        
-    Args:
-        item (str | pathlib.Path): path of folder to examine.
-        recursive (bool): whether to include subfolders. Defaults to None. If
-            'recursive' is None, 'miller.RECURSIVE' is used.
-        
-    Returns:
-        list[str]: a list of names of file paths in 'item'.
-        
-    """
-    if recursive is None:
-        recursive = configuration.RECURSIVE   
-    item = camina.pathlibify(item)
-    kwargs = dict(item = item, recursive = recursive)
-    return [p.stem for p in list_files(**kwargs)]
-          
-def name_folders(
-    item: str | pathlib.Path,
-    recursive: Optional[bool] = None) -> list[str]:  
-    """Returns list of names of folder paths in 'item'.
-    
-    Args:
-        item (str | pathlib.Path): path of folder to examine.
-        recursive (bool): whether to include subfolders. Defaults to None. If
-            'recursive' is None, 'miller.RECURSIVE' is used.
-        
-    Returns:
-        list[str]: a list of folder paths in 'item'.
-        
-    """
-    if recursive is None:
-        recursive = configuration.RECURSIVE   
-    item = camina.pathlibify(item)
-    kwargs = dict(item = item, recursive = recursive)
-    return [p.name for p in list_folders(**kwargs)]
- 
-def name_modules(
-    item: str | pathlib.Path,
-    recursive: Optional[bool] = None) -> list[str]:  
-    """Returns list of names of paths to python modules in 'item'.
-    
-    The 'stem' property of 'pathlib.Path' is used for the names.
-    
-    Args:
-        item (str | pathlib.Path): path of folder to examine.
-        recursive (bool): whether to include subfolders. Defaults to None. If
-            'recursive' is None, 'miller.RECURSIVE' is used.
-        
-    Returns:
-        list[str]: a list of names of paths to python modules in 'item'.
-        
-    """
-    if recursive is None:
-        recursive = configuration.RECURSIVE   
-    item = camina.pathlibify(item)
-    kwargs = dict(item = item, recursive = recursive)
-    return [p.stem for p in list_modules(**kwargs)]
- 
+    def _checker(_: Any, path: Any, **__: Any) -> bool:
+        if isinstance(path, str) and path in found:
+            return True
+        full = utilities.pathlibify(path)
+        return any(full in (f, f.relative_to(folder)) for f in found.values())
+
+    return base.has_names(item, paths, _checker, raise_error, match_all)
+
+
+def _as_posix(path: pathlib.Path) -> str:
+    """Returns the relative `path` as a str with forward slashes."""
+    return path.as_posix()
+
+
+def _as_module_name(path: pathlib.Path) -> str:
+    """Returns the relative `path` as a dotted module name."""
+    return '.'.join(path.with_suffix('').parts)
+
+
+def _is_module_file(path: pathlib.Path) -> bool:
+    """Returns whether `path` is a python module file."""
+    return path.is_file() and path.suffix in configuration.MODULE_EXTENSIONS
+
+
 def name_paths(
-    item: str | pathlib.Path,
-    recursive: Optional[bool] = None) -> list[str]:  
-    """Returns list of names of paths in 'item'.
-    
-    For folders, the 'name' property of 'pathlib.Path' is used. For files, the
-    'stem' property is.
-    
+    item: str | os.PathLike[str],
+    recursive: bool | None = None,
+    include_privates: bool | None = None) -> list[str]:
+    """Returns names of everything (files and folders) in folder `item`.
+
     Args:
-        item (str | pathlib.Path): path of folder to examine.
-        recursive (bool): whether to include subfolders. Defaults to None. If
-            'recursive' is None, 'miller.RECURSIVE' is used.
-        
+        item: path to a folder.
+        recursive: whether to include subfolders. If None,
+            `miller.configuration.RECURSIVE` is used.
+        include_privates: whether to include paths with a component beginning
+            with an underscore. If None, `miller.configuration.INCLUDE_PRIVATES`
+            is used.
+
+    Raises:
+        NotADirectoryError: if `item` is not a folder.
+
     Returns:
-        list[str]: a list of names of paths in 'item'.
-        
+        Sorted list of paths relative to `item`, as str.
+
     """
-    if recursive is None:
-        recursive = configuration.RECURSIVE   
-    kwargs = dict(item = item, recursive = recursive)
-    return name_files(**kwargs) + name_folders(**kwargs)
+    return list(catalog_paths(item, recursive, include_privates))
+
+
+def collect_paths(
+    item: str | os.PathLike[str],
+    recursive: bool | None = None,
+    include_privates: bool | None = None) -> list[pathlib.Path]:
+    """Returns full paths of everything (files and folders) in folder `item`.
+
+    Args:
+        item: path to a folder.
+        recursive: whether to include subfolders. If None,
+            `miller.configuration.RECURSIVE` is used.
+        include_privates: whether to include paths with a component beginning
+            with an underscore. If None, `miller.configuration.INCLUDE_PRIVATES`
+            is used.
+
+    Raises:
+        NotADirectoryError: if `item` is not a folder.
+
+    Returns:
+        Sorted list of `pathlib.Path` objects.
+
+    """
+    return list(catalog_paths(item, recursive, include_privates).values())
+
+
+def catalog_paths(
+    item: str | os.PathLike[str],
+    recursive: bool | None = None,
+    include_privates: bool | None = None) -> dict[str, pathlib.Path]:
+    """Returns dict of names and paths of everything in folder `item`.
+
+    Args:
+        item: path to a folder.
+        recursive: whether to include subfolders. If None,
+            `miller.configuration.RECURSIVE` is used.
+        include_privates: whether to include paths with a component beginning
+            with an underscore. If None, `miller.configuration.INCLUDE_PRIVATES`
+            is used.
+
+    Raises:
+        NotADirectoryError: if `item` is not a folder.
+
+    Returns:
+        Dict of relative path str names and full `pathlib.Path` objects.
+
+    """
+    return _catalog(
+        item, lambda _: True, _as_posix, recursive, include_privates)
+
+
+def has_paths(
+    item: str | os.PathLike[str],
+    paths: Any,
+    recursive: bool | None = None,
+    raise_error: bool | None = None,
+    match_all: bool | None = None) -> bool:
+    """Returns whether `paths` are in folder `item`.
+
+    Args:
+        item: path to a folder.
+        paths: name, path, or iterable of names or paths to look for. Each can
+            be relative to `item` or a full path.
+        recursive: whether to include subfolders. If None,
+            `miller.configuration.RECURSIVE` is used.
+        raise_error: whether to raise an `AttributeError` if the check fails.
+            If None, `miller.configuration.RAISE_ERRORS` is used.
+        match_all: whether all `paths` must be found (True) or any (False). If
+            None, `miller.configuration.MATCH_ALL` is used.
+
+    Returns:
+        Whether all (or any) of `paths` are in `item`.
+
+    """
+    return _has(
+        item, paths, lambda _: True, _as_posix, recursive, raise_error,
+        match_all)
+
+
+def name_file_paths(
+    item: str | os.PathLike[str],
+    recursive: bool | None = None,
+    include_privates: bool | None = None) -> list[str]:
+    """Returns names of the files in folder `item`.
+
+    Args:
+        item: path to a folder.
+        recursive: whether to include subfolders. If None,
+            `miller.configuration.RECURSIVE` is used.
+        include_privates: whether to include paths with a component beginning
+            with an underscore. If None, `miller.configuration.INCLUDE_PRIVATES`
+            is used.
+
+    Raises:
+        NotADirectoryError: if `item` is not a folder.
+
+    Returns:
+        Sorted list of file paths relative to `item`, as str.
+
+    """
+    return list(catalog_file_paths(item, recursive, include_privates))
+
+
+def collect_file_paths(
+    item: str | os.PathLike[str],
+    recursive: bool | None = None,
+    include_privates: bool | None = None) -> list[pathlib.Path]:
+    """Returns full paths of the files in folder `item`.
+
+    Args:
+        item: path to a folder.
+        recursive: whether to include subfolders. If None,
+            `miller.configuration.RECURSIVE` is used.
+        include_privates: whether to include paths with a component beginning
+            with an underscore. If None, `miller.configuration.INCLUDE_PRIVATES`
+            is used.
+
+    Raises:
+        NotADirectoryError: if `item` is not a folder.
+
+    Returns:
+        Sorted list of `pathlib.Path` objects.
+
+    """
+    return list(catalog_file_paths(item, recursive, include_privates).values())
+
+
+def catalog_file_paths(
+    item: str | os.PathLike[str],
+    recursive: bool | None = None,
+    include_privates: bool | None = None) -> dict[str, pathlib.Path]:
+    """Returns dict of names and paths of the files in folder `item`.
+
+    Args:
+        item: path to a folder.
+        recursive: whether to include subfolders. If None,
+            `miller.configuration.RECURSIVE` is used.
+        include_privates: whether to include paths with a component beginning
+            with an underscore. If None, `miller.configuration.INCLUDE_PRIVATES`
+            is used.
+
+    Raises:
+        NotADirectoryError: if `item` is not a folder.
+
+    Returns:
+        Dict of relative path str names and full `pathlib.Path` objects.
+
+    """
+    return _catalog(
+        item, lambda p: p.is_file(), _as_posix, recursive, include_privates)
+
+
+def has_file_paths(
+    item: str | os.PathLike[str],
+    paths: Any,
+    recursive: bool | None = None,
+    raise_error: bool | None = None,
+    match_all: bool | None = None) -> bool:
+    """Returns whether `paths` are files in folder `item`.
+
+    Args:
+        item: path to a folder.
+        paths: name, path, or iterable of names or paths to look for. Each can
+            be relative to `item` or a full path.
+        recursive: whether to include subfolders. If None,
+            `miller.configuration.RECURSIVE` is used.
+        raise_error: whether to raise an `AttributeError` if the check fails.
+            If None, `miller.configuration.RAISE_ERRORS` is used.
+        match_all: whether all `paths` must be found (True) or any (False). If
+            None, `miller.configuration.MATCH_ALL` is used.
+
+    Returns:
+        Whether all (or any) of `paths` are files in `item`.
+
+    """
+    return _has(
+        item, paths, lambda p: p.is_file(), _as_posix, recursive, raise_error,
+        match_all)
+
+
+def name_folder_paths(
+    item: str | os.PathLike[str],
+    recursive: bool | None = None,
+    include_privates: bool | None = None) -> list[str]:
+    """Returns names of the folders in folder `item`.
+
+    Args:
+        item: path to a folder.
+        recursive: whether to include subfolders. If None,
+            `miller.configuration.RECURSIVE` is used.
+        include_privates: whether to include paths with a component beginning
+            with an underscore. If None, `miller.configuration.INCLUDE_PRIVATES`
+            is used.
+
+    Raises:
+        NotADirectoryError: if `item` is not a folder.
+
+    Returns:
+        Sorted list of folder paths relative to `item`, as str.
+
+    """
+    return list(catalog_folder_paths(item, recursive, include_privates))
+
+
+def collect_folder_paths(
+    item: str | os.PathLike[str],
+    recursive: bool | None = None,
+    include_privates: bool | None = None) -> list[pathlib.Path]:
+    """Returns full paths of the folders in folder `item`.
+
+    Args:
+        item: path to a folder.
+        recursive: whether to include subfolders. If None,
+            `miller.configuration.RECURSIVE` is used.
+        include_privates: whether to include paths with a component beginning
+            with an underscore. If None, `miller.configuration.INCLUDE_PRIVATES`
+            is used.
+
+    Raises:
+        NotADirectoryError: if `item` is not a folder.
+
+    Returns:
+        Sorted list of `pathlib.Path` objects.
+
+    """
+    return list(
+        catalog_folder_paths(item, recursive, include_privates).values())
+
+
+def catalog_folder_paths(
+    item: str | os.PathLike[str],
+    recursive: bool | None = None,
+    include_privates: bool | None = None) -> dict[str, pathlib.Path]:
+    """Returns dict of names and paths of the folders in folder `item`.
+
+    Args:
+        item: path to a folder.
+        recursive: whether to include subfolders. If None,
+            `miller.configuration.RECURSIVE` is used.
+        include_privates: whether to include paths with a component beginning
+            with an underscore. If None, `miller.configuration.INCLUDE_PRIVATES`
+            is used.
+
+    Raises:
+        NotADirectoryError: if `item` is not a folder.
+
+    Returns:
+        Dict of relative path str names and full `pathlib.Path` objects.
+
+    """
+    return _catalog(
+        item, lambda p: p.is_dir(), _as_posix, recursive, include_privates)
+
+
+def has_folder_paths(
+    item: str | os.PathLike[str],
+    paths: Any,
+    recursive: bool | None = None,
+    raise_error: bool | None = None,
+    match_all: bool | None = None) -> bool:
+    """Returns whether `paths` are folders in folder `item`.
+
+    Args:
+        item: path to a folder.
+        paths: name, path, or iterable of names or paths to look for. Each can
+            be relative to `item` or a full path.
+        recursive: whether to include subfolders. If None,
+            `miller.configuration.RECURSIVE` is used.
+        raise_error: whether to raise an `AttributeError` if the check fails.
+            If None, `miller.configuration.RAISE_ERRORS` is used.
+        match_all: whether all `paths` must be found (True) or any (False). If
+            None, `miller.configuration.MATCH_ALL` is used.
+
+    Returns:
+        Whether all (or any) of `paths` are folders in `item`.
+
+    """
+    return _has(
+        item, paths, lambda p: p.is_dir(), _as_posix, recursive, raise_error,
+        match_all)
+
+
+def name_modules(
+    item: str | os.PathLike[str],
+    recursive: bool | None = None,
+    include_privates: bool | None = None) -> list[str]:
+    """Returns names of the python modules in folder `item`.
+
+    Args:
+        item: path to a folder.
+        recursive: whether to include subfolders. If None,
+            `miller.configuration.RECURSIVE` is used.
+        include_privates: whether to include paths with a component beginning
+            with an underscore. If None, `miller.configuration.INCLUDE_PRIVATES`
+            is used.
+
+    Raises:
+        NotADirectoryError: if `item` is not a folder.
+
+    Returns:
+        Sorted list of dotted module names relative to `item`.
+
+    """
+    return list(catalog_modules(item, recursive, include_privates))
+
+
+def collect_modules(
+    item: str | os.PathLike[str],
+    recursive: bool | None = None,
+    include_privates: bool | None = None) -> list[pathlib.Path]:
+    """Returns full paths of the python modules in folder `item`.
+
+    Args:
+        item: path to a folder.
+        recursive: whether to include subfolders. If None,
+            `miller.configuration.RECURSIVE` is used.
+        include_privates: whether to include paths with a component beginning
+            with an underscore. If None, `miller.configuration.INCLUDE_PRIVATES`
+            is used.
+
+    Raises:
+        NotADirectoryError: if `item` is not a folder.
+
+    Returns:
+        Sorted list of `pathlib.Path` objects.
+
+    """
+    return list(catalog_modules(item, recursive, include_privates).values())
+
+
+def catalog_modules(
+    item: str | os.PathLike[str],
+    recursive: bool | None = None,
+    include_privates: bool | None = None) -> dict[str, pathlib.Path]:
+    """Returns dict of names and paths of the python modules in folder `item`.
+
+    Args:
+        item: path to a folder.
+        recursive: whether to include subfolders. If None,
+            `miller.configuration.RECURSIVE` is used.
+        include_privates: whether to include paths with a component beginning
+            with an underscore. If None, `miller.configuration.INCLUDE_PRIVATES`
+            is used.
+
+    Raises:
+        NotADirectoryError: if `item` is not a folder.
+
+    Returns:
+        Dict of dotted module names and full `pathlib.Path` objects.
+
+    """
+    return _catalog(
+        item, _is_module_file, _as_module_name, recursive, include_privates)
+
+
+def has_modules(
+    item: str | os.PathLike[str],
+    paths: Any,
+    recursive: bool | None = None,
+    raise_error: bool | None = None,
+    match_all: bool | None = None) -> bool:
+    """Returns whether `paths` are python modules in folder `item`.
+
+    Args:
+        item: path to a folder.
+        paths: module name, path, or iterable of names or paths to look for.
+            Each can be a dotted module name, relative to `item`, or a full
+            path.
+        recursive: whether to include subfolders. If None,
+            `miller.configuration.RECURSIVE` is used.
+        raise_error: whether to raise an `AttributeError` if the check fails.
+            If None, `miller.configuration.RAISE_ERRORS` is used.
+        match_all: whether all `paths` must be found (True) or any (False). If
+            None, `miller.configuration.MATCH_ALL` is used.
+
+    Returns:
+        Whether all (or any) of `paths` are python modules in `item`.
+
+    """
+    return _has(
+        item, paths, _is_module_file, _as_module_name, recursive, raise_error,
+        match_all)

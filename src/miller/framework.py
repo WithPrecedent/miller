@@ -1,84 +1,144 @@
-"""
-framework: functions for changing global settings for miller
-Corey Rayburn Yung <coreyrayburnyung@gmail.com>
-Copyright 2020-2022, Corey Rayburn Yung
-License: Apache-2.0
+"""Functions for changing miller's global default settings.
 
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
+The settings themselves are stored in `miller.configuration`. An argument
+passed directly to any function always takes precedence over these defaults.
 
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
-
-Contents:  
-
-        
-ToDo:
-
+Contents:
+    set_include_privates: sets whether names beginning with '_' are included.
+    set_include_str: sets whether `str` counts as a container or iterable.
+    set_keyer: sets the function used to name items.
+    set_match_all: sets whether `has_*` functions require all names to match.
+    set_module_extensions: sets the file suffixes of python modules.
+    set_raise_errors: sets whether `has_*` and `is_*` functions raise errors.
+    set_recursion: sets whether folder functions include subfolders.
 
 """
+
 from __future__ import annotations
+
 from collections.abc import Callable, Sequence
-from typing import Any, Type
+from typing import Any
 
 from . import configuration
 
-    
-def set_keyer(namer: Callable[[object | Type[Any]], str]) -> None:
+__all__: list[str] = [
+    'set_include_privates',
+    'set_include_str',
+    'set_keyer',
+    'set_match_all',
+    'set_module_extensions',
+    'set_raise_errors',
+    'set_recursion']
+
+
+def _set_bool(name: str, value: Any) -> None:
+    """Sets the boolean setting `name` in `miller.configuration`."""
+    if not isinstance(value, bool):
+        message = f'{name.lower()} argument must be a boolean type'
+        raise TypeError(message)
+    setattr(configuration, name, value)
+
+
+def set_include_privates(include_privates: bool) -> None:
+    """Sets the global default for including names beginning with '_'.
+
+    Args:
+        include_privates: value to set `INCLUDE_PRIVATES` to.
+
+    Raises:
+        TypeError: if `include_privates` is not a boolean type.
+
+    """
+    _set_bool('INCLUDE_PRIVATES', include_privates)
+
+
+def set_include_str(include_str: bool) -> None:
+    """Sets the global default for whether `str` counts as a container.
+
+    Args:
+        include_str: value to set `INCLUDE_STR` to.
+
+    Raises:
+        TypeError: if `include_str` is not a boolean type.
+
+    """
+    _set_bool('INCLUDE_STR', include_str)
+
+
+def set_keyer(keyer: Callable[[Any], str]) -> None:
     """Sets the global default function used to name items.
 
     Args:
-        namer (Callable[[object | Type[Any]], str]): function that returns a 
-            str name of any item passed.
+        keyer: function that returns a str name of any item passed.
 
     Raises:
-        TypeError: if 'namer' is not callable.
-        
+        TypeError: if `keyer` is not callable.
+
     """
-    if isinstance(namer, Callable):
-        configuration.KEYER = namer
-    else:
-        raise TypeError('extensions argument must be a sequence of strings')
-    
-def set_module_extensions(extensions: Sequence[str]) -> None:
-    """Sets the global default rule of python module suffixes.
+    if not callable(keyer):
+        message = 'keyer argument must be callable'
+        raise TypeError(message)
+    configuration.KEYER = keyer
+
+
+def set_match_all(match_all: bool) -> None:
+    """Sets the global default for whether all names must match in `has_*`.
 
     Args:
-        extensions (Sequence[str]): file extensions of python modules.
+        match_all: value to set `MATCH_ALL` to.
 
     Raises:
-        TypeError: if 'extensions' is not a sequence of str type.
-        
+        TypeError: if `match_all` is not a boolean type.
+
     """
-    if (isinstance(extensions, Sequence) 
+    _set_bool('MATCH_ALL', match_all)
+
+
+def set_module_extensions(extensions: Sequence[str]) -> None:
+    """Sets the global default file suffixes of python modules.
+
+    Args:
+        extensions: file suffixes of python modules (for example, '.py').
+
+    Raises:
+        TypeError: if `extensions` is not a sequence of str type.
+
+    """
+    if (
+            isinstance(extensions, Sequence)
             and not isinstance(extensions, str)
             and all(isinstance(i, str) for i in extensions)):
-        configuration.MODULE_EXTENSIONS = extensions
+        configuration.MODULE_EXTENSIONS = tuple(extensions)
     else:
-        raise TypeError('extensions argument must be a sequence of strings')
- 
+        message = 'extensions argument must be a sequence of strings'
+        raise TypeError(message)
+
+
+def set_raise_errors(raise_errors: bool) -> None:
+    """Sets the global default for raising errors from `has_*` and `is_*`.
+
+    Args:
+        raise_errors: value to set `RAISE_ERRORS` to.
+
+    Raises:
+        TypeError: if `raise_errors` is not a boolean type.
+
+    """
+    _set_bool('RAISE_ERRORS', raise_errors)
+
+
 def set_recursion(recursive: bool) -> None:
     """Sets the global default rule whether tools should be recursive.
-    
-    If a 'recursive' argument is passed to a function that takes one, that
-    argument will always take precedence. However, the default value is used 
+
+    If a `recursive` argument is passed to a function that takes one, that
+    argument will always take precedence. However, the default value is used
     when an argument is not passed.
 
     Args:
-        recursive (bool): value to set the RECURSIVE variable to.
+        recursive: value to set `RECURSIVE` to.
 
     Raises:
-        TypeError: if 'recursive' is not a boolean type.
-        
+        TypeError: if `recursive` is not a boolean type.
+
     """
-    if isinstance(recursive, bool):
-        configuration.RECURSIVE = recursive
-    else:
-        raise TypeError('recursive argument must be a boolean type')
-       
+    _set_bool('RECURSIVE', recursive)

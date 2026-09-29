@@ -22,7 +22,7 @@
 <img src="https://media.giphy.com/media/l44Q6pEdnMOQqHgek/giphy.gif" height="300"/>
 </p>
 
-Named after the erstwhile inspector from *The Expanse*, this package provides convenient, introspection tools using a consistent, intuitive syntax for packages, modules, classes, objects, attributes, and containers. 
+Named after the erstwhile inspector from *The Expanse*, this package provides convenient, introspection tools using a consistent, intuitive syntax for packages, modules, classes, objects, attributes, and containers.
 
 ## Why use miller?
 
@@ -33,17 +33,18 @@ introspection of different objects.
 
 ``` python
 """Returns a list of function names in the module 'item'."""
-[m[0] for m in inspect.getmembers(item, inspect.isfunction) 
+[m[0] for m in inspect.getmembers(item, inspect.isfunction)
  if m[1].__module__ == item.__name__]
 
 """Returns names of properties of the instance 'item'."""
-[a for a in dir(item) if isinstance(getattr(a, item), property)] 
+[a for a in dir(type(item))
+ if isinstance(getattr(type(item), a), property)]
 
 """Returns names of fields of the dataclass 'item'."""
-[f.name for f in dataclasses.fields(item)] 
+[f.name for f in dataclasses.fields(item)]
 ```
 
-That code can be difficult to remember, requires importing a range of packages, and is not easy to understand if you are not familiar with the relevant imported packages. 
+That code can be difficult to remember, requires importing a range of packages, and is not easy to understand if you are not familiar with the relevant imported packages.
 
 <p align="center">
 <img src="https://media.giphy.com/media/3oz8xxBsDMZWcMCHoQ/giphy.gif" height="300"/>
@@ -71,22 +72,23 @@ Unlike the default Python instrospection functions and methods, **miller** uses 
 
 | prefix   | what it does   | returns   |
 |---|---|---|
-| `map`  |combines results of corresponding  `name` and `get` functions into a `dict`  | `dict[str, Any]`   |
-| `get`  | gets sought types from an item  |   `list[Any]`   |
-| `has`  | whether an item has specified types  |   `bool`   |
-| `is` | whether an item is a type  |   `bool`   |
-| `name` | gets `str` names of sought types from an item  |   `list[str]`   |
+| `catalog`  |combines results of corresponding  `name` and `collect` functions into a `dict`  | `dict[str, Any]`   |
+| `collect`  | gets sought kinds from an item  |   `list[Any]`   |
+| `has`  | whether an item has specific attributes of a kind |   `bool`   |
+| `is` | whether an item is a particular kind  |   `bool`   |
+| `name` | gets `str` names of sought kinds from an item  |   `list[str]`   |
 
-Those prefixes are followed by an underscore and a suffix indicating what information is sought. **miller** has XXX possible suffixes for each of those prefixes:
+Those prefixes are followed by an underscore and a suffix indicating what information is sought. **miller** has 28 possible suffixes (not every suffix is available for every prefix):
+
 | suffix  | what it concerns   | what types it inspects   |
 |---|---|---|
-| `annotations`  | class, function, or method annotations   | `object`, `Type`, or `ModuleType`  |
-| `attribute`  | an attribute (including methods) of a class  | attribute in an `object` or `Type` |
+| `annotations`  | type annotations of a class, function, or module   | `object`, `Type`, `ModuleType`, or function  |
+| `attribute`  | an attribute (including methods) of an item  | attribute in an `object`, `Type`, or `ModuleType` |
 | `attributes`  | attributes (including methods or functions)  |  `object`, `Type`, or `ModuleType`  |
 | `class`  | a class (not an instance)  | `object` or `Type` |
 | `classes`  | classes in a module    | `ModuleType`   |
-| `class_attribute`  | attributes of a class (not an instance)  | `object` or `Type` |
-| `class_attributes`  | attributes of a class (not an instance)    | `object` or `Type`    |
+| `class_attribute`  | an attribute defined on a class (not an instance)  | `object` or `Type` |
+| `class_attributes`  | attributes defined on a class (not an instance)    | `object` or `Type`    |
 | `field`  | field in a dataclass  | `dataclass` or `Type[dataclass]` |
 | `fields`  | fields in a dataclass  | `dataclass` or `Type[dataclass]`  |
 | `file_path`  | path of a file | `str` or `Path`  |
@@ -95,30 +97,33 @@ Those prefixes are followed by an underscore and a suffix indicating what inform
 | `folder_paths`  | paths of folders in a path   | `str` or `Path`  |
 | `function`  | a callable function  | `object`|
 | `functions`  | functions in a module  | `ModuleType`  |
-| `instance`  | a class instance (not a class)  | `object` or `Type` |
-| `method`  | method in a class  | attribute in an `object` or `Type` |
+| `instance`  | a class instance (not a class)  | `object` |
+| `instance_attributes`  | attributes stored on an instance  | `object` |
+| `method`  | method (or function) of an item  | attribute in an `object`, `Type`, or `ModuleType` |
 | `methods`  | class or instance methods  | `object` or `Type`   |
-| `module`  | module types  | `object` or `Type` |
-| `modules`  | paths of modules in a path   |  `str` or `Path`  |
-| `path`  | path on disk  | `str` or `Path` |
-| `paths`  | combination of file_paths and folder_paths  | `str` or `Path`   |
-| `property`  | attributes of a class  | attribute in an `object` |
+| `module`  | a module or the path to a python module  | `ModuleType`, `str`, or `Path` |
+| `modules`  | python modules in a folder   |  `str` or `Path`  |
+| `path`  | path to something that exists on disk  | `str` or `Path` |
+| `paths`  | combination of file_paths and folder_paths in a folder  | `str` or `Path`   |
+| `property`  | a property of a class  | attribute in an `object` or `Type` |
 | `properties`  | properties of a class  | `object` or `Type`   |
-| `signatures`  | class, function, or method signatures  | `object`, `Type`, or `ModuleType`    |
-| `variable`  | attributes (excluding methods) of a class | `object`, `Type`, or `ModuleType`   |
-| `variables`  | an attribute (excluding methods or functions)  |  `object`, `Type`, or `ModuleType`   |
+| `signatures`  | signatures of methods (or functions in a module)  | `object`, `Type`, or `ModuleType`    |
+| `variable`  | an attribute (excluding methods or properties) | `object`, `Type`, or `ModuleType`   |
+| `variables`  | attributes (excluding methods or properties)  |  `object`, `Type`, or `ModuleType`   |
 
-The following functions are available in **miller** for the `map`, `get`, `has`, and `name`  suffixes :
+The following functions are available in **miller** for the `catalog`, `collect`, `has`, and `name` prefixes:
 
-| prefix/suffix | `map`  | `get`  | `has`  | `name`  |
+| suffix/prefix | `catalog`  | `collect`  | `has`  | `name`  |
 |---|---|---|---|---|
 | `annotations` | X | X | X | X |
 | `attributes` | X | X | X | X |
 | `classes` | X | X | X | X |
+| `class_attributes` | X | X | X | X |
 | `fields` | X | X | X | X |
 | `file_paths` | X | X | X | X |
 | `folder_paths` | X | X | X | X |
 | `functions` | X | X | X | X |
+| `instance_attributes` | X | X | X | X |
 | `methods` | X | X | X | X |
 | `modules` | X | X | X | X |
 | `paths`  | X | X | X | X |
@@ -126,13 +131,13 @@ The following functions are available in **miller** for the `map`, `get`, `has`,
 | `signatures` | X | X | X | X |
 | `variables` | X | X | X | X |
 
-For the `is` prefix, functions with the following suffixes are included: 
+The `is` prefix has functions for the following singular suffixes: `attribute`, `class`, `class_attribute`, `field`, `file_path`, `folder_path`, `function`, `instance`, `method`, `module`, `path`, `property`, and `variable`. It also includes `is_container`, `is_dict`, `is_dunder`, `is_iterable`, `is_list`, `is_nested`, `is_object`, `is_private`, `is_sequence`, `is_set`, and `is_tuple`. `is_file` and `is_folder` are short aliases of `is_file_path` and `is_folder_path`.
 
- So, for example, 
+So, for example,
 
-* `map_methods`: returns a dict of the method names and methods of an object.
-* `list_methods`: returns a list of methods of an object.
-* `has_methods`: returns whether an object has all of the named methods passed to the `methods` parameter.
+* `catalog_methods`: returns a dict of the method names and methods of an object.
+* `collect_methods`: returns a list of methods of an object.
+* `has_methods`: returns whether an object has all (or, if `match_all = False`, any) of the named methods passed to the `names` parameter.
 * `is_method`: returns whether an item is a method of an object.
 * `name_methods`: returns a list of names of methods of an object.
 
@@ -149,7 +154,7 @@ Miller
 
 ### Requirements
 
-[TODO: List any OS or other restrictions and pre-installation dependencies]
+**miller** requires Python 3.10 or later and has no other dependencies. It runs on Linux, MacOS, and Windows.
 
 ### Installation
 
@@ -161,7 +166,48 @@ pip install miller
 
 ### Usage
 
-[TODO: Describe common use cases, with possible example(s)]
+``` python
+import dataclasses
+
+import miller
+
+
+@dataclasses.dataclass
+class Example:
+    one: int = 1
+    _two: int = 2
+
+    def add(self, other: int) -> int:
+        return self.one + other
+
+    @property
+    def double(self) -> int:
+        return self.one * 2
+
+
+item = Example()
+
+miller.name_methods(item)          # ['add']
+miller.name_properties(item)       # ['double']
+miller.name_fields(item)           # ['one']
+miller.name_fields(item, include_privates = True)  # ['one', '_two']
+miller.catalog_variables(item)     # {'one': 1}
+miller.has_methods(item, 'add')    # True
+miller.is_property(item, 'double') # True
+miller.name_functions(miller.framework)  # functions defined in a module
+miller.name_modules('src/miller')  # python modules in a folder
+```
+
+Functions that check whether an item qualifies (`has_*` and `is_*`) return `False` by default. Pass `raise_error = True` (or call `miller.set_raise_errors(True)`) to have them raise an error instead. The `miller.set_*` functions change the global defaults for `include_privates`, `include_str`, `match_all`, `raise_errors`, `recursive`, module file suffixes, and the function used to name items.
+
+**miller** also provides `Inspector`, which returns an object-oriented inspector appropriate to whatever is passed to it (a module, a folder, a class, or an instance):
+
+``` python
+inspector = miller.Inspector(item)
+inspector.methods      # {'add': <bound method Example.add ...>}
+inspector.variables    # {'one': 1}
+inspector.fields       # {'one': Field(...)}
+```
 
 ## Contributing
 
@@ -169,12 +215,12 @@ Contributors are always welcome. Feel free to grab an [issue](https://www.github
 
 ## Similar Projects
 
-[TODO: If they exist, it is always nice to acknowledge other similar efforts]
+The standard library's [`inspect`](https://docs.python.org/3/library/inspect.html) module offers the underlying tools that **miller** wraps in a more consistent syntax.
 
 ## Acknowledgments
 
-[TODO: Mention any people or organizations that warrant a special acknowledgment]
+This project was generated from [@WithPrecedent](https://github.com/WithPrecedent)'s [![cookiecutter Template](https://img.shields.io/badge/snickerdoodle-bisque?style=for-the-badge&logo=cookiecutter&labelColor=gray)](https://www.github.com/WithPrecedent/snickerdoodle) template.
 
 ## License
 
-Use of this repository is authorized under the [Apache Software License 2.0](https://www.github.com/WithPrecedent/miller/blog/main/LICENSE).
+Use of this repository is authorized under the [Apache Software License 2.0](https://www.github.com/WithPrecedent/miller/blob/main/LICENSE).

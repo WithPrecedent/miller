@@ -1,1110 +1,1068 @@
-"""
-attributes: introspection tools for class and instance attributes
-Corey Rayburn Yung <coreyrayburnyung@gmail.com>
-Copyright 2020-2022, Corey Rayburn Yung
-License: Apache-2.0
+"""Introspection of the attributes of classes, instances, and modules.
 
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
+Each kind of attribute has functions with the following prefixes:
 
-        http://www.apache.org/licenses/LICENSE-2.0
+    catalog: returns a dict of names and values.
+    collect: returns a list of values.
+    has: returns whether specified names are of that kind.
+    name: returns a list of str names.
 
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+The kinds are: `annotations`, `attributes`, `class_attributes`, `fields`,
+`instance_attributes`, `methods`, `properties`, `signatures`, and `variables`.
+Singular `is_*` functions (for example, `is_method`) check a single name.
 
 Contents:
-    This module contains the following types of inspectors:
-        has
-        is
-        list
-        map
-        name
-    Those relate to the following attributes of classes and instances:
-        attributes
-        fields
-        methods
-        properties
-        traits
-   
-ToDo:
-    Add functions for annotation instrospection.
+    is_attribute, is_class_attribute, is_field, is_instance_attribute,
+    is_method, is_property, is_variable
+    catalog_*, collect_*, has_*, name_* for each of the kinds above.
 
 """
+
 from __future__ import annotations
-from collections.abc import MutableSequence
+
 import dataclasses
+import functools
 import inspect
 import types
-from typing import Any, Optional
-
-import camina 
+from collections.abc import Callable
+from typing import Any
 
 from . import base
-from . import configuration
+
+__all__: list[str] = [
+    'catalog_annotations',
+    'catalog_attributes',
+    'catalog_class_attributes',
+    'catalog_fields',
+    'catalog_instance_attributes',
+    'catalog_methods',
+    'catalog_properties',
+    'catalog_signatures',
+    'catalog_variables',
+    'collect_annotations',
+    'collect_attributes',
+    'collect_class_attributes',
+    'collect_fields',
+    'collect_instance_attributes',
+    'collect_methods',
+    'collect_properties',
+    'collect_signatures',
+    'collect_variables',
+    'has_annotations',
+    'has_attributes',
+    'has_class_attributes',
+    'has_fields',
+    'has_instance_attributes',
+    'has_methods',
+    'has_properties',
+    'has_signatures',
+    'has_variables',
+    'is_attribute',
+    'is_class_attribute',
+    'is_field',
+    'is_instance_attribute',
+    'is_method',
+    'is_property',
+    'is_variable',
+    'name_annotations',
+    'name_attributes',
+    'name_class_attributes',
+    'name_fields',
+    'name_instance_attributes',
+    'name_methods',
+    'name_properties',
+    'name_signatures',
+    'name_variables']
+
+_MISSING: Any = object()
+_PROPERTY_TYPES: tuple[type, ...] = (property, functools.cached_property)
 
 
-def has_attributes(
-    item: Any, 
-    attributes: MutableSequence[str], 
-    raise_error: Optional[bool] = None,
-    match_all: Optional[bool] = None) -> bool:
-    """Returns whether 'attributes' exist in 'item'.
+def _static(item: Any, name: str) -> Any:
+    """Returns attribute `name` of `item` without running any descriptors."""
+    try:
+        return inspect.getattr_static(item, name)
+    except AttributeError:
+        return _MISSING
 
-    Args:
-        item (Any): class or instance to examine.
-        attributes (MutableSequence[str]): names of attributes to check.
-        raise_error (Optional[bool]): whether to raise an error if any 
-            'attributes' are not attributes of 'item' (True) or to simply 
-            return False in such situations. Defaults to None, which means the 
-            global 'miller.RAISE_ERRORS' setting will be used.
-        match_all (Optional[bool]): whether all items in 'attributes' must match
-            (True) or any of the items must match (False). Defaults to None,
-            which means the global 'miller.MATCH_ALL' will be used.
-    
-    Raises:
-        AttributeError: if 'attributes' are not attributes of 'item' and 
-            'raise_error' is True (or if it is None and the global setting is
-            True).
-                                 
-    Returns:
-        bool: whether some or all (depending on 'match_all') of 'attributes' 
-            exist in 'item'.
-    
+
+def _value(item: Any, name: str) -> Any:
+    """Returns the value of `name` in `item`.
+
+    If getting the value fails (as can happen with a property that raises an
+    error), the raw attribute is returned instead.
     """
-    return base.has_elements(
-        item = item,
-        attributes = attributes,
-        checker = is_attribute,
-        raise_error = raise_error,
-        match_all = match_all)
+    try:
+        return getattr(item, name)
+    except Exception:  # noqa: BLE001
+        return _static(item, name)
 
-def has_class_attributes(
-    item: Any, 
-    attributes: MutableSequence[str], 
-    raise_error: Optional[bool] = None,
-    match_all: Optional[bool] = None) -> bool:
-    """Returns whether 'attributes' exist in 'item' as class attributes.
 
-    Args:
-        item (Any): class or instance to examine.
-        attributes (MutableSequence[str]): names of attributes to check.
-        raise_error (Optional[bool]): whether to raise an error if any 
-            'attributes' are not attributes of 'item' (True) or to simply 
-            return False in such situations. Defaults to None, which means the 
-            global 'miller.RAISE_ERRORS' setting will be used.
-        match_all (Optional[bool]): whether all items in 'attributes' must match
-            (True) or any of the items must match (False). Defaults to None,
-            which means the global 'miller.MATCH_ALL' will be used.
-    
-    Raises:
-        AttributeError: if 'attributes' are not attributes of 'item' and 
-            'raise_error' is True (or if it is None and the global setting is
-            True).
-                                 
-    Returns:
-        bool: whether some or all (depending on 'match_all') of 'attributes' 
-            exist in 'item' and are the appropriate type.
-    
-    """
-    return base.has_elements(
-        item = item,
-        attributes = attributes,
-        checker = is_class_attribute,
-        raise_error = raise_error,
-        match_all = match_all)
-
-def has_class_methods(
-    item: Any, 
-    attributes: MutableSequence[str], 
-    raise_error: Optional[bool] = None,
-    match_all: Optional[bool] = None) -> bool:
-    """Returns whether 'attributes' exist in 'item' as class methods.
-
-    Args:
-        item (Any): class or instance to examine.
-        attributes (MutableSequence[str]): names of attributes to check.
-        raise_error (Optional[bool]): whether to raise an error if any 
-            'attributes' are not attributes of 'item' (True) or to simply 
-            return False in such situations. Defaults to None, which means the 
-            global 'miller.RAISE_ERRORS' setting will be used.
-        match_all (Optional[bool]): whether all items in 'attributes' must match
-            (True) or any of the items must match (False). Defaults to None,
-            which means the global 'miller.MATCH_ALL' will be used.
-    
-    Raises:
-        AttributeError: if 'attributes' are not attributes of 'item' and 
-            'raise_error' is True (or if it is None and the global setting is
-            True).
-                                 
-    Returns:
-        bool: whether some or all (depending on 'match_all') of 'attributes' 
-            exist in 'item' and are the appropriate type.
-    
-    """
-    return base.has_elements(
-        item = item,
-        attributes = attributes,
-        checker = is_class_method,
-        raise_error = raise_error,
-        match_all = match_all)
-
-def has_class_objects(
-    item: Any, 
-    attributes: MutableSequence[str], 
-    raise_error: Optional[bool] = None,
-    match_all: Optional[bool] = None) -> bool:
-    """Returns whether 'attributes' exist in 'item' as class objects.
-
-    Args:
-        item (Any): class or instance to examine.
-        attributes (MutableSequence[str]): names of attributes to check.
-        raise_error (Optional[bool]): whether to raise an error if any 
-            'attributes' are not attributes of 'item' (True) or to simply 
-            return False in such situations. Defaults to None, which means the 
-            global 'miller.RAISE_ERRORS' setting will be used.
-        match_all (Optional[bool]): whether all items in 'attributes' must match
-            (True) or any of the items must match (False). Defaults to None,
-            which means the global 'miller.MATCH_ALL' will be used.
-    
-    Raises:
-        AttributeError: if 'attributes' are not attributes of 'item' and 
-            'raise_error' is True (or if it is None and the global setting is
-            True).
-                                 
-    Returns:
-        bool: whether some or all (depending on 'match_all') of 'attributes' 
-            exist in 'item' and are the appropriate type.
-    
-    """
-    return base.has_elements(
-        item = item,
-        attributes = attributes,
-        checker = is_class_object,
-        raise_error = raise_error,
-        match_all = match_all)
-               
-def has_fields(
-    item: dataclasses.dataclass | type[dataclasses.dataclass], 
-    attributes: MutableSequence[str], 
-    raise_error: Optional[bool] = None,
-    match_all: Optional[bool] = None) -> bool:
-    """Returns whether 'attributes' are fields in dataclass 'item'.
-
-    Args:
-        item (Any): class or instance to examine.
-        attributes (MutableSequence[str]): names of attributes to check.
-        raise_error (Optional[bool]): whether to raise an error if any 
-            'attributes' are not attributes of 'item' (True) or to simply 
-            return False in such situations. Defaults to None, which means the 
-            global 'miller.RAISE_ERRORS' setting will be used.
-        match_all (Optional[bool]): whether all items in 'attributes' must match
-            (True) or any of the items must match (False). Defaults to None,
-            which means the global 'miller.MATCH_ALL' will be used.
-    
-    Raises:
-        AttributeError: if 'attributes' are not attributes of 'item' and 
-            'raise_error' is True (or if it is None and the global setting is
-            True).
-        TypeError: if 'item' is not a dataclass.
-                                 
-    Returns:
-        bool: whether some or all (depending on 'match_all') of 'attributes' 
-            exist in 'item' and are the appropriate type.
-    
-    """
-    if dataclasses.identity.is_dataclass(item):
-        return base.has_elements(
-            item = item,
-            attributes = attributes,
-            checker = is_field,
-            raise_error = raise_error,
-            match_all = match_all)
-    else:
-        raise TypeError('item must be a dataclass')
-
-def has_instance_attributes(
-    item: Any, 
-    attributes: MutableSequence[str], 
-    raise_error: Optional[bool] = None,
-    match_all: Optional[bool] = None) -> bool:
-    """Returns whether 'attributes' exist in 'item' as instance attributes.
-
-    Args:
-        item (Any): class or instance to examine.
-        attributes (MutableSequence[str]): names of attributes to check.
-        raise_error (Optional[bool]): whether to raise an error if any 
-            'attributes' are not attributes of 'item' (True) or to simply 
-            return False in such situations. Defaults to None, which means the 
-            global 'miller.RAISE_ERRORS' setting will be used.
-        match_all (Optional[bool]): whether all items in 'attributes' must match
-            (True) or any of the items must match (False). Defaults to None,
-            which means the global 'miller.MATCH_ALL' will be used.
-    
-    Raises:
-        AttributeError: if 'attributes' are not attributes of 'item' and 
-            'raise_error' is True (or if it is None and the global setting is
-            True).
-                                 
-    Returns:
-        bool: whether some or all (depending on 'match_all') of 'attributes' 
-            exist in 'item' and are the appropriate type.
-    
-    """
-    return base.has_elements(
-        item = item,
-        attributes = attributes,
-        checker = is_instance_attribute,
-        raise_error = raise_error,
-        match_all = match_all)
-
-def has_instance_methods(
-    item: Any, 
-    attributes: MutableSequence[str], 
-    raise_error: Optional[bool] = None,
-    match_all: Optional[bool] = None) -> bool:
-    """Returns whether 'attributes' exist in 'item' as instance methods.
-
-    Args:
-        item (Any): class or instance to examine.
-        attributes (MutableSequence[str]): names of attributes to check.
-        raise_error (Optional[bool]): whether to raise an error if any 
-            'attributes' are not attributes of 'item' (True) or to simply 
-            return False in such situations. Defaults to None, which means the 
-            global 'miller.RAISE_ERRORS' setting will be used.
-        match_all (Optional[bool]): whether all items in 'attributes' must match
-            (True) or any of the items must match (False). Defaults to None,
-            which means the global 'miller.MATCH_ALL' will be used.
-    
-    Raises:
-        AttributeError: if 'attributes' are not attributes of 'item' and 
-            'raise_error' is True (or if it is None and the global setting is
-            True).
-                                 
-    Returns:
-        bool: whether some or all (depending on 'match_all') of 'attributes' 
-            exist in 'item' and are the appropriate type.
-    
-    """
-    return base.has_elements(
-        item = item,
-        attributes = attributes,
-        checker = is_instance_method,
-        raise_error = raise_error,
-        match_all = match_all)
-
-def has_instance_objects(
-    item: Any, 
-    attributes: MutableSequence[str], 
-    raise_error: Optional[bool] = None,
-    match_all: Optional[bool] = None) -> bool:
-    """Returns whether 'attributes' exist in 'item' as instance objects.
-
-    Args:
-        item (Any): class or instance to examine.
-        attributes (MutableSequence[str]): names of attributes to check.
-        raise_error (Optional[bool]): whether to raise an error if any 
-            'attributes' are not attributes of 'item' (True) or to simply 
-            return False in such situations. Defaults to None, which means the 
-            global 'miller.RAISE_ERRORS' setting will be used.
-        match_all (Optional[bool]): whether all items in 'attributes' must match
-            (True) or any of the items must match (False). Defaults to None,
-            which means the global 'miller.MATCH_ALL' will be used.
-    
-    Raises:
-        AttributeError: if 'attributes' are not attributes of 'item' and 
-            'raise_error' is True (or if it is None and the global setting is
-            True).
-                                 
-    Returns:
-        bool: whether some or all (depending on 'match_all') of 'attributes' 
-            exist in 'item' and are the appropriate type.
-    
-    """
-    return base.has_elements(
-        item = item,
-        attributes = attributes,
-        checker = is_instance_object,
-        raise_error = raise_error,
-        match_all = match_all)
-        
-def has_methods(
-    item: Any, 
-    attributes: MutableSequence[str], 
-    raise_error: Optional[bool] = None,
-    match_all: Optional[bool] = None) -> bool:
-    """Returns whether 'attributes' exist in 'item' as methods.
-
-    Args:
-        item (Any): class or instance to examine.
-        attributes (MutableSequence[str]): names of attributes to check.
-        raise_error (Optional[bool]): whether to raise an error if any 
-            'attributes' are not attributes of 'item' (True) or to simply 
-            return False in such situations. Defaults to None, which means the 
-            global 'miller.RAISE_ERRORS' setting will be used.
-        match_all (Optional[bool]): whether all items in 'attributes' must match
-            (True) or any of the items must match (False). Defaults to None,
-            which means the global 'miller.MATCH_ALL' will be used.
-    
-    Raises:
-        AttributeError: if 'attributes' are not attributes of 'item' and 
-            'raise_error' is True (or if it is None and the global setting is
-            True).
-                                 
-    Returns:
-        bool: whether some or all (depending on 'match_all') of 'attributes' 
-            exist in 'item' and are the appropriate type.
-        
-    """
-    return base.has_elements(
-        item = item,
-        attributes = attributes,
-        checker = is_method,
-        raise_error = raise_error,
-        match_all = match_all)
-  
-def has_properties(
-    item: Any, 
-    attributes: MutableSequence[str], 
-    raise_error: Optional[bool] = None,
-    match_all: Optional[bool] = None) -> bool:
-    """Returns whether 'attributes' exist in 'item' as properties.
-
-    Args:
-        item (Any): class or instance to examine.
-        attributes (MutableSequence[str]): names of attributes to check.
-        raise_error (Optional[bool]): whether to raise an error if any 
-            'attributes' are not attributes of 'item' (True) or to simply 
-            return False in such situations. Defaults to None, which means the 
-            global 'miller.RAISE_ERRORS' setting will be used.
-        match_all (Optional[bool]): whether all items in 'attributes' must match
-            (True) or any of the items must match (False). Defaults to None,
-            which means the global 'miller.MATCH_ALL' will be used.
-    
-    Raises:
-        AttributeError: if 'attributes' are not attributes of 'item' and 
-            'raise_error' is True (or if it is None and the global setting is
-            True).
-                                 
-    Returns:
-        bool: whether some or all (depending on 'match_all') of 'attributes' 
-            exist in 'item' and are the appropriate type.
-        
-    """
-    return base.has_elements(
-        item = item,
-        attributes = attributes,
-        checker = is_property,
-        raise_error = raise_error,
-        match_all = match_all)
-        
-def has_traits(
-    item: Any,
-    attributes: Optional[MutableSequence[str]] = None,
-    methods: Optional[MutableSequence[str]] = None,
-    properties: Optional[MutableSequence[str]] = None, 
-    objects: Optional[MutableSequence[str]] = None,
-    raise_error: Optional[bool] = None,
-    match_all: Optional[bool] = None) -> bool:
-    """Returns if 'item' has all or some of the passed traits.
-
-    Args:
-        item (Any): object to examine.
-        attributes (MutableSequence[str]): names of attributes to check.
-        methods (MutableSequence[str]): name(s) of methods to check.       
-        properties (MutableSequence[str]): names of properties to check.
-        objects (MutableSequence[str]): names of objects to check.
-        raise_error (Optional[bool]): whether to raise an error if any of the 
-            traits are not an attribute of 'item' (True) or to simply 
-            return False in such situations. Defaults to None, which means the 
-            global 'miller.RAISE_ERRORS' setting will be used.
-        match_all (Optional[bool]): whether all items in the traits must match
-            (True) or any of the items must match (False). Defaults to None,
-            which means the global 'miller.MATCH_ALL' will be used.
-                          
-    Returns:
-        bool: whether all passed arguments exist in 'item'.    
-    
-    """
-    attributes = attributes or []
-    methods = methods or []
-    properties = properties or []
-    objects = objects or []
-    kwargs = dict(raise_error = raise_error, match_all = match_all)
+def _is_routine(raw: Any) -> bool:
+    """Returns whether `raw` (a statically found attribute) is a method."""
     return (
-        has_attributes(item, attributes = attributes, **kwargs)
-        and has_methods(item, attributes = methods, **kwargs)
-        and has_properties(item, attributes = properties, **kwargs)
-        and has_objects(item, attributes = objects, **kwargs))
-  
-def has_objects(
-    item: Any, 
-    attributes: MutableSequence[str], 
-    raise_error: Optional[bool] = None,
-    match_all: Optional[bool] = None) -> bool:
-    """Returns whether 'attributes' exist in 'item' as simple data objects.
+        isinstance(raw, (classmethod, staticmethod))
+        or inspect.isroutine(raw))
+
+
+def is_attribute(item: Any, name: str, raise_error: bool | None = None) -> bool:
+    """Returns whether `name` is an attribute of `item`.
 
     Args:
-        item (Any): class or instance to examine.
-        attributes (MutableSequence[str]): names of attributes to check.
-        raise_error (Optional[bool]): whether to raise an error if any 
-            'attributes' are not attributes of 'item' (True) or to simply 
-            return False in such situations. Defaults to None, which means the 
-            global 'miller.RAISE_ERRORS' setting will be used.
-        match_all (Optional[bool]): whether all items in 'attributes' must match
-            (True) or any of the items must match (False). Defaults to None,
-            which means the global 'miller.MATCH_ALL' will be used.
-    
-    Raises:
-        AttributeError: if 'attributes' are not attributes of 'item' and 
-            'raise_error' is True (or if it is None and the global setting is
-            True).
-                                 
-    Returns:
-        bool: whether some or all (depending on 'match_all') of 'attributes' 
-            exist in 'item' and are the appropriate type.
-        
-    """
-    return base.has_elements(
-        item = item,
-        attributes = attributes,
-        checker = is_object,
-        raise_error = raise_error,
-        match_all = match_all)
-             
-def is_attribute(
-    item: Any,
-    attribute: str, 
-    raise_error: Optional[bool] = None) -> bool:
-    """Returns if 'attribute' is an attribute of 'item'.
+        item: class, instance, or module to examine.
+        name: str name of the attribute.
+        raise_error: whether to raise an `AttributeError` if `name` is not an
+            attribute. If None, `miller.configuration.RAISE_ERRORS` is used.
 
-    Args:
-        item (Any): class or instance to examine.
-        attribute (str): name of attribute to examine.
-        raise_error (Optional[bool]): whether to raise an error if 'attribute' 
-            is not an attribute of 'item' (True) or to simply return False in
-            such situations. Defaults to None, which means the global 
-            'miller.RAISE_ERRORS' setting will be used.
-    
-    Raises:
-        TypeError: if 'item' is not the appropriate type and 'raise_error' is 
-            True (or if it is None and the global setting is True).
-                  
     Returns:
-        bool: whether 'attribute' is an attribute.
-        
+        Whether `name` is an attribute of `item`.
+
     """
-    return base.is_kind_class(
-        item = item,
-        kind = attribute,
-        checker = hasattr,
-        raise_error = raise_error)
+    value = _static(item, name) is not _MISSING
+    if not value:
+        try:
+            value = hasattr(item, name)
+        except Exception:  # noqa: BLE001
+            value = False
+    return base.verdict(
+        value, raise_error, f'{name} is not an attribute of {item!r}',
+        AttributeError)
+
 
 def is_class_attribute(
     item: Any,
-    attribute: str, 
-    raise_error: Optional[bool] = None) -> bool:
-    """Returns if 'attribute' is a class attribute of 'item'.
+    name: str,
+    raise_error: bool | None = None) -> bool:
+    """Returns whether `name` is an attribute of the class of `item`.
 
     Args:
-        item (Any): class or instance to examine.
-        attribute (str): name of attribute to examine.
-        raise_error (Optional[bool]): whether to raise an error if 'attribute' 
-            is not an attribute of 'item' (True) or to simply return False in
-            such situations. Defaults to None, which means the global 
-            'miller.RAISE_ERRORS' setting will be used.
-    
-    Raises:
-        TypeError: if 'item' is not the appropriate type and 'raise_error' is 
-            True (or if it is None and the global setting is True).
-                  
-    Returns:
-        bool: whether 'attribute' is an attribute and the appropriate type.
-        
-    """ 
-    item = item if inspect.isclass(item) else item.__class__
-    return base.is_kind_class(
-        item = item,
-        kind = attribute,
-        checker = hasattr,
-        raise_error = raise_error)
+        item: class or instance to examine.
+        name: str name of the attribute.
+        raise_error: whether to raise an `AttributeError` if `name` is not a
+            class attribute. If None, `miller.configuration.RAISE_ERRORS` is
+            used.
 
-def is_class_method(
-    item: Any,
-    attribute: str, 
-    raise_error: Optional[bool] = None) -> bool:
-    """Returns if 'attribute' is a class method of 'item'.
-
-    The code used in this function is adapted from:
-    https://stackoverflow.com/questions/19227724/check-if-a-function-uses-classmethod
-    
-    Args:
-        item (Any): class or instance to examine.
-        attribute (str): name of attribute to examine.
-        raise_error (Optional[bool]): whether to raise an error if 'attribute' 
-            is not an attribute of 'item' (True) or to simply return False in
-            such situations. Defaults to None, which means the global 
-            'miller.RAISE_ERRORS' setting will be used.
-    
-    Raises:
-        TypeError: if 'item' is not the appropriate type and 'raise_error' is 
-            True (or if it is None and the global setting is True).
-                  
     Returns:
-        bool: whether 'attribute' is an attribute and the appropriate type.
-        
+        Whether `name` is defined on the class (or a parent class).
+
     """
-    if raise_error is None:
-        raise_error = configuration.RAISE_ERRORS    
-    item = item if inspect.isclass(item) else item.__class__
-    if not hasattr(item, attribute) and raise_error:
-        raise AttributeError(f'{attribute} is not an method of {item}')
-    elif is_method(item, attribute):
-        method = getattr(item, attribute)
-        bound_to = getattr(method, '__self__', None)
-        if not isinstance(bound_to, type):
-            return False
-        name = method.__name__
-        for cls in bound_to.__mro__:
-            descriptor = vars(cls).get(name)
-            if descriptor is not None:
-                return isinstance(descriptor, classmethod)
-    return False    
-       
-def is_class_object(
-    item: Any,
-    attribute: str, 
-    raise_error: Optional[bool] = None) -> bool:
-    """Returns if 'attribute' is a class object of 'item'.
+    cls = item if inspect.isclass(item) else item.__class__
+    return base.verdict(
+        _static(cls, name) is not _MISSING,
+        raise_error,
+        f'{name} is not a class attribute of {item!r}',
+        AttributeError)
+
+
+def is_field(item: Any, name: str, raise_error: bool | None = None) -> bool:
+    """Returns whether `name` is a field of the dataclass `item`.
 
     Args:
-        item (Any): class or instance to examine.
-        attribute (str): name of attribute to examine.
-        raise_error (Optional[bool]): whether to raise an error if 'attribute' 
-            is not an attribute of 'item' (True) or to simply return False in
-            such situations. Defaults to None, which means the global 
-            'miller.RAISE_ERRORS' setting will be used.
-    
-    Raises:
-        TypeError: if 'item' is not the appropriate type and 'raise_error' is 
-            True (or if it is None and the global setting is True).
-                  
-    Returns:
-        bool: whether 'attribute' is an attribute and the appropriate type.
-        
-    """
-    if raise_error is None:
-        raise_error = configuration.RAISE_ERRORS    
-    owner = item if inspect.isclass(item) else item.__class__
-    if not hasattr(item, attribute) and raise_error:
-        raise AttributeError(f'{attribute} is not an attribute of {item}')
-    else:
-        return (
-            hasattr(owner, attribute)
-            and not is_method(item, attribute, raise_error = False)
-            and not is_property(owner, attribute, raise_error = False))
-    
-def is_field(
-    item: Any,
-    attribute: str, 
-    raise_error: Optional[bool] = None) -> bool:
-    """Returns if 'attribute' is a field of 'item'.
+        item: dataclass or dataclass instance to examine.
+        name: str name of the field.
+        raise_error: whether to raise an `AttributeError` if `name` is not a
+            field. If None, `miller.configuration.RAISE_ERRORS` is used.
 
-    Args:
-        item (dataclasses.dataclass | type[dataclasses.dataclass]): dataclass or 
-            dataclass instance to examine.
-        attribute (str): name of attribute to examine.
-        raise_error (Optional[bool]): whether to raise an error if 'attribute' 
-            is not an attribute of 'item' (True) or to simply return False in
-            such situations. Defaults to None, which means the global 
-            'miller.RAISE_ERRORS' setting will be used.
-    
-    Raises:
-        TypeError: if 'item' is not the appropriate type and 'raise_error' is 
-            True (or if it is None and the global setting is True).
-        TypeError: if 'item' is not a dataclass.
-                  
     Returns:
-        bool: whether 'attribute' is an attribute and the appropriate type.
-        
+        Whether `name` is a field of `item`. This is False if `item` is not a
+            dataclass.
+
     """
-    if dataclasses.identity.is_dataclass(item):
-        return base.is_kind_class(
-            checker = dataclasses.fields,
-            raise_error = raise_error,
-            item = getattr(item, attribute))
-    else:
-        raise TypeError('item must be a dataclass')
+    value = dataclasses.is_dataclass(item) and name in {
+        f.name for f in dataclasses.fields(item)}
+    return base.verdict(
+        value, raise_error, f'{name} is not a field of {item!r}',
+        AttributeError)
+
 
 def is_instance_attribute(
-    item: object,
-    attribute: str, 
-    raise_error: Optional[bool] = None) -> bool:
-    """Returns if 'attribute' is an instance attribute of 'item'.
-
-    Args:
-        item (Any): class or instance to examine.
-        attribute (str): name of attribute to examine.
-        raise_error (Optional[bool]): whether to raise an error if 'attribute' 
-            is not an attribute of 'item' (True) or to simply return False in
-            such situations. Defaults to None, which means the global 
-            'miller.RAISE_ERRORS' setting will be used.
-    
-    Raises:
-        TypeError: if 'item' is not the appropriate type and 'raise_error' is 
-            True (or if it is None and the global setting is True).
-                  
-    Returns:
-        bool: whether 'attribute' is an attribute and the appropriate type.
-        
-    """
-    if raise_error is None:
-        raise_error = configuration.RAISE_ERRORS
-    owner = item if inspect.isclass(item) else item.__class__
-    if not hasattr(item, attribute) and raise_error:
-        raise AttributeError(f'{attribute} is not an attribute of {item}')
-    else:
-        return (
-            hasattr(item, attribute) 
-            and not is_class_attribute(owner, attribute, raise_error = False))
- 
-def is_instance_method(
-    item: object,
-    attribute: str, 
-    raise_error: Optional[bool] = None) -> bool:
-    """Returns if 'attribute' is an instance method of 'item'.
-
-    Args:
-        item (Any): class or instance to examine.
-        attribute (str): name of attribute to examine.
-        raise_error (Optional[bool]): whether to raise an error if 'attribute' 
-            is not an attribute of 'item' (True) or to simply return False in
-            such situations. Defaults to None, which means the global 
-            'miller.RAISE_ERRORS' setting will be used.
-    
-    Raises:
-        TypeError: if 'item' is not the appropriate type and 'raise_error' is 
-            True (or if it is None and the global setting is True).
-                  
-    Returns:
-        bool: whether 'attribute' is an attribute and the appropriate type.
-        
-    """
-    if raise_error is None:
-        raise_error = configuration.RAISE_ERRORS    
-    if not hasattr(item, attribute) and raise_error:
-        raise AttributeError(f'{attribute} is not an method of {item}')
-    else:
-        return (
-            hasattr(item, attribute) 
-            and is_method(item, attribute, raise_error = False)
-            and not is_class_method(item, attribute, raise_error = False))
-  
-def is_instance_object(
-    item: object,
-    attribute: str, 
-    raise_error: Optional[bool] = None) -> bool:
-    """Returns if 'attribute' is an instance object of 'item'.
-
-    Args:
-        item (Any): class or instance to examine.
-        attribute (str): name of attribute to examine.
-        raise_error (Optional[bool]): whether to raise an error if 'attribute' 
-            is not an attribute of 'item' (True) or to simply return False in
-            such situations. Defaults to None, which means the global 
-            'miller.RAISE_ERRORS' setting will be used.
-    
-    Raises:
-        TypeError: if 'item' is not the appropriate type and 'raise_error' is 
-            True (or if it is None and the global setting is True).
-                  
-    Returns:
-        bool: whether 'attribute' is an attribute and the appropriate type.
-        
-    """
-    if raise_error is None:
-        raise_error = configuration.RAISE_ERRORS    
-    owner = item if inspect.isclass(item) else item.__class__
-    if not hasattr(item, attribute) and raise_error:
-        raise AttributeError(f'{attribute} is not an attribute of {item}')
-    else:
-        return (
-            hasattr(item, attribute)
-            and not is_class_attribute(owner, attribute, raise_error = False)
-            and not is_method(item, attribute, raise_error = False)
-            and not is_property(item, attribute, raise_error = False))
-         
-def is_method(
     item: Any,
-    attribute: str, 
-    raise_error: Optional[bool] = None) -> bool:
-    """Returns if 'attribute' is a method of 'item'.
+    name: str,
+    raise_error: bool | None = None) -> bool:
+    """Returns whether `name` is an attribute stored on the instance `item`.
 
     Args:
-        item (Any): class or instance to examine.
-        attribute (str): name of attribute to examine.
-        raise_error (Optional[bool]): whether to raise an error if 'attribute' 
-            is not an attribute of 'item' (True) or to simply return False in
-            such situations. Defaults to None, which means the global 
-            'miller.RAISE_ERRORS' setting will be used.
-    
-    Raises:
-        TypeError: if 'item' is not the appropriate type and 'raise_error' is 
-            True (or if it is None and the global setting is True).
-                  
+        item: instance to examine. A class always returns False.
+        name: str name of the attribute.
+        raise_error: whether to raise an `AttributeError` if `name` is not an
+            instance attribute. If None, `miller.configuration.RAISE_ERRORS` is
+            used.
+
     Returns:
-        bool: whether 'attribute' is an attribute and the appropriate type.
-        
+        Whether `name` is in the `__dict__` of `item` or is a filled slot.
+
     """
-    return base.is_kind_class(
-        checker = inspect.ismethod,
-        raise_error = raise_error,
-        item = getattr(item, attribute))    
-  
-def is_property(
+    value = False
+    if not inspect.isclass(item):
+        if name in getattr(item, '__dict__', {}):
+            value = True
+        else:
+            raw = _static(item.__class__, name)
+            value = (
+                isinstance(raw, types.MemberDescriptorType)
+                and _static(item, name) is not _MISSING
+                and hasattr(item, name))
+    return base.verdict(
+        value, raise_error, f'{name} is not an instance attribute of {item!r}',
+        AttributeError)
+
+
+def is_method(item: Any, name: str, raise_error: bool | None = None) -> bool:
+    """Returns whether `name` is a method (or function) of `item`.
+
+    Args:
+        item: class, instance, or module to examine.
+        name: str name of the attribute.
+        raise_error: whether to raise an `AttributeError` if `name` is not a
+            method. If None, `miller.configuration.RAISE_ERRORS` is used.
+
+    Returns:
+        Whether `name` is an attribute of `item` that is a function, method,
+            classmethod, or staticmethod. A callable stored in the `__dict__`
+            of an instance is not a method.
+
+    """
+    raw = _static(item, name)
+    value = _is_routine(raw)
+    if value and not inspect.isclass(item) and not inspect.ismodule(item):
+        value = name not in getattr(item, '__dict__', {})
+    return base.verdict(
+        value, raise_error, f'{name} is not a method of {item!r}',
+        AttributeError)
+
+
+def is_property(item: Any, name: str, raise_error: bool | None = None) -> bool:
+    """Returns whether `name` is a property of `item`.
+
+    Args:
+        item: class or instance to examine.
+        name: str name of the attribute.
+        raise_error: whether to raise an `AttributeError` if `name` is not a
+            property. If None, `miller.configuration.RAISE_ERRORS` is used.
+
+    Returns:
+        Whether `name` is a `property` (or `functools.cached_property`).
+
+    """
+    return base.verdict(
+        isinstance(_static(item, name), _PROPERTY_TYPES),
+        raise_error,
+        f'{name} is not a property of {item!r}',
+        AttributeError)
+
+
+def is_variable(item: Any, name: str, raise_error: bool | None = None) -> bool:
+    """Returns whether `name` is an attribute that is not a method or property.
+
+    Args:
+        item: class, instance, or module to examine.
+        name: str name of the attribute.
+        raise_error: whether to raise an `AttributeError` if `name` is not a
+            variable. If None, `miller.configuration.RAISE_ERRORS` is used.
+
+    Returns:
+        Whether `name` is an attribute of `item` that is neither a method nor a
+            property.
+
+    """
+    value = (
+        is_attribute(item, name, raise_error = False)
+        and not is_method(item, name, raise_error = False)
+        and not is_property(item, name, raise_error = False))
+    return base.verdict(
+        value, raise_error, f'{name} is not a variable of {item!r}',
+        AttributeError)
+
+
+""" Names (the str names of attributes of each kind) """
+
+
+def _names(
     item: Any,
-    attribute: str, 
-    raise_error: Optional[bool] = None) -> bool:
-    """Returns if 'attribute' is a property of 'item'.
+    checker: Callable[[Any, str], bool],
+    include_privates: bool | None) -> list[str]:
+    """Returns names in `dir(item)` that `checker` accepts."""
+    return base.name_where(
+        names = dir(item),
+        predicate = functools.partial(checker, item),
+        include_privates = include_privates)
 
-    Args:
-        item (Any): class or instance to examine.
-        attribute (str): name of attribute to examine.
-        raise_error (Optional[bool]): whether to raise an error if 'attribute' 
-            is not an attribute of 'item' (True) or to simply return False in
-            such situations. Defaults to None, which means the global 
-            'miller.RAISE_ERRORS' setting will be used.
-    
-    Raises:
-        TypeError: if 'item' is not the appropriate type and 'raise_error' is 
-            True (or if it is None and the global setting is True).
-                  
-    Returns:
-        bool: whether 'attribute' is an attribute and the appropriate type.
-        
-    """
-    if raise_error is None:
-        raise_error = configuration.RAISE_ERRORS    
-    item = item if inspect.isclass(item) else item.__class__
-    if not hasattr(item, attribute) and raise_error:
-        raise AttributeError(f'{attribute} is not an attribute of {item}')
-    else:
-        return (
-            hasattr(item, attribute) 
-            and isinstance(getattr(item, attribute), property))
 
-def is_object(
+def _catalog(
     item: Any,
-    attribute: str, 
-    raise_error: Optional[bool] = None) -> bool:
-    """Returns if 'attribute' is a data object of 'item'.
+    checker: Callable[[Any, str], bool],
+    include_privates: bool | None) -> dict[str, Any]:
+    """Returns dict of names in `dir(item)` accepted by `checker`."""
+    return base.catalog_where(
+        names = dir(item),
+        predicate = functools.partial(checker, item),
+        getter = functools.partial(_value, item),
+        include_privates = include_privates)
 
-    Args:
-        item (Any): class or instance to examine.
-        attribute (str): name of attribute to examine.
-        raise_error (Optional[bool]): whether to raise an error if 'attribute' 
-            is not an attribute of 'item' (True) or to simply return False in
-            such situations. Defaults to None, which means the global 
-            'miller.RAISE_ERRORS' setting will be used.
-    
-    Raises:
-        TypeError: if 'item' is not the appropriate type and 'raise_error' is 
-            True (or if it is None and the global setting is True).
-                  
-    Returns:
-        bool: whether 'attribute' is an attribute and the appropriate type.
-        
-    """
-    if raise_error is None:
-        raise_error = configuration.RAISE_ERRORS    
-    if not hasattr(item, attribute) and raise_error:
-        raise AttributeError(f'{attribute} is not an attribute of {item}')
-    else:
-        return(
-            hasattr(item, attribute)
-            and not is_method(item, attribute, raise_error = False)
-            and not is_property(item, attribute, raise_error = False))
-
-def map_attributes(
-    item: object, 
-    include_private: bool = False) -> dict[str, Any]:
-    """Returns dict of attributes of 'item'.
-    
-    Args:
-        item (Any): item to examine.
-        include_private (bool): whether to include items that begin with '_'
-            (True) or to exclude them (False). Defauls to False.
-                        
-    Returns:
-        dict[str, Any]: dict of attributes in 'item' (keys are attribute names 
-            and values are attribute values).
-            
-    """
-    attributes = name_attributes(item, include_private = include_private)
-    values = [getattr(item, m) for m in attributes]
-    return dict(zip(attributes, values))
-
-def map_fields(
-    item: dataclasses.dataclass | type[dataclasses.dataclass], 
-    include_private: bool = False) -> dict[str, dataclasses.Field]:
-    """Returns whether 'attributes' exist in dataclass 'item'.
-
-    Args:
-        item (dataclasses.dataclass | type[dataclasses.dataclass]): dataclass or 
-            dataclass instance to examine.
-        include_private (bool): whether to include items that begin with '_'
-            (True) or to exclude them (False). Defauls to False.    
-    Raises:
-        TypeError: if 'item' is not a dataclass.
-        
-    Returns:
-        dict[str, dataclasses.Field]: dict of fields in 'item' (keys are 
-            attribute names and values are dataclass fields).
-    
-    """
-    if dataclasses.identify.identity.is_dataclass(item):
-        attributes = {f.name: f for f in dataclasses.fields(item)}
-        if not include_private:
-            attributes = camina.drop_privates(attributes)
-        return attributes
-    else:
-        raise TypeError('item must be a dataclass')
-  
-def map_methods(
-    item: Any, 
-    include_private: bool = False) -> dict[str, types.MethodType]:
-    """Returns dict of methods of 'item'.
-    
-    Args:
-        item (Any): object to examine.
-        include_private (bool): whether to include items that begin with '_'
-            (True) or to exclude them (False). Defauls to False.
-
-    Returns:
-        dict[str, types.MethodType]: dict of methods in 'item' (keys are method 
-            names and values are methods).
-        
-    """ 
-    methods = name_methods(item, include_private = include_private)
-    return [getattr(item, m) for m in methods]
-
-def map_properties(
-    item: object, 
-    include_private: bool = False) -> dict[str, Any]:
-    """Returns properties of 'item'.
-
-    Args:
-        item (object): instance to examine.
-        include_private (bool): whether to include items that begin with '_'
-            (True) or to exclude them (False). Defauls to False.
-
-    Returns:
-        dict[str, Any]: dict of properties in 'item' (keys are property names 
-            and values are property values).
-        
-    """    
-    properties = name_properties(item, include_private = include_private)
-    values = [getattr(item, p) for p in properties]
-    return dict(zip(properties, values))
-
-def map_signatures(
-    item: Any, 
-    include_private: bool = False) -> dict[str, inspect.Signature]:
-    """Returns dict of method signatures of 'item'.
-
-    Args:
-        item (Any): object to examine.
-        include_private (bool): whether to include items that begin with '_'
-            (True) or to exclude them (False). Defauls to False.
-
-    Returns:
-        dict[str, inspect.Signature]: dict of method signatures in 'item' (keys 
-            are method names and values are method signatures).
-                   
-    """ 
-    methods = name_methods(item, include_private = include_private)
-    signatures = [inspect.signature(getattr(item, m)) for m in methods]
-    return dict(zip(methods, signatures))
-
-def map_objects(
-    item: object, 
-    include_private: bool = False) -> dict[str, Any]:
-    """Returns dict of attributes of 'item' that are not methods or properties.
-    
-    Args:
-        item (object): instance to examine.
-        include_private (bool): whether to include items that begin with '_'
-            (True) or to exclude them (False). Defauls to False.
-                        
-    Returns:
-        dict[str, Any]: dict of attributes in 'item' (keys are attribute names 
-            and values are attribute values) that are not methods or properties.
-            
-    """
-    attributes = name_attributes(item, include_private = include_private)
-    methods = name_methods(item, include_private = include_private)
-    properties = name_properties(item, include_private = include_private)
-    objects = [
-        a for a in attributes if a not in methods and a not in properties]
-    values = [getattr(item, m) for m in objects]
-    return dict(zip(objects, values))
 
 def name_attributes(
-    item: Any, 
-    include_private: bool = False) -> list[str]:
-    """Returns attribute names of 'item'.
-    
+    item: Any,
+    include_privates: bool | None = None) -> list[str]:
+    """Returns names of the attributes of `item`.
+
     Args:
-        item (Any): item to examine.
-        include_private (bool): whether to include items that begin with '_'
-            (True) or to exclude them (False). Defauls to False.
-                        
+        item: class, instance, or module to examine.
+        include_privates: whether to include names that begin with an
+            underscore. If None, `miller.configuration.INCLUDE_PRIVATES` is
+            used.
+
     Returns:
-        list[str]: names of attributes in 'item'.
-            
+        List of attribute names.
+
     """
-    names = dir(item)
-    if not include_private:
-        names = camina.drop_privates(names)
-    return names
-      
+    return _names(item, is_attribute, include_privates)
+
+
+def collect_attributes(
+    item: Any,
+    include_privates: bool | None = None) -> list[Any]:
+    """Returns the values of the attributes of `item`.
+
+    Args:
+        item: class, instance, or module to examine.
+        include_privates: whether to include attributes whose names begin with
+            an underscore. If None, `miller.configuration.INCLUDE_PRIVATES` is
+            used.
+
+    Returns:
+        List of attribute values.
+
+    """
+    return list(catalog_attributes(item, include_privates).values())
+
+
+def catalog_attributes(
+    item: Any,
+    include_privates: bool | None = None) -> dict[str, Any]:
+    """Returns a dict of the names and values of the attributes of `item`.
+
+    Args:
+        item: class, instance, or module to examine.
+        include_privates: whether to include attributes whose names begin with
+            an underscore. If None, `miller.configuration.INCLUDE_PRIVATES` is
+            used.
+
+    Returns:
+        Dict of attribute names and values.
+
+    """
+    return _catalog(item, is_attribute, include_privates)
+
+
+def has_attributes(
+    item: Any,
+    names: Any,
+    raise_error: bool | None = None,
+    match_all: bool | None = None) -> bool:
+    """Returns whether `names` are attributes of `item`.
+
+    Args:
+        item: class, instance, or module to examine.
+        names: str name or iterable of str names to look for.
+        raise_error: whether to raise an `AttributeError` if the check fails.
+            If None, `miller.configuration.RAISE_ERRORS` is used.
+        match_all: whether all `names` must be found (True) or any (False). If
+            None, `miller.configuration.MATCH_ALL` is used.
+
+    Returns:
+        Whether all (or any) of `names` are attributes of `item`.
+
+    """
+    return base.has_names(item, names, is_attribute, raise_error, match_all)
+
+
+def name_class_attributes(
+    item: Any,
+    include_privates: bool | None = None) -> list[str]:
+    """Returns names of the attributes defined on the class of `item`.
+
+    Args:
+        item: class or instance to examine.
+        include_privates: whether to include names that begin with an
+            underscore. If None, `miller.configuration.INCLUDE_PRIVATES` is
+            used.
+
+    Returns:
+        List of class attribute names.
+
+    """
+    cls = item if inspect.isclass(item) else item.__class__
+    return _names(cls, is_class_attribute, include_privates)
+
+
+def collect_class_attributes(
+    item: Any,
+    include_privates: bool | None = None) -> list[Any]:
+    """Returns the values of the attributes defined on the class of `item`.
+
+    Args:
+        item: class or instance to examine.
+        include_privates: whether to include attributes whose names begin with
+            an underscore. If None, `miller.configuration.INCLUDE_PRIVATES` is
+            used.
+
+    Returns:
+        List of class attribute values.
+
+    """
+    return list(catalog_class_attributes(item, include_privates).values())
+
+
+def catalog_class_attributes(
+    item: Any,
+    include_privates: bool | None = None) -> dict[str, Any]:
+    """Returns dict of names and values of the class attributes of `item`.
+
+    Args:
+        item: class or instance to examine.
+        include_privates: whether to include attributes whose names begin with
+            an underscore. If None, `miller.configuration.INCLUDE_PRIVATES` is
+            used.
+
+    Returns:
+        Dict of class attribute names and values.
+
+    """
+    cls = item if inspect.isclass(item) else item.__class__
+    return _catalog(cls, is_class_attribute, include_privates)
+
+
+def has_class_attributes(
+    item: Any,
+    names: Any,
+    raise_error: bool | None = None,
+    match_all: bool | None = None) -> bool:
+    """Returns whether `names` are class attributes of `item`.
+
+    Args:
+        item: class or instance to examine.
+        names: str name or iterable of str names to look for.
+        raise_error: whether to raise an `AttributeError` if the check fails.
+            If None, `miller.configuration.RAISE_ERRORS` is used.
+        match_all: whether all `names` must be found (True) or any (False). If
+            None, `miller.configuration.MATCH_ALL` is used.
+
+    Returns:
+        Whether all (or any) of `names` are class attributes of `item`.
+
+    """
+    return base.has_names(
+        item, names, is_class_attribute, raise_error, match_all)
+
+
 def name_fields(
-    item: dataclasses.dataclass | type[dataclasses.dataclass], 
-    include_private: bool = False) -> list[str]:
-    """Returns whether 'attributes' exist in dataclass 'item'.
+    item: Any,
+    include_privates: bool | None = None) -> list[str]:
+    """Returns names of the fields of the dataclass `item`.
 
     Args:
-        item (dataclasses.dataclass | type[dataclasses.dataclass]): dataclass or 
-            dataclass instance to examine.
-        include_private (bool): whether to include items that begin with '_'
-            (True) or to exclude them (False). Defauls to False.    
+        item: dataclass or dataclass instance to examine.
+        include_privates: whether to include names that begin with an
+            underscore. If None, `miller.configuration.INCLUDE_PRIVATES` is
+            used.
+
     Raises:
-        TypeError: if 'item' is not a dataclass.
-        
+        TypeError: if `item` is not a dataclass.
+
     Returns:
-        list[str]: names of fields in 'item'.
-    
+        List of field names.
+
     """
-    if dataclasses.identity.is_dataclass(item):
-        attributes = [f.name for f in dataclasses.fields(item)]
-        if not include_private:
-            attributes = camina.drop_privates(attributes)
-        return attributes
-    else:
-        raise TypeError('item must be a dataclass')
-     
+    return list(catalog_fields(item, include_privates))
+
+
+def collect_fields(
+    item: Any,
+    include_privates: bool | None = None) -> list[dataclasses.Field[Any]]:
+    """Returns the `dataclasses.Field` objects of the dataclass `item`.
+
+    Args:
+        item: dataclass or dataclass instance to examine.
+        include_privates: whether to include fields whose names begin with an
+            underscore. If None, `miller.configuration.INCLUDE_PRIVATES` is
+            used.
+
+    Raises:
+        TypeError: if `item` is not a dataclass.
+
+    Returns:
+        List of fields.
+
+    """
+    return list(catalog_fields(item, include_privates).values())
+
+
+def catalog_fields(
+    item: Any,
+    include_privates: bool | None = None) -> dict[str, dataclasses.Field[Any]]:
+    """Returns dict of names and `dataclasses.Field` objects of `item`.
+
+    Args:
+        item: dataclass or dataclass instance to examine.
+        include_privates: whether to include fields whose names begin with an
+            underscore. If None, `miller.configuration.INCLUDE_PRIVATES` is
+            used.
+
+    Raises:
+        TypeError: if `item` is not a dataclass.
+
+    Returns:
+        Dict of field names and fields.
+
+    """
+    if not dataclasses.is_dataclass(item):
+        message = f'{item!r} is not a dataclass'
+        raise TypeError(message)
+    fields = {f.name: f for f in dataclasses.fields(item)}
+    return base.catalog_where(
+        names = fields,
+        predicate = lambda _: True,
+        getter = fields.__getitem__,
+        include_privates = include_privates)
+
+
+def has_fields(
+    item: Any,
+    names: Any,
+    raise_error: bool | None = None,
+    match_all: bool | None = None) -> bool:
+    """Returns whether `names` are fields of the dataclass `item`.
+
+    Args:
+        item: dataclass or dataclass instance to examine.
+        names: str name or iterable of str names to look for.
+        raise_error: whether to raise an `AttributeError` if the check fails.
+            If None, `miller.configuration.RAISE_ERRORS` is used.
+        match_all: whether all `names` must be found (True) or any (False). If
+            None, `miller.configuration.MATCH_ALL` is used.
+
+    Raises:
+        TypeError: if `item` is not a dataclass.
+
+    Returns:
+        Whether all (or any) of `names` are fields of `item`.
+
+    """
+    if not dataclasses.is_dataclass(item):
+        message = f'{item!r} is not a dataclass'
+        raise TypeError(message)
+    return base.has_names(item, names, is_field, raise_error, match_all)
+
+
+def name_instance_attributes(
+    item: Any,
+    include_privates: bool | None = None) -> list[str]:
+    """Returns names of the attributes stored on the instance `item`.
+
+    Args:
+        item: instance to examine.
+        include_privates: whether to include names that begin with an
+            underscore. If None, `miller.configuration.INCLUDE_PRIVATES` is
+            used.
+
+    Returns:
+        List of instance attribute names.
+
+    """
+    return _names(item, is_instance_attribute, include_privates)
+
+
+def collect_instance_attributes(
+    item: Any,
+    include_privates: bool | None = None) -> list[Any]:
+    """Returns the values of the attributes stored on the instance `item`.
+
+    Args:
+        item: instance to examine.
+        include_privates: whether to include attributes whose names begin with
+            an underscore. If None, `miller.configuration.INCLUDE_PRIVATES` is
+            used.
+
+    Returns:
+        List of instance attribute values.
+
+    """
+    return list(catalog_instance_attributes(item, include_privates).values())
+
+
+def catalog_instance_attributes(
+    item: Any,
+    include_privates: bool | None = None) -> dict[str, Any]:
+    """Returns dict of names and values of the instance attributes of `item`.
+
+    Args:
+        item: instance to examine.
+        include_privates: whether to include attributes whose names begin with
+            an underscore. If None, `miller.configuration.INCLUDE_PRIVATES` is
+            used.
+
+    Returns:
+        Dict of instance attribute names and values.
+
+    """
+    return _catalog(item, is_instance_attribute, include_privates)
+
+
+def has_instance_attributes(
+    item: Any,
+    names: Any,
+    raise_error: bool | None = None,
+    match_all: bool | None = None) -> bool:
+    """Returns whether `names` are instance attributes of `item`.
+
+    Args:
+        item: instance to examine.
+        names: str name or iterable of str names to look for.
+        raise_error: whether to raise an `AttributeError` if the check fails.
+            If None, `miller.configuration.RAISE_ERRORS` is used.
+        match_all: whether all `names` must be found (True) or any (False). If
+            None, `miller.configuration.MATCH_ALL` is used.
+
+    Returns:
+        Whether all (or any) of `names` are instance attributes of `item`.
+
+    """
+    return base.has_names(
+        item, names, is_instance_attribute, raise_error, match_all)
+
+
 def name_methods(
-    item: Any, 
-    include_private: bool = False) -> list[str]:
-    """Returns method names of 'item'.
-    
+    item: Any,
+    include_privates: bool | None = None) -> list[str]:
+    """Returns names of the methods of `item`.
+
     Args:
-        item (Any): item to examine.
-        include_private (bool): whether to include items that begin with '_'
-            (True) or to exclude them (False). Defauls to False.
-                        
+        item: class, instance, or module to examine.
+        include_privates: whether to include names that begin with an
+            underscore. If None, `miller.configuration.INCLUDE_PRIVATES` is
+            used.
+
     Returns:
-        list[str]: names of methods in 'item'.
-            
+        List of method names.
+
     """
-    methods = [
-        a for a in dir(item)
-        if is_method(item, attribute = a)]
-    if not include_private:
-        methods = camina.drop_privates(methods)
-    return methods
-  
-def name_parameters(item: type[Any]) -> list[str]:
-    """Returns list of parameters based on annotations of 'item'.
+    return _names(item, is_method, include_privates)
+
+
+def collect_methods(
+    item: Any,
+    include_privates: bool | None = None) -> list[Any]:
+    """Returns the methods of `item`.
 
     Args:
-        item (type[Any]): class to get parameters to.
+        item: class, instance, or module to examine.
+        include_privates: whether to include methods whose names begin with an
+            underscore. If None, `miller.configuration.INCLUDE_PRIVATES` is
+            used.
 
     Returns:
-        list[str]: names of parameters in 'item'.
-        
-    """          
-    return list(item.__annotations__.keys())
+        List of methods.
+
+    """
+    return list(catalog_methods(item, include_privates).values())
+
+
+def catalog_methods(
+    item: Any,
+    include_privates: bool | None = None) -> dict[str, Any]:
+    """Returns a dict of the names and methods of `item`.
+
+    Args:
+        item: class, instance, or module to examine.
+        include_privates: whether to include methods whose names begin with an
+            underscore. If None, `miller.configuration.INCLUDE_PRIVATES` is
+            used.
+
+    Returns:
+        Dict of method names and methods.
+
+    """
+    return _catalog(item, is_method, include_privates)
+
+
+def has_methods(
+    item: Any,
+    names: Any,
+    raise_error: bool | None = None,
+    match_all: bool | None = None) -> bool:
+    """Returns whether `names` are methods of `item`.
+
+    Args:
+        item: class, instance, or module to examine.
+        names: str name or iterable of str names to look for.
+        raise_error: whether to raise an `AttributeError` if the check fails.
+            If None, `miller.configuration.RAISE_ERRORS` is used.
+        match_all: whether all `names` must be found (True) or any (False). If
+            None, `miller.configuration.MATCH_ALL` is used.
+
+    Returns:
+        Whether all (or any) of `names` are methods of `item`.
+
+    """
+    return base.has_names(item, names, is_method, raise_error, match_all)
+
 
 def name_properties(
-    item: Any, 
-    include_private: bool = False) -> list[str]:
-    """Returns method names of 'item'.
-    
+    item: Any,
+    include_privates: bool | None = None) -> list[str]:
+    """Returns names of the properties of `item`.
+
     Args:
-        item (Any): item to examine.
-        include_private (bool): whether to include items that begin with '_'
-            (True) or to exclude them (False). Defauls to False.
-                        
+        item: class or instance to examine.
+        include_privates: whether to include names that begin with an
+            underscore. If None, `miller.configuration.INCLUDE_PRIVATES` is
+            used.
+
     Returns:
-        list[str]: names of properties in 'item'.
-            
+        List of property names.
+
     """
-    if not inspect.isclass(item):
-        item.__class__
-    properties = [
-        a for a in dir(item)
-        if is_property(item, attribute = a)]
-    if not include_private:
-        properties = camina.drop_privates(properties)
-    return properties
+    return _names(item, is_property, include_privates)
 
 
-# def list_annotations(
-#     item: Any, 
-#     include_private: bool = False, 
-#     raise_error: Optional[bool] = None) -> list[Any]:
-#     """Returns list of type annotations in 'item'.
-    
-#     Args:
-#         item (Any): class or instance to examine.
-#         include_private (bool): whether to include items that begin with '_'
-#             (True) or to exclude them (False). Defauls to False.
-#         raise_error (Optional[bool]): whether to raise an error if no matches
-#             are found in 'item' or to simply return False in such situations. 
-#             Defaults to None, which means the global 'miller.RAISE_ERRORS' 
-#             setting will be used.
+def collect_properties(
+    item: Any,
+    include_privates: bool | None = None) -> list[Any]:
+    """Returns the values of the properties of `item`.
 
-#     Raises:
-#         AttributeError: if there are no matches in 'item' and 'raise_error' is 
-#             True (or if it is None and the global setting is True).    
-                                            
-#     Returns:
-#         list[Any]: list of the appropriate types in 'item'.
-            
-#     """
-#     return list(map_annotations(
-#         item = item, 
-#         include_private = include_private).values())
-   
-# def map_annotations(
-#     item: object | types.ModuleType, 
-#     include_private: bool = False) -> dict[str, Any]:
-#     """Returns dict of attributes of 'item' with type annotations.
-    
-#     This function follows the best practices suggested for compatibility with
-#     Python 3.9 and before (without relying on the newer functionality of 3.10):
-#     https://docs.python.org/3/howto/annotations.html
-    
-#     Args:
-#         item (object): instance to examine.
-#         include_private (bool): whether to include items that begin with '_'
-#             (True) or to exclude them (False). Defauls to False.
-                        
-#     Returns:
-#         dict[str, Any]: dict of attributes in 'item' (keys are attribute names 
-#             and values are type annotations) that are type annotated.
-            
-#     """
-#     if isinstance(item, type):
-#         annotations = item.__dict__.get('__annotations__', None)
-#     else:
-#         annotations = getattr(item, '__annotations__', None)
-#     if include_private:
-#         return annotations
-#     else:
-#         return camina.drop_privates_dict(annotations)
-   
+    Args:
+        item: class or instance to examine. If `item` is a class, the
+            `property` objects themselves are returned.
+        include_privates: whether to include properties whose names begin with
+            an underscore. If None, `miller.configuration.INCLUDE_PRIVATES` is
+            used.
+
+    Returns:
+        List of property values.
+
+    """
+    return list(catalog_properties(item, include_privates).values())
+
+
+def catalog_properties(
+    item: Any,
+    include_privates: bool | None = None) -> dict[str, Any]:
+    """Returns a dict of the names and values of the properties of `item`.
+
+    Args:
+        item: class or instance to examine. If `item` is a class, the
+            `property` objects themselves are the values.
+        include_privates: whether to include properties whose names begin with
+            an underscore. If None, `miller.configuration.INCLUDE_PRIVATES` is
+            used.
+
+    Returns:
+        Dict of property names and values.
+
+    """
+    return _catalog(item, is_property, include_privates)
+
+
+def has_properties(
+    item: Any,
+    names: Any,
+    raise_error: bool | None = None,
+    match_all: bool | None = None) -> bool:
+    """Returns whether `names` are properties of `item`.
+
+    Args:
+        item: class or instance to examine.
+        names: str name or iterable of str names to look for.
+        raise_error: whether to raise an `AttributeError` if the check fails.
+            If None, `miller.configuration.RAISE_ERRORS` is used.
+        match_all: whether all `names` must be found (True) or any (False). If
+            None, `miller.configuration.MATCH_ALL` is used.
+
+    Returns:
+        Whether all (or any) of `names` are properties of `item`.
+
+    """
+    return base.has_names(item, names, is_property, raise_error, match_all)
+
+
+def name_variables(
+    item: Any,
+    include_privates: bool | None = None) -> list[str]:
+    """Returns names of the variables of `item`.
+
+    Variables are attributes that are neither methods nor properties.
+
+    Args:
+        item: class, instance, or module to examine.
+        include_privates: whether to include names that begin with an
+            underscore. If None, `miller.configuration.INCLUDE_PRIVATES` is
+            used.
+
+    Returns:
+        List of variable names.
+
+    """
+    return _names(item, is_variable, include_privates)
+
+
+def collect_variables(
+    item: Any,
+    include_privates: bool | None = None) -> list[Any]:
+    """Returns the values of the variables of `item`.
+
+    Args:
+        item: class, instance, or module to examine.
+        include_privates: whether to include variables whose names begin with
+            an underscore. If None, `miller.configuration.INCLUDE_PRIVATES` is
+            used.
+
+    Returns:
+        List of variable values.
+
+    """
+    return list(catalog_variables(item, include_privates).values())
+
+
+def catalog_variables(
+    item: Any,
+    include_privates: bool | None = None) -> dict[str, Any]:
+    """Returns a dict of the names and values of the variables of `item`.
+
+    Args:
+        item: class, instance, or module to examine.
+        include_privates: whether to include variables whose names begin with
+            an underscore. If None, `miller.configuration.INCLUDE_PRIVATES` is
+            used.
+
+    Returns:
+        Dict of variable names and values.
+
+    """
+    return _catalog(item, is_variable, include_privates)
+
+
+def has_variables(
+    item: Any,
+    names: Any,
+    raise_error: bool | None = None,
+    match_all: bool | None = None) -> bool:
+    """Returns whether `names` are variables of `item`.
+
+    Args:
+        item: class, instance, or module to examine.
+        names: str name or iterable of str names to look for.
+        raise_error: whether to raise an `AttributeError` if the check fails.
+            If None, `miller.configuration.RAISE_ERRORS` is used.
+        match_all: whether all `names` must be found (True) or any (False). If
+            None, `miller.configuration.MATCH_ALL` is used.
+
+    Returns:
+        Whether all (or any) of `names` are variables of `item`.
+
+    """
+    return base.has_names(item, names, is_variable, raise_error, match_all)
+
+
+""" Signatures """
+
+
+def _signatures(item: Any) -> dict[str, inspect.Signature]:
+    """Returns all signatures for callables in `item` that have signatures."""
+    signatures = {}
+    for name in dir(item):
+        if not is_method(item, name):
+            continue
+        try:
+            signatures[name] = inspect.signature(getattr(item, name))
+        except (TypeError, ValueError):
+            continue
+    return signatures
+
+
+def name_signatures(
+    item: Any,
+    include_privates: bool | None = None) -> list[str]:
+    """Returns names of the methods of `item` that have signatures.
+
+    Args:
+        item: class, instance, or module to examine.
+        include_privates: whether to include names that begin with an
+            underscore. If None, `miller.configuration.INCLUDE_PRIVATES` is
+            used.
+
+    Returns:
+        List of names of methods with retrievable signatures.
+
+    """
+    return list(catalog_signatures(item, include_privates))
+
+
+def collect_signatures(
+    item: Any,
+    include_privates: bool | None = None) -> list[inspect.Signature]:
+    """Returns the signatures of the methods of `item`.
+
+    Args:
+        item: class, instance, or module to examine.
+        include_privates: whether to include methods whose names begin with an
+            underscore. If None, `miller.configuration.INCLUDE_PRIVATES` is
+            used.
+
+    Returns:
+        List of `inspect.Signature` objects.
+
+    """
+    return list(catalog_signatures(item, include_privates).values())
+
+
+def catalog_signatures(
+    item: Any,
+    include_privates: bool | None = None) -> dict[str, inspect.Signature]:
+    """Returns a dict of the names and signatures of the methods of `item`.
+
+    Args:
+        item: class, instance, or module to examine.
+        include_privates: whether to include methods whose names begin with an
+            underscore. If None, `miller.configuration.INCLUDE_PRIVATES` is
+            used.
+
+    Returns:
+        Dict of method names and `inspect.Signature` objects.
+
+    """
+    signatures = _signatures(item)
+    return base.catalog_where(
+        names = signatures,
+        predicate = lambda _: True,
+        getter = signatures.__getitem__,
+        include_privates = include_privates)
+
+
+def has_signatures(
+    item: Any,
+    names: Any,
+    raise_error: bool | None = None,
+    match_all: bool | None = None) -> bool:
+    """Returns whether `names` are methods of `item` with signatures.
+
+    Args:
+        item: class, instance, or module to examine.
+        names: str name or iterable of str names to look for.
+        raise_error: whether to raise an `AttributeError` if the check fails.
+            If None, `miller.configuration.RAISE_ERRORS` is used.
+        match_all: whether all `names` must be found (True) or any (False). If
+            None, `miller.configuration.MATCH_ALL` is used.
+
+    Returns:
+        Whether all (or any) of `names` have signatures in `item`.
+
+    """
+    return base.has_names(
+        item, names, base.membership(_signatures(item)), raise_error,
+        match_all)
+
+
+""" Annotations """
+
+
+def _annotations(item: Any) -> dict[str, Any]:
+    """Returns type annotations of `item` without evaluating strings.
+
+    Annotations are gathered across the whole inheritance chain of a class
+    (children override parents) and, for instances, from the instance as well.
+    """
+    if inspect.isclass(item):
+        annotations: dict[str, Any] = {}
+        for cls in reversed(item.__mro__):
+            annotations.update(inspect.get_annotations(cls))
+        return annotations
+    if inspect.ismodule(item) or inspect.isroutine(item):
+        return dict(inspect.get_annotations(item))
+    annotations = _annotations(item.__class__)
+    annotations.update(getattr(item, '__annotations__', {}) or {})
+    return annotations
+
+
+def name_annotations(
+    item: Any,
+    include_privates: bool | None = None) -> list[str]:
+    """Returns names of the annotated attributes or parameters of `item`.
+
+    Args:
+        item: class, instance, module, or function to examine.
+        include_privates: whether to include names that begin with an
+            underscore. If None, `miller.configuration.INCLUDE_PRIVATES` is
+            used.
+
+    Returns:
+        List of names that have type annotations.
+
+    """
+    return list(catalog_annotations(item, include_privates))
+
+
+def collect_annotations(
+    item: Any,
+    include_privates: bool | None = None) -> list[Any]:
+    """Returns the type annotations of `item`.
+
+    Args:
+        item: class, instance, module, or function to examine.
+        include_privates: whether to include annotations whose names begin with
+            an underscore. If None, `miller.configuration.INCLUDE_PRIVATES` is
+            used.
+
+    Returns:
+        List of annotations (which are `str` if the annotated code uses
+            `from __future__ import annotations`).
+
+    """
+    return list(catalog_annotations(item, include_privates).values())
+
+
+def catalog_annotations(
+    item: Any,
+    include_privates: bool | None = None) -> dict[str, Any]:
+    """Returns a dict of the names and type annotations of `item`.
+
+    Args:
+        item: class, instance, module, or function to examine.
+        include_privates: whether to include annotations whose names begin with
+            an underscore. If None, `miller.configuration.INCLUDE_PRIVATES` is
+            used.
+
+    Returns:
+        Dict of annotated names and their annotations.
+
+    """
+    annotations = _annotations(item)
+    return base.catalog_where(
+        names = annotations,
+        predicate = lambda _: True,
+        getter = annotations.__getitem__,
+        include_privates = include_privates)
+
+
+def has_annotations(
+    item: Any,
+    names: Any,
+    raise_error: bool | None = None,
+    match_all: bool | None = None) -> bool:
+    """Returns whether `names` have type annotations in `item`.
+
+    Args:
+        item: class, instance, module, or function to examine.
+        names: str name or iterable of str names to look for.
+        raise_error: whether to raise an `AttributeError` if the check fails.
+            If None, `miller.configuration.RAISE_ERRORS` is used.
+        match_all: whether all `names` must be found (True) or any (False). If
+            None, `miller.configuration.MATCH_ALL` is used.
+
+    Returns:
+        Whether all (or any) of `names` are annotated in `item`.
+
+    """
+    return base.has_names(
+        item, names, base.membership(_annotations(item)), raise_error,
+        match_all)
+

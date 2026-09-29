@@ -1,379 +1,571 @@
-"""
-identity: introspection tools that return a bool whether an item is a type
-Corey Rayburn Yung <coreyrayburnyung@gmail.com>
-Copyright 2020-2022, Corey Rayburn Yung
-License: Apache-2.0
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+"""Functions that identify what kind of thing an item is.
 
 Contents:
-    is_class:
-    is_class_attribute:
-    is_container:
-    is_dict:
-    is_file:
-    is_folder:
-    is_function:
-    is_iterable:
-    is_list:
-    is_method:
-    is_module:
-    is_nested (dispatcher):
-        is_nested_dict:
-        is_nested_list:
-        is_nested_set:
-        is_nested_tuple:
-    is_object:
-    is_path:
-    is_property:
-    is_sequence:
-    is_set:
-    is_variable:
-   
-ToDo:
-    
+    is_class: whether an item is a class (and not an instance).
+    is_container: whether an item is a container.
+    is_dict: whether an item is a dict or other mutable mapping.
+    is_dunder: whether an item has a name like `__name__`.
+    is_file: whether an item is a path to an existing file.
+    is_file_path: same as `is_file`.
+    is_folder: whether an item is a path to an existing folder.
+    is_folder_path: same as `is_folder`.
+    is_function: whether an item is a function.
+    is_instance: whether an item is an instance (and not a class).
+    is_iterable: whether an item is iterable.
+    is_list: whether an item is a list or other mutable sequence.
+    is_module: whether an item is a module or a path to a python module.
+    is_nested: whether an item contains other containers.
+    is_nested_dict: whether an item is a mapping containing other containers.
+    is_nested_list: whether an item is a list containing other containers.
+    is_nested_set: whether an item is a set containing other containers.
+    is_nested_tuple: whether an item is a tuple containing other containers.
+    is_object: whether an item is an object (not a class, function, or module).
+    is_path: whether an item is a path to something that exists.
+    is_private: whether an item has a name beginning with an underscore.
+    is_sequence: whether an item is a sequence.
+    is_set: whether an item is a set.
+    is_tuple: whether an item is a tuple.
 
 """
+
 from __future__ import annotations
-from collections.abc import (
-    Container, Hashable, Iterable, Mapping, MutableMapping, MutableSequence, 
-    Sequence, Set)
-import functools
+
 import inspect
+import os
 import pathlib
 import types
-from typing import Any, Optional, Type
+from collections.abc import (
+    Container,
+    Iterable,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    MutableSet,
+    Sequence,
+)
+from collections.abc import Set as AbstractSet
+from typing import Any
 
-import camina
+from . import base, configuration, utilities
 
-from . import base
-from . import configuration
+__all__: list[str] = [
+    'is_class',
+    'is_container',
+    'is_dict',
+    'is_dunder',
+    'is_file',
+    'is_file_path',
+    'is_folder',
+    'is_folder_path',
+    'is_function',
+    'is_instance',
+    'is_iterable',
+    'is_list',
+    'is_module',
+    'is_nested',
+    'is_nested_dict',
+    'is_nested_list',
+    'is_nested_set',
+    'is_nested_tuple',
+    'is_object',
+    'is_path',
+    'is_private',
+    'is_sequence',
+    'is_set',
+    'is_tuple']
 
-     
-def is_class(item: Any, raise_error: Optional[bool] = None) -> bool:
-    """Returns if 'item' is a class (and not an instance).
-    
+_STR_LIKE: tuple[type, ...] = (str, bytes, bytearray)
+_MIN_DUNDER_LENGTH: int = 4
+
+
+def _kind_of(item: Any) -> type:
+    """Returns `item` if it is a class or otherwise the class of `item`."""
+    return item if inspect.isclass(item) else item.__class__
+
+
+def _is_type(
+    item: Any,
+    kind: type | tuple[type, ...],
+    include_str: bool | None = None) -> bool:
+    """Returns whether `item` (or its class) is a subclass of `kind`."""
+    include_str = base.resolve(include_str, configuration.INCLUDE_STR)
+    cls = _kind_of(item)
+    return issubclass(cls, kind) and (
+        include_str or not issubclass(cls, _STR_LIKE))
+
+
+def is_class(item: Any, raise_error: bool | None = None) -> bool:
+    """Returns whether `item` is a class (and not an instance).
+
     Args:
-        item (Any): object to examine.
-        
+        item: object to examine.
+        raise_error: whether to raise a `TypeError` if `item` is not a class.
+            If None, `miller.configuration.RAISE_ERRORS` is used.
+
     Returns:
-        bool: if 'item' is a class (and not an instance).
-        
+        Whether `item` is a class.
+
     """
-    return base.is_kind(
-        item = item,
-        checker = inspect.isclass,
-        raise_error = raise_error,
-        kind = 'class')
- 
+    return base.verdict(
+        inspect.isclass(item), raise_error, f'{item!r} is not a class')
+
+
 def is_container(
-    item: Any, 
-    include_str: bool = False, 
-    raise_error: Optional[bool] = None) -> bool:
-    """Returns if 'item' is a container.
-    
-    If 'exclude_str' is True (the default) and 'item' is a str, False will be
-    returned.
-    
+    item: Any,
+    include_str: bool | None = None,
+    raise_error: bool | None = None) -> bool:
+    """Returns whether `item` is a container.
+
     Args:
-        item (Any): object to examine.
-        include_str (bool): whether to return True if 'item' is a str.
-                    
+        item: class or instance to examine.
+        include_str: whether `str` and `bytes` count as containers. If None,
+            `miller.configuration.INCLUDE_STR` is used.
+        raise_error: whether to raise a `TypeError` if `item` is not a
+            container. If None, `miller.configuration.RAISE_ERRORS` is used.
+
     Returns:
-        bool: if 'item' is a container.
-        
+        Whether `item` is a container.
+
     """
-    item = item.__class__ if inspect.isclass(item) else item
-    if not isinstance(item, Container):
-        return False
-    if include_str and isinstance(item, str):
-        return True
-    return base.is_kind(
-        item = item,
-        checker = inspect.isclass,
-        raise_error = raise_error,
-        kind = 'container')  
-    if not inspect.isclass(item):
-        item = item.__class__
-    return (
-        issubclass(item, Container)
-        and (not issubclass(item, str) or include_str))
+    return base.verdict(
+        _is_type(item, Container, include_str),
+        raise_error,
+        f'{item!r} is not a container')
 
-def is_dict(item: Any, raise_error: Optional[bool] = None) -> bool:
-    """Returns if 'item' is a mutable mapping (generic dict type).
-    
-    Args:
-        item (Any): object to examine.
-        
-    Returns:
-        bool: if 'item' is a mutable mapping.
-        
-    """  
-    if not inspect.isclass(item):
-        item = item.__class__
-    return isinstance(item, MutableMapping) 
-  
-def is_file(
-    item: str | pathlib.Path, 
-    raise_error: Optional[bool] = None) -> bool:
-    """Returns whether 'item' is a file.
-    
-    Args:
-        item (str | pathlib.Path): path to check.
-        
-    Returns:
-        bool: whether 'item' is a file.
-        
-    """ 
-    item = camina.pathlibify(item)
-    return item.exists() and item.is_file()
 
-def is_folder(
-    item: str | pathlib.Path, 
-    raise_error: Optional[bool] = None) -> bool:
-    """Returns whether 'item' is a path to a folder.
-    
+def is_dict(
+    item: Any,
+    *,
+    include_generic: bool = True,
+    raise_error: bool | None = None) -> bool:
+    """Returns whether `item` is a dict or other mutable mapping.
+
     Args:
-        item (str | pathlib.Path): path to check.
-        
+        item: class or instance to examine.
+        include_generic: whether any `MutableMapping` counts (True) or only
+            actual `dict` types (False). Defaults to True.
+        raise_error: whether to raise a `TypeError` if `item` is not a dict.
+            If None, `miller.configuration.RAISE_ERRORS` is used.
+
     Returns:
-        bool: whether 'item' is a path to a folder.
-        
-    """ 
-    item = camina.pathlibify(item)
-    return item.exists() and item.is_dir()
- 
-def is_function(item: Any, raise_error: Optional[bool] = None) -> bool:
-    """Returns if 'item' is a function.
-    
+        Whether `item` is a dict (or, if `include_generic`, a mutable mapping).
+
+    """
+    kind = MutableMapping if include_generic else dict
+    return base.verdict(
+        issubclass(_kind_of(item), kind),
+        raise_error,
+        f'{item!r} is not a dict')
+
+
+def is_dunder(item: Any, raise_error: bool | None = None) -> bool:
+    """Returns whether `item` has a name like `__name__`.
+
     Args:
-        item (Any): object to examine.
-        
+        item: str name or object with a name to examine.
+        raise_error: whether to raise a `TypeError` if the name is not a dunder
+            name. If None, `miller.configuration.RAISE_ERRORS` is used.
+
     Returns:
-        bool: if 'item' is a function.
-        
-    """  
-    return isinstance(item, types.FunctionType)
-        
-def is_instance(item: Any, raise_error: Optional[bool] = None) -> bool:
-    """Returns if 'item' is an instance (and not a class).
-    
-    To rule out edge cases, this function checks that 'item' is not a class and
-    has the attribute '__class__'.
-    
+        Whether the name of `item` begins and ends with two underscores.
+
+    """
+    name = configuration.KEYER(item)
+    return base.verdict(
+        len(name) > _MIN_DUNDER_LENGTH and name.startswith('__') and name.endswith('__'),
+        raise_error,
+        f'{name} is not a dunder name')
+
+
+def is_file_path(
+    item: str | os.PathLike[str],
+    raise_error: bool | None = None) -> bool:
+    """Returns whether `item` is a path to an existing file.
+
     Args:
-        item (Any): object to examine.
-        
+        item: path to check.
+        raise_error: whether to raise a `TypeError` if `item` is not a file. If
+            None, `miller.configuration.RAISE_ERRORS` is used.
+
     Returns:
-        bool: if 'item' is an instance (and not a class).
-        
-    """  
-    return hasattr(item, '__class__') and not is_class(item)
+        Whether `item` is a path to an existing file.
+
+    """
+    return base.verdict(
+        _path_or_none(item, lambda p: p.is_file()),
+        raise_error,
+        f'{item!r} is not a path to a file')
+
+
+def is_folder_path(
+    item: str | os.PathLike[str],
+    raise_error: bool | None = None) -> bool:
+    """Returns whether `item` is a path to an existing folder.
+
+    Args:
+        item: path to check.
+        raise_error: whether to raise a `TypeError` if `item` is not a folder.
+            If None, `miller.configuration.RAISE_ERRORS` is used.
+
+    Returns:
+        Whether `item` is a path to an existing folder.
+
+    """
+    return base.verdict(
+        _path_or_none(item, lambda p: p.is_dir()),
+        raise_error,
+        f'{item!r} is not a path to a folder')
+
+
+def is_function(item: Any, raise_error: bool | None = None) -> bool:
+    """Returns whether `item` is a function.
+
+    Args:
+        item: object to examine.
+        raise_error: whether to raise a `TypeError` if `item` is not a
+            function. If None, `miller.configuration.RAISE_ERRORS` is used.
+
+    Returns:
+        Whether `item` is a function.
+
+    """
+    return base.verdict(
+        isinstance(item, types.FunctionType),
+        raise_error,
+        f'{item!r} is not a function')
+
+
+def is_instance(
+    item: Any,
+    kind: type | tuple[type, ...] | None = None,
+    raise_error: bool | None = None) -> bool:
+    """Returns whether `item` is an instance (and not a class).
+
+    Args:
+        item: object to examine.
+        kind: optional class (or tuple of classes) that `item` must be an
+            instance of. Defaults to None.
+        raise_error: whether to raise a `TypeError` if `item` is not an
+            instance. If None, `miller.configuration.RAISE_ERRORS` is used.
+
+    Returns:
+        Whether `item` is an instance (of `kind`, if passed).
+
+    """
+    value = not inspect.isclass(item)
+    if kind is not None:
+        value = value and isinstance(item, kind)
+    return base.verdict(value, raise_error, f'{item!r} is not an instance')
+
 
 def is_iterable(
-    item: Any, 
-    include_str: bool = False, 
-    raise_error: Optional[bool] = None) -> bool:
-    """Returns if 'item' is iterable.
-    
-    If 'exclude_str' is True (the default) and 'item' is a str, False will be
-    returned.
-        
-    Args:
-        item (Any): object to examine.
-        include_str (bool): whether to return True if 'item' is a str.
-        
-    Returns:
-        bool: if 'item' is iterable.
-        
-    """ 
-    if not inspect.isclass(item):
-        item = item.__class__
-    return (
-        issubclass(item, Iterable) 
-        and (not issubclass(item, str) or include_str))
+    item: Any,
+    include_str: bool | None = None,
+    raise_error: bool | None = None) -> bool:
+    """Returns whether `item` is iterable.
 
-def is_list(item: Any, raise_error: Optional[bool] = None) -> bool:
-    """Returns if 'item' is a mutable sequence (generic list type).
-    
     Args:
-        item (Any): object to examine.
-        
+        item: class or instance to examine.
+        include_str: whether `str` and `bytes` count as iterable. If None,
+            `miller.configuration.INCLUDE_STR` is used.
+        raise_error: whether to raise a `TypeError` if `item` is not iterable.
+            If None, `miller.configuration.RAISE_ERRORS` is used.
+
     Returns:
-        bool: if 'item' is a mutable list.
-        
+        Whether `item` is iterable.
+
     """
-    if not inspect.isclass(item):
-        item = item.__class__
-    return isinstance(item, MutableSequence)
-   
+    return base.verdict(
+        _is_type(item, Iterable, include_str),
+        raise_error,
+        f'{item!r} is not iterable')
+
+
+def is_list(
+    item: Any,
+    *,
+    include_generic: bool = True,
+    raise_error: bool | None = None) -> bool:
+    """Returns whether `item` is a list or other mutable sequence.
+
+    Args:
+        item: class or instance to examine.
+        include_generic: whether any `MutableSequence` counts (True) or only
+            actual `list` types (False). Defaults to True.
+        raise_error: whether to raise a `TypeError` if `item` is not a list. If
+            None, `miller.configuration.RAISE_ERRORS` is used.
+
+    Returns:
+        Whether `item` is a list (or, if `include_generic`, a mutable
+            sequence).
+
+    """
+    kind = MutableSequence if include_generic else list
+    return base.verdict(
+        issubclass(_kind_of(item), kind),
+        raise_error,
+        f'{item!r} is not a list')
+
+
 def is_module(
-    item: str | pathlib.Path, 
-    raise_error: Optional[bool] = None) -> bool:
-    """Returns whether 'item' is a python-module file.
-    
-    Args:
-        item (str | pathlib.Path): path to check.
-        
-    Returns:
-        bool: whether 'item' is a python-module file.
-        
-    """  
-    item = camina.pathlibify(item)
-    return (
-        item.exists() 
-        and item.is_file() 
-        and item.suffix in configuration.MODULE_EXTENSIONS)
-  
-@functools.singledispatch
-def is_nested(item: object, /, raise_error: Optional[bool] = None) -> bool:
-    """Returns if 'item' is nested at least one-level.
-    
-    Args:
-        item (object): instance to examine.
-        
-    Raises:
-        TypeError: if 'item' does not match any of the registered types.
-        
-    Returns:
-        bool: if 'item' is a nested mapping.
-        
-    """ 
-    raise TypeError(f'item {item} is not supported by {__name__}')
-
-@is_nested.register(Mapping)   
-def is_nested_dict(
-    item: Mapping[Any, Any], /, 
-    raise_error: Optional[bool] = None) -> bool:
-    """Returns if 'item' is nested at least one-level.
-    
-    Args:
-        item (Mapping[Any, Any]): object to examine.
-        
-    Returns:
-        bool: if 'item' is a nested mapping.
-        
-    """ 
-    return (
-        isinstance(item, Mapping) 
-        and any(isinstance(v, Mapping) for v in item.values()))
-
-@is_nested.register(MutableSequence)     
-def is_nested_list(
-    item: MutableSequence[Any], /, 
-    raise_error: Optional[bool] = None) -> bool:
-    """Returns if 'item' is nested at least one-level.
-    
-    Args:
-        item (MutableSequence[Any]): object to examine.
-        
-    Returns:
-        bool: if 'item' is a nested sequence.
-        
-    """ 
-    return is_sequence(item)and any(is_sequence(item = v) for v in item)
-
-@is_nested.register(Set)         
-def is_nested_set(
-    item: Set[Any], /, 
-    raise_error: Optional[bool] = None) -> bool:
-    """Returns if 'item' is nested at least one-level.
-    
-    Args:
-        item (item: Set[Any]): object to examine.
-        
-    Returns:
-        bool: if 'item' is a nested set.
-        
-    """ 
-    return is_set(item) and any(is_set(item = v) for v in item)
-
-@is_nested.register(tuple)     
-def is_nested_tuple(
-    item: tuple[Any, ...], /, 
-    raise_error: Optional[bool] = None) -> bool:
-    """Returns if 'item' is nested at least one-level.
-    
-    Args:
-        item (tuple[Any, ...]): object to examine.
-        
-    Returns:
-        bool: if 'item' is a nested sequence.
-        
-    """ 
-    return is_sequence(item) and any(is_sequence(item = v) for v in item)
-
-def is_object(item: Any, raise_error: Optional[bool] = None) -> bool:
-    """Returns if 'item' is an object (and not a class or function).
+    item: Any,
+    raise_error: bool | None = None) -> bool:
+    """Returns whether `item` is a module or a path to a python module file.
 
     Args:
-        item (Any): object to examine.
+        item: module, str, or path-like object to examine.
+        raise_error: whether to raise a `TypeError` if `item` is not a module.
+            If None, `miller.configuration.RAISE_ERRORS` is used.
 
     Returns:
-        bool: whether 'item' is an object (and not a class or function).
-        
-    """ 
-    return not is_function(item) and not is_class(item)
-  
+        Whether `item` is a module or a path to an existing file with one of
+            the suffixes in `miller.configuration.MODULE_EXTENSIONS`.
+
+    """
+    if isinstance(item, types.ModuleType):
+        value = True
+    else:
+        value = _path_or_none(
+            item,
+            lambda p: p.is_file()
+            and p.suffix in configuration.MODULE_EXTENSIONS)
+    return base.verdict(value, raise_error, f'{item!r} is not a module')
+
+
+def is_object(item: Any, raise_error: bool | None = None) -> bool:
+    """Returns whether `item` is an object (not a class, function, or module).
+
+    Args:
+        item: object to examine.
+        raise_error: whether to raise a `TypeError` if `item` is not an
+            object. If None, `miller.configuration.RAISE_ERRORS` is used.
+
+    Returns:
+        Whether `item` is an object.
+
+    """
+    value = not (
+        inspect.isclass(item)
+        or inspect.isroutine(item)
+        or inspect.ismodule(item))
+    return base.verdict(value, raise_error, f'{item!r} is not an object')
+
+
 def is_path(
-    item: str | pathlib.Path, 
-    raise_error: Optional[bool] = None) -> bool:
-    """Returns whether 'item' is a currently existing path.
-    
+    item: str | os.PathLike[str],
+    raise_error: bool | None = None) -> bool:
+    """Returns whether `item` is a path to something that exists.
+
     Args:
-        item (str | pathlib.Path): path to check.
-        
+        item: path to check.
+        raise_error: whether to raise a `TypeError` if `item` is not an
+            existing path. If None, `miller.configuration.RAISE_ERRORS` is
+            used.
+
     Returns:
-        bool: whether 'item' is a currently existing path.
-        
-    """ 
-    item = camina.pathlibify(item)
-    return item.exists()
-  
+        Whether `item` is an existing path.
+
+    """
+    return base.verdict(
+        _path_or_none(item, lambda p: p.exists()),
+        raise_error,
+        f'{item!r} is not an existing path')
+
+
+def is_private(item: Any, raise_error: bool | None = None) -> bool:
+    """Returns whether `item` has a name beginning with an underscore.
+
+    Args:
+        item: str name or object with a name to examine.
+        raise_error: whether to raise a `TypeError` if the name is not private.
+            If None, `miller.configuration.RAISE_ERRORS` is used.
+
+    Returns:
+        Whether the name of `item` begins with an underscore.
+
+    """
+    name = configuration.KEYER(item)
+    return base.verdict(
+        utilities.is_private_name(name),
+        raise_error,
+        f'{name} is not a private name')
+
+
 def is_sequence(
-    item: Any, 
-    include_str: bool = False, 
-    raise_error: Optional[bool] = None) -> bool:
-    """Returns if 'item' is a sequence.
-    
-    If 'exclude_str' is True (the default) and 'item' is a str, False will be
-    returned.
-        
+    item: Any,
+    include_str: bool | None = None,
+    raise_error: bool | None = None) -> bool:
+    """Returns whether `item` is a sequence.
+
     Args:
-        item (Any): object to examine.
-        include_str (bool): whether to return True if 'item' is a str.
-                    
+        item: class or instance to examine.
+        include_str: whether `str` and `bytes` count as sequences. If None,
+            `miller.configuration.INCLUDE_STR` is used.
+        raise_error: whether to raise a `TypeError` if `item` is not a
+            sequence. If None, `miller.configuration.RAISE_ERRORS` is used.
+
     Returns:
-        bool: if 'item' is a sequence.
-        
-    """ 
-    if not inspect.isclass(item):
-        item = item.__class__
+        Whether `item` is a sequence.
+
+    """
+    return base.verdict(
+        _is_type(item, Sequence, include_str),
+        raise_error,
+        f'{item!r} is not a sequence')
+
+
+def is_set(
+    item: Any,
+    *,
+    include_generic: bool = True,
+    raise_error: bool | None = None) -> bool:
+    """Returns whether `item` is a set (or `frozenset`) or other set type.
+
+    Args:
+        item: class or instance to examine.
+        include_generic: whether any `collections.abc.Set` counts (True) or
+            only actual `set` and `frozenset` types (False). Defaults to True.
+        raise_error: whether to raise a `TypeError` if `item` is not a set. If
+            None, `miller.configuration.RAISE_ERRORS` is used.
+
+    Returns:
+        Whether `item` is a set.
+
+    """
+    kind = AbstractSet if include_generic else (set, frozenset)
+    return base.verdict(
+        issubclass(_kind_of(item), kind),
+        raise_error,
+        f'{item!r} is not a set')
+
+
+def is_tuple(item: Any, raise_error: bool | None = None) -> bool:
+    """Returns whether `item` is a tuple.
+
+    Args:
+        item: class or instance to examine.
+        raise_error: whether to raise a `TypeError` if `item` is not a tuple.
+            If None, `miller.configuration.RAISE_ERRORS` is used.
+
+    Returns:
+        Whether `item` is a tuple.
+
+    """
+    return base.verdict(
+        issubclass(_kind_of(item), tuple),
+        raise_error,
+        f'{item!r} is not a tuple')
+
+
+def _is_nested_container(item: Any) -> bool:
+    """Returns whether `item` is a non-str container."""
     return (
-        issubclass(item, Sequence)
-        and (not issubclass(item, str) or include_str))
-        
-def is_set(item: Any, raise_error: Optional[bool] = None) -> bool:
-    """Returns if 'item' is a Set (generic type set).
-    
+        not isinstance(item, _STR_LIKE)
+        and isinstance(item, (Mapping, Sequence, AbstractSet)))
+
+
+def is_nested(item: Any, raise_error: bool | None = None) -> bool:
+    """Returns whether `item` contains at least one other container.
+
+    For mappings, the values are examined. For other containers, the elements
+    are. `str` and `bytes` do not count as containers here.
+
     Args:
-        item (Any): object to examine.
-        
+        item: instance to examine.
+        raise_error: whether to raise a `TypeError` if `item` is not nested.
+            If None, `miller.configuration.RAISE_ERRORS` is used.
+
     Returns:
-        bool: if 'item' is a set.
-        
-    """ 
-    if not inspect.isclass(item):
-        item = item.__class__
-    return issubclass(item, Set)
- 
+        Whether `item` is a container that holds at least one container.
+
+    """
+    if isinstance(item, Mapping):
+        value = any(_is_nested_container(v) for v in item.values())
+    elif _is_nested_container(item):
+        value = any(_is_nested_container(i) for i in item)
+    else:
+        value = False
+    return base.verdict(value, raise_error, f'{item!r} is not nested')
+
+
+def is_nested_dict(item: Any, raise_error: bool | None = None) -> bool:
+    """Returns whether `item` is a mapping that contains another container.
+
+    Args:
+        item: instance to examine.
+        raise_error: whether to raise a `TypeError` if `item` does not qualify.
+            If None, `miller.configuration.RAISE_ERRORS` is used.
+
+    Returns:
+        Whether `item` is a nested mapping.
+
+    """
+    value = isinstance(item, Mapping) and is_nested(item)
+    return base.verdict(value, raise_error, f'{item!r} is not a nested dict')
+
+
+def is_nested_list(item: Any, raise_error: bool | None = None) -> bool:
+    """Returns whether `item` is a list that contains another container.
+
+    Args:
+        item: instance to examine.
+        raise_error: whether to raise a `TypeError` if `item` does not qualify.
+            If None, `miller.configuration.RAISE_ERRORS` is used.
+
+    Returns:
+        Whether `item` is a nested list.
+
+    """
+    value = isinstance(item, MutableSequence) and is_nested(item)
+    return base.verdict(value, raise_error, f'{item!r} is not a nested list')
+
+
+def is_nested_set(item: Any, raise_error: bool | None = None) -> bool:
+    """Returns whether `item` is a set that contains another container.
+
+    Because most containers are not hashable, only sets containing
+    `frozenset` or `tuple` objects will qualify.
+
+    Args:
+        item: instance to examine.
+        raise_error: whether to raise a `TypeError` if `item` does not qualify.
+            If None, `miller.configuration.RAISE_ERRORS` is used.
+
+    Returns:
+        Whether `item` is a nested set.
+
+    """
+    value = isinstance(item, (MutableSet, frozenset)) and is_nested(item)
+    return base.verdict(value, raise_error, f'{item!r} is not a nested set')
+
+
+def is_nested_tuple(item: Any, raise_error: bool | None = None) -> bool:
+    """Returns whether `item` is a tuple that contains another container.
+
+    Args:
+        item: instance to examine.
+        raise_error: whether to raise a `TypeError` if `item` does not qualify.
+            If None, `miller.configuration.RAISE_ERRORS` is used.
+
+    Returns:
+        Whether `item` is a nested tuple.
+
+    """
+    value = isinstance(item, tuple) and is_nested(item)
+    return base.verdict(value, raise_error, f'{item!r} is not a nested tuple')
+
+
+def _path_or_none(
+    item: Any,
+    check: Any) -> bool:
+    """Returns whether `check` passes for `item` converted to a path."""
+    if not isinstance(item, (str, os.PathLike)):
+        return False
+    try:
+        return bool(check(pathlib.Path(item)))
+    except (OSError, ValueError):
+        return False
+
+
+is_file = is_file_path
+is_folder = is_folder_path

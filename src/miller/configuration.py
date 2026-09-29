@@ -1,66 +1,36 @@
-"""
-configuration: global settings for miller
-Corey Rayburn Yung <coreyrayburnyung@gmail.com>
-Copyright 2020-2022, Corey Rayburn Yung
-License: Apache-2.0
+"""Global default settings for miller.
 
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
+Every setting here is only a default. Any function that accepts an argument
+covering the same setting (for example, `include_privates`) will always use the
+argument, when passed, in preference to the global setting. Use the `set_*`
+functions in `miller.framework` to change these settings safely.
 
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
-
-Contents:  
-
-        
-ToDo:
-
+Attributes:
+    INCLUDE_PRIVATES: whether names beginning with an underscore are included
+        in results.
+    INCLUDE_STR: whether `str` objects count as containers, iterables, and
+        sequences.
+    KEYER: function used to determine a str name for an item.
+    MATCH_ALL: whether all (True) or any (False) of the sought items must be
+        found by `has_*` functions.
+    MODULE_EXTENSIONS: file suffixes that identify python modules.
+    RAISE_ERRORS: whether `has_*` and `is_*` functions raise an error (True) or
+        just return False (False) when an item does not qualify.
+    RECURSIVE: whether functions that examine folders also examine subfolders.
 
 """
+
 from __future__ import annotations
+
 from collections.abc import Callable
-import dataclasses
-from typing import Any, Type
+from typing import Any
 
-import camina
+from . import utilities
 
-
-DEFAULT_HAS: Any = False
-DEFAULT_IS: Any = False
-DEFAULT_LIST: Any = []
-DEFAULT_MAP: Any = {}
-DEFAULT_NAME: Any = []
+INCLUDE_PRIVATES: bool = False
 INCLUDE_STR: bool = False
-INCLUDE_PRIVATE: bool = False
-KEYER: Callable[[Any], str] = camina.namify
+KEYER: Callable[[Any], str] = utilities.namify
 MATCH_ALL: bool = True
-MODULE_EXTENSIONS: list[str] = ['.py', '.pyc']
-RAISE_ERRORS: bool = True
+MODULE_EXTENSIONS: tuple[str, ...] = ('.py',)
+RAISE_ERRORS: bool = False
 RECURSIVE: bool = False
-
-       
-@dataclasses.dataclass
-class MISSING_VALUE(object):
-    """Sentinel object for a missing data or parameter.
-    
-    This follows the same pattern as the '_MISSING_TYPE' class in the builtin
-    dataclasses library. 
-    https://github.com/python/cpython/blob/3.10/Lib/dataclasses.py#L182-L186
-    
-    Because None is sometimes a valid argument or data option, this class
-    provides an alternative that does not create the confusion that a default of 
-    None can sometimes lead to.
-    
-    """
-    pass
-
-
-# MISSING, instance of MISSING_VALUE, should be used for missing values as an 
-# alternative to None. This provides a fuller repr and traceback.
-MISSING = MISSING_VALUE()  
