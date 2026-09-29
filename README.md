@@ -157,7 +157,7 @@ Miller
 
 ### Requirements
 
-**miller** requires Python 3.10 or later and has no other dependencies. It runs on Linux, MacOS, and Windows.
+**miller** requires Python 3.11 or later and has no other dependencies. It runs on Linux, MacOS, and Windows.
 
 ### Installation
 

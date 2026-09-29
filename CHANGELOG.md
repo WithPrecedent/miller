@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 * Rewrote `attributes`, `identity`, `containers`, `disks`, `modules`, and `examiners`, fixing many bugs (for example, `has_*` functions that ignored `match_all`, undefined names in `base`, and broken `Inspector` classes)
 * Changed the default of `RAISE_ERRORS` to `False`, so `has_*` and `is_*` functions return `False` unless told to raise
 * Added a full unit test suite
+* Dropped support for Python 3.10 (Python 3.11 or later is now required)
 
 ## 0.1.0
 

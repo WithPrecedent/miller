@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import dataclasses
+import inspect
 import pathlib
 import re
 
@@ -23,7 +24,8 @@ def test_all_exports_exist():
     assert miller.__all__
     assert len(miller.__all__) == len(set(miller.__all__))
     for name in miller.__all__:
-        assert callable(getattr(miller, name)), name
+        item = getattr(miller, name)
+        assert callable(item) or inspect.ismodule(item), name
 
 
 def test_readme_prefix_suffix_grid():

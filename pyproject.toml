@@ -6,7 +6,7 @@ description = "Introspection tools using consistent, accessible syntax"
 authors = [{name = "Corey Rayburn Yung", email = "coreyrayburnyung@gmail.com"}]
 license = {text = "Apache Software License 2.0"}
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 version = "0.2.0"
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -14,7 +14,6 @@ classifiers = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -35,7 +34,6 @@ Changelog = "https://WithPrecedent.github.io/miller/changelog"
 [dependency-groups]
 dev = [
     "uv",
-
     "markdown-callouts",
     "markdown-exec",
     "mkdocs",
@@ -80,8 +78,6 @@ tests = ["tests", "*/tests"]
 branch = true
 source = ["miller", "tests"]
 
-
-
 [tool.mypy]
 files = ['src']
 disallow_untyped_defs = true
@@ -91,7 +87,6 @@ check_untyped_defs = true
 warn_return_any = true
 warn_unused_ignores = true
 show_error_codes = true
-
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
