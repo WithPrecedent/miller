@@ -20,14 +20,15 @@ from typing import Any
 from . import base
 
 __all__: list[str] = [
-    'catalog_classes',
-    'catalog_functions',
-    'collect_classes',
-    'collect_functions',
-    'has_classes',
-    'has_functions',
-    'name_classes',
-    'name_functions']
+    "catalog_classes",
+    "catalog_functions",
+    "collect_classes",
+    "collect_functions",
+    "has_classes",
+    "has_functions",
+    "name_classes",
+    "name_functions",
+]
 
 
 def _modulify(item: types.ModuleType | str) -> types.ModuleType:
@@ -36,29 +37,33 @@ def _modulify(item: types.ModuleType | str) -> types.ModuleType:
         return item
     if isinstance(item, str):
         return importlib.import_module(item)
-    message = f'item must be a module or module name, not {type(item)}'
+    message = f"item must be a module or module name, not {type(item)}"
     raise TypeError(message)
 
 
 def _members(
     item: types.ModuleType | str,
     predicate: Callable[[Any], bool],
-    include_privates: bool | None) -> dict[str, Any]:
+    include_privates: bool | None,
+) -> dict[str, Any]:
     """Returns members of module `item` that are defined in that module."""
     module = _modulify(item)
     members = {
-        n: o for n, o in inspect.getmembers(module, predicate)
-        if getattr(o, '__module__', None) == module.__name__}
+        n: o
+        for n, o in inspect.getmembers(module, predicate)
+        if getattr(o, "__module__", None) == module.__name__
+    }
     return base.catalog_where(
-        names = members,
-        predicate = lambda _: True,
-        getter = members.__getitem__,
-        include_privates = include_privates)
+        names=members,
+        predicate=lambda _: True,
+        getter=members.__getitem__,
+        include_privates=include_privates,
+    )
 
 
 def name_classes(
-    item: types.ModuleType | str,
-    include_privates: bool | None = None) -> list[str]:
+    item: types.ModuleType | str, include_privates: bool | None = None
+) -> list[str]:
     """Returns names of the classes defined in module `item`.
 
     Args:
@@ -75,8 +80,8 @@ def name_classes(
 
 
 def collect_classes(
-    item: types.ModuleType | str,
-    include_privates: bool | None = None) -> list[type]:
+    item: types.ModuleType | str, include_privates: bool | None = None
+) -> list[type]:
     """Returns the classes defined in module `item`.
 
     Args:
@@ -93,8 +98,8 @@ def collect_classes(
 
 
 def catalog_classes(
-    item: types.ModuleType | str,
-    include_privates: bool | None = None) -> dict[str, type]:
+    item: types.ModuleType | str, include_privates: bool | None = None
+) -> dict[str, type]:
     """Returns a dict of the names and classes defined in module `item`.
 
     Args:
@@ -114,7 +119,8 @@ def has_classes(
     item: types.ModuleType | str,
     names: Any,
     raise_error: bool | None = None,
-    match_all: bool | None = None) -> bool:
+    match_all: bool | None = None,
+) -> bool:
     """Returns whether `names` are classes defined in module `item`.
 
     Args:
@@ -129,14 +135,15 @@ def has_classes(
         Whether all (or any) of `names` are classes defined in `item`.
 
     """
-    classes = _members(item, inspect.isclass, include_privates = True)
+    classes = _members(item, inspect.isclass, include_privates=True)
     return base.has_names(
-        item, names, base.membership(classes), raise_error, match_all)
+        item, names, base.membership(classes), raise_error, match_all
+    )
 
 
 def name_functions(
-    item: types.ModuleType | str,
-    include_privates: bool | None = None) -> list[str]:
+    item: types.ModuleType | str, include_privates: bool | None = None
+) -> list[str]:
     """Returns names of the functions defined in module `item`.
 
     Args:
@@ -153,8 +160,8 @@ def name_functions(
 
 
 def collect_functions(
-    item: types.ModuleType | str,
-    include_privates: bool | None = None) -> list[types.FunctionType]:
+    item: types.ModuleType | str, include_privates: bool | None = None
+) -> list[types.FunctionType]:
     """Returns the functions defined in module `item`.
 
     Args:
@@ -171,8 +178,8 @@ def collect_functions(
 
 
 def catalog_functions(
-    item: types.ModuleType | str,
-    include_privates: bool | None = None) -> dict[str, types.FunctionType]:
+    item: types.ModuleType | str, include_privates: bool | None = None
+) -> dict[str, types.FunctionType]:
     """Returns a dict of the names and functions defined in module `item`.
 
     Args:
@@ -192,7 +199,8 @@ def has_functions(
     item: types.ModuleType | str,
     names: Any,
     raise_error: bool | None = None,
-    match_all: bool | None = None) -> bool:
+    match_all: bool | None = None,
+) -> bool:
     """Returns whether `names` are functions defined in module `item`.
 
     Args:
@@ -207,6 +215,7 @@ def has_functions(
         Whether all (or any) of `names` are functions defined in `item`.
 
     """
-    functions = _members(item, inspect.isfunction, include_privates = True)
+    functions = _members(item, inspect.isfunction, include_privates=True)
     return base.has_names(
-        item, names, base.membership(functions), raise_error, match_all)
+        item, names, base.membership(functions), raise_error, match_all
+    )

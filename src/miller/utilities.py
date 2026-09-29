@@ -16,7 +16,7 @@ import pathlib
 from collections.abc import Iterable, Mapping
 from typing import Any, TypeVar
 
-_T = TypeVar('_T')
+_T = TypeVar("_T")
 
 
 def iterify(item: Any) -> Iterable[Any]:
@@ -60,7 +60,7 @@ def namify(item: Any, default: str | None = None) -> str:
     """
     if isinstance(item, str):
         return item
-    for attribute in ('name', '__name__'):
+    for attribute in ("name", "__name__"):
         try:
             name = getattr(item, attribute)
         except Exception:  # noqa: BLE001, S112
@@ -89,7 +89,7 @@ def pathlibify(item: str | os.PathLike[str]) -> pathlib.Path:
         return item
     if isinstance(item, (str, os.PathLike)):
         return pathlib.Path(item)
-    message = f'item must be a str or path-like object, not {type(item)}'
+    message = f"item must be a str or path-like object, not {type(item)}"
     raise TypeError(message)
 
 
@@ -103,7 +103,7 @@ def is_private_name(name: str) -> bool:
         Whether `name` is a "private" (or "dunder") name.
 
     """
-    return name.startswith('_')
+    return name.startswith("_")
 
 
 def drop_privates(item: _T) -> _T:
@@ -120,8 +120,12 @@ def drop_privates(item: _T) -> _T:
     """
     if isinstance(item, Mapping):
         return {  # type: ignore[return-value]
-            k: v for k, v in item.items()
-            if not (isinstance(k, str) and is_private_name(k))}
+            k: v
+            for k, v in item.items()
+            if not (isinstance(k, str) and is_private_name(k))
+        }
     return [  # type: ignore[return-value]
-        i for i in item  # type: ignore[attr-defined]
-        if not (isinstance(i, str) and is_private_name(i))]
+        i
+        for i in item  # type: ignore[attr-defined]
+        if not (isinstance(i, str) and is_private_name(i))
+    ]

@@ -14,10 +14,7 @@ from typing import Any
 
 from . import base, utilities
 
-__all__: list[str] = [
-    'collect_key_types',
-    'collect_types',
-    'has_types']
+__all__: list[str] = ["collect_key_types", "collect_types", "has_types"]
 
 
 def _unique_types(items: Iterable[Any]) -> tuple[type, ...]:
@@ -44,9 +41,10 @@ def collect_types(item: Any) -> tuple[type, ...]:
     if isinstance(item, Mapping):
         return _unique_types(item.values())
     if isinstance(item, Iterable) and not isinstance(
-            item, (str, bytes, bytearray)):
+        item, (str, bytes, bytearray)
+    ):
         return _unique_types(item)
-    message = f'{item!r} is not a container'
+    message = f"{item!r} is not a container"
     raise TypeError(message)
 
 
@@ -64,7 +62,7 @@ def collect_key_types(item: Mapping[Any, Any]) -> tuple[type, ...]:
 
     """
     if not isinstance(item, Mapping):
-        message = f'{item!r} is not a mapping'
+        message = f"{item!r} is not a mapping"
         raise TypeError(message)
     return _unique_types(item.keys())
 
@@ -73,7 +71,8 @@ def has_types(
     item: Any,
     kinds: type | Iterable[type],
     raise_error: bool | None = None,
-    match_all: bool | None = None) -> bool:
+    match_all: bool | None = None,
+) -> bool:
     """Returns whether the container `item` holds items of `kinds`.
 
     Subclasses count: an item that is a `bool` satisfies the kind `int`. For
@@ -98,8 +97,7 @@ def has_types(
     return base.has_names(
         item,
         list(utilities.iterify(kinds)),
-        lambda _, k, raise_error = False: any(
-            issubclass(h, k) for h in held),
+        lambda _, k, raise_error=False: any(issubclass(h, k) for h in held),
         raise_error,
-        match_all)
-
+        match_all,
+    )

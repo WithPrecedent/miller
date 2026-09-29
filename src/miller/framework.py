@@ -22,19 +22,20 @@ from typing import Any
 from . import configuration
 
 __all__: list[str] = [
-    'set_include_privates',
-    'set_include_str',
-    'set_keyer',
-    'set_match_all',
-    'set_module_extensions',
-    'set_raise_errors',
-    'set_recursion']
+    "set_include_privates",
+    "set_include_str",
+    "set_keyer",
+    "set_match_all",
+    "set_module_extensions",
+    "set_raise_errors",
+    "set_recursion",
+]
 
 
 def _set_bool(name: str, value: Any) -> None:
     """Sets the boolean setting `name` in `miller.configuration`."""
     if not isinstance(value, bool):
-        message = f'{name.lower()} argument must be a boolean type'
+        message = f"{name.lower()} argument must be a boolean type"
         raise TypeError(message)
     setattr(configuration, name, value)
 
@@ -49,7 +50,7 @@ def set_include_privates(include_privates: bool) -> None:
         TypeError: if `include_privates` is not a boolean type.
 
     """
-    _set_bool('INCLUDE_PRIVATES', include_privates)
+    _set_bool("INCLUDE_PRIVATES", include_privates)
 
 
 def set_include_str(include_str: bool) -> None:
@@ -62,7 +63,7 @@ def set_include_str(include_str: bool) -> None:
         TypeError: if `include_str` is not a boolean type.
 
     """
-    _set_bool('INCLUDE_STR', include_str)
+    _set_bool("INCLUDE_STR", include_str)
 
 
 def set_keyer(keyer: Callable[[Any], str]) -> None:
@@ -76,7 +77,7 @@ def set_keyer(keyer: Callable[[Any], str]) -> None:
 
     """
     if not callable(keyer):
-        message = 'keyer argument must be callable'
+        message = "keyer argument must be callable"
         raise TypeError(message)
     configuration.KEYER = keyer
 
@@ -91,7 +92,7 @@ def set_match_all(match_all: bool) -> None:
         TypeError: if `match_all` is not a boolean type.
 
     """
-    _set_bool('MATCH_ALL', match_all)
+    _set_bool("MATCH_ALL", match_all)
 
 
 def set_module_extensions(extensions: Sequence[str]) -> None:
@@ -105,12 +106,13 @@ def set_module_extensions(extensions: Sequence[str]) -> None:
 
     """
     if (
-            isinstance(extensions, Sequence)
-            and not isinstance(extensions, str)
-            and all(isinstance(i, str) for i in extensions)):
+        isinstance(extensions, Sequence)
+        and not isinstance(extensions, str)
+        and all(isinstance(i, str) for i in extensions)
+    ):
         configuration.MODULE_EXTENSIONS = tuple(extensions)
     else:
-        message = 'extensions argument must be a sequence of strings'
+        message = "extensions argument must be a sequence of strings"
         raise TypeError(message)
 
 
@@ -124,7 +126,7 @@ def set_raise_errors(raise_errors: bool) -> None:
         TypeError: if `raise_errors` is not a boolean type.
 
     """
-    _set_bool('RAISE_ERRORS', raise_errors)
+    _set_bool("RAISE_ERRORS", raise_errors)
 
 
 def set_recursion(recursive: bool) -> None:
@@ -141,4 +143,4 @@ def set_recursion(recursive: bool) -> None:
         TypeError: if `recursive` is not a boolean type.
 
     """
-    _set_bool('RECURSIVE', recursive)
+    _set_bool("RECURSIVE", recursive)

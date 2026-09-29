@@ -33,12 +33,15 @@ introspection of different objects.
 
 ``` python
 """Returns a list of function names in the module 'item'."""
-[m[0] for m in inspect.getmembers(item, inspect.isfunction)
- if m[1].__module__ == item.__name__]
+
+[
+    m[0]
+    for m in inspect.getmembers(item, inspect.isfunction)
+    if m[1].__module__ == item.__name__
+]
 
 """Returns names of properties of the instance 'item'."""
-[a for a in dir(type(item))
- if isinstance(getattr(type(item), a), property)]
+[a for a in dir(type(item)) if isinstance(getattr(type(item), a), property)]
 
 """Returns names of fields of the dataclass 'item'."""
 [f.name for f in dataclasses.fields(item)]
@@ -187,15 +190,15 @@ class Example:
 
 item = Example()
 
-miller.name_methods(item)          # ['add']
-miller.name_properties(item)       # ['double']
-miller.name_fields(item)           # ['one']
-miller.name_fields(item, include_privates = True)  # ['one', '_two']
-miller.catalog_variables(item)     # {'one': 1}
-miller.has_methods(item, 'add')    # True
-miller.is_property(item, 'double') # True
+miller.name_methods(item)  # ['add']
+miller.name_properties(item)  # ['double']
+miller.name_fields(item)  # ['one']
+miller.name_fields(item, include_privates=True)  # ['one', '_two']
+miller.catalog_variables(item)  # {'one': 1}
+miller.has_methods(item, "add")  # True
+miller.is_property(item, "double")  # True
 miller.name_functions(miller.framework)  # functions defined in a module
-miller.name_modules('src/miller')  # python modules in a folder
+miller.name_modules("src/miller")  # python modules in a folder
 ```
 
 Functions that check whether an item qualifies (`has_*` and `is_*`) return `False` by default. Pass `raise_error = True` (or call `miller.set_raise_errors(True)`) to have them raise an error instead. The `miller.set_*` functions change the global defaults for `include_privates`, `include_str`, `match_all`, `raise_errors`, `recursive`, module file suffixes, and the function used to name items.
@@ -204,9 +207,9 @@ Functions that check whether an item qualifies (`has_*` and `is_*`) return `Fals
 
 ``` python
 inspector = miller.Inspector(item)
-inspector.methods      # {'add': <bound method Example.add ...>}
-inspector.variables    # {'one': 1}
-inspector.fields       # {'one': Field(...)}
+inspector.methods  # {'add': <bound method Example.add ...>}
+inspector.variables  # {'one': 1}
+inspector.fields  # {'one': Field(...)}
 ```
 
 ## Contributing

@@ -17,7 +17,7 @@ from typing import Any, TypeVar
 
 from . import configuration, utilities
 
-_T = TypeVar('_T')
+_T = TypeVar("_T")
 
 
 def resolve(value: _T | None, default: _T) -> _T:
@@ -38,7 +38,8 @@ def verdict(
     value: bool,
     raise_error: bool | None,
     message: str,
-    error: type[Exception] = TypeError) -> bool:
+    error: type[Exception] = TypeError,
+) -> bool:
     """Returns `value` or raises an error if `value` is False.
 
     Args:
@@ -65,7 +66,8 @@ def has_names(
     names: Any,
     checker: Callable[..., bool],
     raise_error: bool | None = None,
-    match_all: bool | None = None) -> bool:
+    match_all: bool | None = None,
+) -> bool:
     """Returns whether `names` qualify in `item` according to `checker`.
 
     Args:
@@ -90,13 +92,14 @@ def has_names(
     names = list(utilities.iterify(names))
     match_all = resolve(match_all, configuration.MATCH_ALL)
     scope = all if match_all else any
-    value = scope(checker(item, n, raise_error = False) for n in names)
-    quantifier = 'Not all' if match_all else 'None'
+    value = scope(checker(item, n, raise_error=False) for n in names)
+    quantifier = "Not all" if match_all else "None"
     return verdict(
-        value = value,
-        raise_error = raise_error,
-        message = f'{quantifier} of {names} qualify in {item!r}',
-        error = AttributeError)
+        value=value,
+        raise_error=raise_error,
+        message=f"{quantifier} of {names} qualify in {item!r}",
+        error=AttributeError,
+    )
 
 
 def membership(collection: Container[Any]) -> Callable[..., bool]:
@@ -110,13 +113,14 @@ def membership(collection: Container[Any]) -> Callable[..., bool]:
             whether the name is in `collection`.
 
     """
-    return lambda _, name, raise_error = False: name in collection
+    return lambda _, name, raise_error=False: name in collection
 
 
 def name_where(
     names: Iterable[str],
     predicate: Callable[[str], bool],
-    include_privates: bool | None = None) -> list[str]:
+    include_privates: bool | None = None,
+) -> list[str]:
     """Returns the `names` that satisfy `predicate`.
 
     Args:
@@ -129,19 +133,21 @@ def name_where(
         List of the selected names in their original order.
 
     """
-    include_privates = resolve(
-        include_privates, configuration.INCLUDE_PRIVATES)
+    include_privates = resolve(include_privates, configuration.INCLUDE_PRIVATES)
     return [
-        n for n in names
+        n
+        for n in names
         if (include_privates or not utilities.is_private_name(n))
-        and predicate(n)]
+        and predicate(n)
+    ]
 
 
 def catalog_where(
     names: Iterable[str],
     predicate: Callable[[str], bool],
     getter: Callable[[str], Any],
-    include_privates: bool | None = None) -> dict[str, Any]:
+    include_privates: bool | None = None,
+) -> dict[str, Any]:
     """Returns a dict of the `names` satisfying `predicate` and their values.
 
     Args:
@@ -156,7 +162,6 @@ def catalog_where(
 
     """
     selected = name_where(
-        names = names,
-        predicate = predicate,
-        include_privates = include_privates)
+        names=names, predicate=predicate, include_privates=include_privates
+    )
     return {n: getter(n) for n in selected}

@@ -25,42 +25,47 @@ from typing import Any
 from . import base, configuration, utilities
 
 __all__: list[str] = [
-    'catalog_file_paths',
-    'catalog_folder_paths',
-    'catalog_modules',
-    'catalog_paths',
-    'collect_file_paths',
-    'collect_folder_paths',
-    'collect_modules',
-    'collect_paths',
-    'has_file_paths',
-    'has_folder_paths',
-    'has_modules',
-    'has_paths',
-    'name_file_paths',
-    'name_folder_paths',
-    'name_modules',
-    'name_paths']
+    "catalog_file_paths",
+    "catalog_folder_paths",
+    "catalog_modules",
+    "catalog_paths",
+    "collect_file_paths",
+    "collect_folder_paths",
+    "collect_modules",
+    "collect_paths",
+    "has_file_paths",
+    "has_folder_paths",
+    "has_modules",
+    "has_paths",
+    "name_file_paths",
+    "name_folder_paths",
+    "name_modules",
+    "name_paths",
+]
 
 
 def _relative_paths(
     item: str | os.PathLike[str],
     recursive: bool | None,
-    include_privates: bool | None) -> tuple[pathlib.Path, list[pathlib.Path]]:
+    include_privates: bool | None,
+) -> tuple[pathlib.Path, list[pathlib.Path]]:
     """Returns folder `item` and sorted relative paths of its contents."""
     folder = utilities.pathlibify(item)
     if not folder.is_dir():
-        message = f'{item} is not a path to a folder'
+        message = f"{item} is not a path to a folder"
         raise NotADirectoryError(message)
     recursive = base.resolve(recursive, configuration.RECURSIVE)
     include_privates = base.resolve(
-        include_privates, configuration.INCLUDE_PRIVATES)
-    paths = folder.rglob('*') if recursive else folder.iterdir()
+        include_privates, configuration.INCLUDE_PRIVATES
+    )
+    paths = folder.rglob("*") if recursive else folder.iterdir()
     relatives = sorted(p.relative_to(folder) for p in paths)
     if not include_privates:
         relatives = [
-            p for p in relatives
-            if not any(utilities.is_private_name(i) for i in p.parts)]
+            p
+            for p in relatives
+            if not any(utilities.is_private_name(i) for i in p.parts)
+        ]
     return folder, relatives
 
 
@@ -69,11 +74,11 @@ def _catalog(
     keep: Callable[[pathlib.Path], bool],
     namer: Callable[[pathlib.Path], str],
     recursive: bool | None,
-    include_privates: bool | None) -> dict[str, pathlib.Path]:
+    include_privates: bool | None,
+) -> dict[str, pathlib.Path]:
     """Returns dict of names and full paths of contents that pass `keep`."""
     folder, relatives = _relative_paths(item, recursive, include_privates)
-    return {
-        namer(r): folder / r for r in relatives if keep(folder / r)}
+    return {namer(r): folder / r for r in relatives if keep(folder / r)}
 
 
 def _has(  # noqa: PLR0917
@@ -83,14 +88,15 @@ def _has(  # noqa: PLR0917
     namer: Callable[[pathlib.Path], str],
     recursive: bool | None,
     raise_error: bool | None,
-    match_all: bool | None) -> bool:
+    match_all: bool | None,
+) -> bool:
     """Returns whether `paths` are among the contents of `item` passing `keep`.
 
     Each of `paths` can be a name (as returned by the `name_*` functions), a
     path relative to `item`, or a full path.
     """
     folder = utilities.pathlibify(item)
-    found = _catalog(item, keep, namer, recursive, include_privates = True)
+    found = _catalog(item, keep, namer, recursive, include_privates=True)
 
     def _checker(_: Any, path: Any, **__: Any) -> bool:
         if isinstance(path, str) and path in found:
@@ -108,7 +114,7 @@ def _as_posix(path: pathlib.Path) -> str:
 
 def _as_module_name(path: pathlib.Path) -> str:
     """Returns the relative `path` as a dotted module name."""
-    return '.'.join(path.with_suffix('').parts)
+    return ".".join(path.with_suffix("").parts)
 
 
 def _is_module_file(path: pathlib.Path) -> bool:
@@ -119,7 +125,8 @@ def _is_module_file(path: pathlib.Path) -> bool:
 def name_paths(
     item: str | os.PathLike[str],
     recursive: bool | None = None,
-    include_privates: bool | None = None) -> list[str]:
+    include_privates: bool | None = None,
+) -> list[str]:
     """Returns names of everything (files and folders) in folder `item`.
 
     Args:
@@ -143,7 +150,8 @@ def name_paths(
 def collect_paths(
     item: str | os.PathLike[str],
     recursive: bool | None = None,
-    include_privates: bool | None = None) -> list[pathlib.Path]:
+    include_privates: bool | None = None,
+) -> list[pathlib.Path]:
     """Returns full paths of everything (files and folders) in folder `item`.
 
     Args:
@@ -167,7 +175,8 @@ def collect_paths(
 def catalog_paths(
     item: str | os.PathLike[str],
     recursive: bool | None = None,
-    include_privates: bool | None = None) -> dict[str, pathlib.Path]:
+    include_privates: bool | None = None,
+) -> dict[str, pathlib.Path]:
     """Returns dict of names and paths of everything in folder `item`.
 
     Args:
@@ -186,7 +195,8 @@ def catalog_paths(
 
     """
     return _catalog(
-        item, lambda _: True, _as_posix, recursive, include_privates)
+        item, lambda _: True, _as_posix, recursive, include_privates
+    )
 
 
 def has_paths(
@@ -194,7 +204,8 @@ def has_paths(
     paths: Any,
     recursive: bool | None = None,
     raise_error: bool | None = None,
-    match_all: bool | None = None) -> bool:
+    match_all: bool | None = None,
+) -> bool:
     """Returns whether `paths` are in folder `item`.
 
     Args:
@@ -213,14 +224,21 @@ def has_paths(
 
     """
     return _has(
-        item, paths, lambda _: True, _as_posix, recursive, raise_error,
-        match_all)
+        item,
+        paths,
+        lambda _: True,
+        _as_posix,
+        recursive,
+        raise_error,
+        match_all,
+    )
 
 
 def name_file_paths(
     item: str | os.PathLike[str],
     recursive: bool | None = None,
-    include_privates: bool | None = None) -> list[str]:
+    include_privates: bool | None = None,
+) -> list[str]:
     """Returns names of the files in folder `item`.
 
     Args:
@@ -244,7 +262,8 @@ def name_file_paths(
 def collect_file_paths(
     item: str | os.PathLike[str],
     recursive: bool | None = None,
-    include_privates: bool | None = None) -> list[pathlib.Path]:
+    include_privates: bool | None = None,
+) -> list[pathlib.Path]:
     """Returns full paths of the files in folder `item`.
 
     Args:
@@ -268,7 +287,8 @@ def collect_file_paths(
 def catalog_file_paths(
     item: str | os.PathLike[str],
     recursive: bool | None = None,
-    include_privates: bool | None = None) -> dict[str, pathlib.Path]:
+    include_privates: bool | None = None,
+) -> dict[str, pathlib.Path]:
     """Returns dict of names and paths of the files in folder `item`.
 
     Args:
@@ -287,7 +307,8 @@ def catalog_file_paths(
 
     """
     return _catalog(
-        item, lambda p: p.is_file(), _as_posix, recursive, include_privates)
+        item, lambda p: p.is_file(), _as_posix, recursive, include_privates
+    )
 
 
 def has_file_paths(
@@ -295,7 +316,8 @@ def has_file_paths(
     paths: Any,
     recursive: bool | None = None,
     raise_error: bool | None = None,
-    match_all: bool | None = None) -> bool:
+    match_all: bool | None = None,
+) -> bool:
     """Returns whether `paths` are files in folder `item`.
 
     Args:
@@ -314,14 +336,21 @@ def has_file_paths(
 
     """
     return _has(
-        item, paths, lambda p: p.is_file(), _as_posix, recursive, raise_error,
-        match_all)
+        item,
+        paths,
+        lambda p: p.is_file(),
+        _as_posix,
+        recursive,
+        raise_error,
+        match_all,
+    )
 
 
 def name_folder_paths(
     item: str | os.PathLike[str],
     recursive: bool | None = None,
-    include_privates: bool | None = None) -> list[str]:
+    include_privates: bool | None = None,
+) -> list[str]:
     """Returns names of the folders in folder `item`.
 
     Args:
@@ -345,7 +374,8 @@ def name_folder_paths(
 def collect_folder_paths(
     item: str | os.PathLike[str],
     recursive: bool | None = None,
-    include_privates: bool | None = None) -> list[pathlib.Path]:
+    include_privates: bool | None = None,
+) -> list[pathlib.Path]:
     """Returns full paths of the folders in folder `item`.
 
     Args:
@@ -364,13 +394,15 @@ def collect_folder_paths(
 
     """
     return list(
-        catalog_folder_paths(item, recursive, include_privates).values())
+        catalog_folder_paths(item, recursive, include_privates).values()
+    )
 
 
 def catalog_folder_paths(
     item: str | os.PathLike[str],
     recursive: bool | None = None,
-    include_privates: bool | None = None) -> dict[str, pathlib.Path]:
+    include_privates: bool | None = None,
+) -> dict[str, pathlib.Path]:
     """Returns dict of names and paths of the folders in folder `item`.
 
     Args:
@@ -389,7 +421,8 @@ def catalog_folder_paths(
 
     """
     return _catalog(
-        item, lambda p: p.is_dir(), _as_posix, recursive, include_privates)
+        item, lambda p: p.is_dir(), _as_posix, recursive, include_privates
+    )
 
 
 def has_folder_paths(
@@ -397,7 +430,8 @@ def has_folder_paths(
     paths: Any,
     recursive: bool | None = None,
     raise_error: bool | None = None,
-    match_all: bool | None = None) -> bool:
+    match_all: bool | None = None,
+) -> bool:
     """Returns whether `paths` are folders in folder `item`.
 
     Args:
@@ -416,14 +450,21 @@ def has_folder_paths(
 
     """
     return _has(
-        item, paths, lambda p: p.is_dir(), _as_posix, recursive, raise_error,
-        match_all)
+        item,
+        paths,
+        lambda p: p.is_dir(),
+        _as_posix,
+        recursive,
+        raise_error,
+        match_all,
+    )
 
 
 def name_modules(
     item: str | os.PathLike[str],
     recursive: bool | None = None,
-    include_privates: bool | None = None) -> list[str]:
+    include_privates: bool | None = None,
+) -> list[str]:
     """Returns names of the python modules in folder `item`.
 
     Args:
@@ -447,7 +488,8 @@ def name_modules(
 def collect_modules(
     item: str | os.PathLike[str],
     recursive: bool | None = None,
-    include_privates: bool | None = None) -> list[pathlib.Path]:
+    include_privates: bool | None = None,
+) -> list[pathlib.Path]:
     """Returns full paths of the python modules in folder `item`.
 
     Args:
@@ -471,7 +513,8 @@ def collect_modules(
 def catalog_modules(
     item: str | os.PathLike[str],
     recursive: bool | None = None,
-    include_privates: bool | None = None) -> dict[str, pathlib.Path]:
+    include_privates: bool | None = None,
+) -> dict[str, pathlib.Path]:
     """Returns dict of names and paths of the python modules in folder `item`.
 
     Args:
@@ -490,7 +533,8 @@ def catalog_modules(
 
     """
     return _catalog(
-        item, _is_module_file, _as_module_name, recursive, include_privates)
+        item, _is_module_file, _as_module_name, recursive, include_privates
+    )
 
 
 def has_modules(
@@ -498,7 +542,8 @@ def has_modules(
     paths: Any,
     recursive: bool | None = None,
     raise_error: bool | None = None,
-    match_all: bool | None = None) -> bool:
+    match_all: bool | None = None,
+) -> bool:
     """Returns whether `paths` are python modules in folder `item`.
 
     Args:
@@ -518,5 +563,11 @@ def has_modules(
 
     """
     return _has(
-        item, paths, _is_module_file, _as_module_name, recursive, raise_error,
-        match_all)
+        item,
+        paths,
+        _is_module_file,
+        _as_module_name,
+        recursive,
+        raise_error,
+        match_all,
+    )

@@ -31,6 +31,6 @@ INCLUDE_PRIVATES: bool = False
 INCLUDE_STR: bool = False
 KEYER: Callable[[Any], str] = utilities.namify
 MATCH_ALL: bool = True
-MODULE_EXTENSIONS: tuple[str, ...] = ('.py',)
+MODULE_EXTENSIONS: tuple[str, ...] = (".py",)
 RAISE_ERRORS: bool = False
 RECURSIVE: bool = False

@@ -30,49 +30,50 @@ from typing import Any
 from . import base
 
 __all__: list[str] = [
-    'catalog_annotations',
-    'catalog_attributes',
-    'catalog_class_attributes',
-    'catalog_fields',
-    'catalog_instance_attributes',
-    'catalog_methods',
-    'catalog_properties',
-    'catalog_signatures',
-    'catalog_variables',
-    'collect_annotations',
-    'collect_attributes',
-    'collect_class_attributes',
-    'collect_fields',
-    'collect_instance_attributes',
-    'collect_methods',
-    'collect_properties',
-    'collect_signatures',
-    'collect_variables',
-    'has_annotations',
-    'has_attributes',
-    'has_class_attributes',
-    'has_fields',
-    'has_instance_attributes',
-    'has_methods',
-    'has_properties',
-    'has_signatures',
-    'has_variables',
-    'is_attribute',
-    'is_class_attribute',
-    'is_field',
-    'is_instance_attribute',
-    'is_method',
-    'is_property',
-    'is_variable',
-    'name_annotations',
-    'name_attributes',
-    'name_class_attributes',
-    'name_fields',
-    'name_instance_attributes',
-    'name_methods',
-    'name_properties',
-    'name_signatures',
-    'name_variables']
+    "catalog_annotations",
+    "catalog_attributes",
+    "catalog_class_attributes",
+    "catalog_fields",
+    "catalog_instance_attributes",
+    "catalog_methods",
+    "catalog_properties",
+    "catalog_signatures",
+    "catalog_variables",
+    "collect_annotations",
+    "collect_attributes",
+    "collect_class_attributes",
+    "collect_fields",
+    "collect_instance_attributes",
+    "collect_methods",
+    "collect_properties",
+    "collect_signatures",
+    "collect_variables",
+    "has_annotations",
+    "has_attributes",
+    "has_class_attributes",
+    "has_fields",
+    "has_instance_attributes",
+    "has_methods",
+    "has_properties",
+    "has_signatures",
+    "has_variables",
+    "is_attribute",
+    "is_class_attribute",
+    "is_field",
+    "is_instance_attribute",
+    "is_method",
+    "is_property",
+    "is_variable",
+    "name_annotations",
+    "name_attributes",
+    "name_class_attributes",
+    "name_fields",
+    "name_instance_attributes",
+    "name_methods",
+    "name_properties",
+    "name_signatures",
+    "name_variables",
+]
 
 _MISSING: Any = object()
 _PROPERTY_TYPES: tuple[type, ...] = (property, functools.cached_property)
@@ -100,9 +101,9 @@ def _value(item: Any, name: str) -> Any:
 
 def _is_routine(raw: Any) -> bool:
     """Returns whether `raw` (a statically found attribute) is a method."""
-    return (
-        isinstance(raw, (classmethod, staticmethod))
-        or inspect.isroutine(raw))
+    return isinstance(raw, (classmethod, staticmethod)) or inspect.isroutine(
+        raw
+    )
 
 
 def is_attribute(item: Any, name: str, raise_error: bool | None = None) -> bool:
@@ -125,14 +126,16 @@ def is_attribute(item: Any, name: str, raise_error: bool | None = None) -> bool:
         except Exception:  # noqa: BLE001
             value = False
     return base.verdict(
-        value, raise_error, f'{name} is not an attribute of {item!r}',
-        AttributeError)
+        value,
+        raise_error,
+        f"{name} is not an attribute of {item!r}",
+        AttributeError,
+    )
 
 
 def is_class_attribute(
-    item: Any,
-    name: str,
-    raise_error: bool | None = None) -> bool:
+    item: Any, name: str, raise_error: bool | None = None
+) -> bool:
     """Returns whether `name` is an attribute of the class of `item`.
 
     Args:
@@ -150,8 +153,9 @@ def is_class_attribute(
     return base.verdict(
         _static(cls, name) is not _MISSING,
         raise_error,
-        f'{name} is not a class attribute of {item!r}',
-        AttributeError)
+        f"{name} is not a class attribute of {item!r}",
+        AttributeError,
+    )
 
 
 def is_field(item: Any, name: str, raise_error: bool | None = None) -> bool:
@@ -169,16 +173,16 @@ def is_field(item: Any, name: str, raise_error: bool | None = None) -> bool:
 
     """
     value = dataclasses.is_dataclass(item) and name in {
-        f.name for f in dataclasses.fields(item)}
+        f.name for f in dataclasses.fields(item)
+    }
     return base.verdict(
-        value, raise_error, f'{name} is not a field of {item!r}',
-        AttributeError)
+        value, raise_error, f"{name} is not a field of {item!r}", AttributeError
+    )
 
 
 def is_instance_attribute(
-    item: Any,
-    name: str,
-    raise_error: bool | None = None) -> bool:
+    item: Any, name: str, raise_error: bool | None = None
+) -> bool:
     """Returns whether `name` is an attribute stored on the instance `item`.
 
     Args:
@@ -194,17 +198,21 @@ def is_instance_attribute(
     """
     value = False
     if not inspect.isclass(item):
-        if name in getattr(item, '__dict__', {}):
+        if name in getattr(item, "__dict__", {}):
             value = True
         else:
             raw = _static(item.__class__, name)
             value = (
                 isinstance(raw, types.MemberDescriptorType)
                 and _static(item, name) is not _MISSING
-                and hasattr(item, name))
+                and hasattr(item, name)
+            )
     return base.verdict(
-        value, raise_error, f'{name} is not an instance attribute of {item!r}',
-        AttributeError)
+        value,
+        raise_error,
+        f"{name} is not an instance attribute of {item!r}",
+        AttributeError,
+    )
 
 
 def is_method(item: Any, name: str, raise_error: bool | None = None) -> bool:
@@ -225,10 +233,13 @@ def is_method(item: Any, name: str, raise_error: bool | None = None) -> bool:
     raw = _static(item, name)
     value = _is_routine(raw)
     if value and not inspect.isclass(item) and not inspect.ismodule(item):
-        value = name not in getattr(item, '__dict__', {})
+        value = name not in getattr(item, "__dict__", {})
     return base.verdict(
-        value, raise_error, f'{name} is not a method of {item!r}',
-        AttributeError)
+        value,
+        raise_error,
+        f"{name} is not a method of {item!r}",
+        AttributeError,
+    )
 
 
 def is_property(item: Any, name: str, raise_error: bool | None = None) -> bool:
@@ -247,8 +258,9 @@ def is_property(item: Any, name: str, raise_error: bool | None = None) -> bool:
     return base.verdict(
         isinstance(_static(item, name), _PROPERTY_TYPES),
         raise_error,
-        f'{name} is not a property of {item!r}',
-        AttributeError)
+        f"{name} is not a property of {item!r}",
+        AttributeError,
+    )
 
 
 def is_variable(item: Any, name: str, raise_error: bool | None = None) -> bool:
@@ -266,12 +278,16 @@ def is_variable(item: Any, name: str, raise_error: bool | None = None) -> bool:
 
     """
     value = (
-        is_attribute(item, name, raise_error = False)
-        and not is_method(item, name, raise_error = False)
-        and not is_property(item, name, raise_error = False))
+        is_attribute(item, name, raise_error=False)
+        and not is_method(item, name, raise_error=False)
+        and not is_property(item, name, raise_error=False)
+    )
     return base.verdict(
-        value, raise_error, f'{name} is not a variable of {item!r}',
-        AttributeError)
+        value,
+        raise_error,
+        f"{name} is not a variable of {item!r}",
+        AttributeError,
+    )
 
 
 """ Names (the str names of attributes of each kind) """
@@ -280,29 +296,33 @@ def is_variable(item: Any, name: str, raise_error: bool | None = None) -> bool:
 def _names(
     item: Any,
     checker: Callable[[Any, str], bool],
-    include_privates: bool | None) -> list[str]:
+    include_privates: bool | None,
+) -> list[str]:
     """Returns names in `dir(item)` that `checker` accepts."""
     return base.name_where(
-        names = dir(item),
-        predicate = functools.partial(checker, item),
-        include_privates = include_privates)
+        names=dir(item),
+        predicate=functools.partial(checker, item),
+        include_privates=include_privates,
+    )
 
 
 def _catalog(
     item: Any,
     checker: Callable[[Any, str], bool],
-    include_privates: bool | None) -> dict[str, Any]:
+    include_privates: bool | None,
+) -> dict[str, Any]:
     """Returns dict of names in `dir(item)` accepted by `checker`."""
     return base.catalog_where(
-        names = dir(item),
-        predicate = functools.partial(checker, item),
-        getter = functools.partial(_value, item),
-        include_privates = include_privates)
+        names=dir(item),
+        predicate=functools.partial(checker, item),
+        getter=functools.partial(_value, item),
+        include_privates=include_privates,
+    )
 
 
 def name_attributes(
-    item: Any,
-    include_privates: bool | None = None) -> list[str]:
+    item: Any, include_privates: bool | None = None
+) -> list[str]:
     """Returns names of the attributes of `item`.
 
     Args:
@@ -319,8 +339,8 @@ def name_attributes(
 
 
 def collect_attributes(
-    item: Any,
-    include_privates: bool | None = None) -> list[Any]:
+    item: Any, include_privates: bool | None = None
+) -> list[Any]:
     """Returns the values of the attributes of `item`.
 
     Args:
@@ -337,8 +357,8 @@ def collect_attributes(
 
 
 def catalog_attributes(
-    item: Any,
-    include_privates: bool | None = None) -> dict[str, Any]:
+    item: Any, include_privates: bool | None = None
+) -> dict[str, Any]:
     """Returns a dict of the names and values of the attributes of `item`.
 
     Args:
@@ -358,7 +378,8 @@ def has_attributes(
     item: Any,
     names: Any,
     raise_error: bool | None = None,
-    match_all: bool | None = None) -> bool:
+    match_all: bool | None = None,
+) -> bool:
     """Returns whether `names` are attributes of `item`.
 
     Args:
@@ -377,8 +398,8 @@ def has_attributes(
 
 
 def name_class_attributes(
-    item: Any,
-    include_privates: bool | None = None) -> list[str]:
+    item: Any, include_privates: bool | None = None
+) -> list[str]:
     """Returns names of the attributes defined on the class of `item`.
 
     Args:
@@ -396,8 +417,8 @@ def name_class_attributes(
 
 
 def collect_class_attributes(
-    item: Any,
-    include_privates: bool | None = None) -> list[Any]:
+    item: Any, include_privates: bool | None = None
+) -> list[Any]:
     """Returns the values of the attributes defined on the class of `item`.
 
     Args:
@@ -414,8 +435,8 @@ def collect_class_attributes(
 
 
 def catalog_class_attributes(
-    item: Any,
-    include_privates: bool | None = None) -> dict[str, Any]:
+    item: Any, include_privates: bool | None = None
+) -> dict[str, Any]:
     """Returns dict of names and values of the class attributes of `item`.
 
     Args:
@@ -436,7 +457,8 @@ def has_class_attributes(
     item: Any,
     names: Any,
     raise_error: bool | None = None,
-    match_all: bool | None = None) -> bool:
+    match_all: bool | None = None,
+) -> bool:
     """Returns whether `names` are class attributes of `item`.
 
     Args:
@@ -452,12 +474,11 @@ def has_class_attributes(
 
     """
     return base.has_names(
-        item, names, is_class_attribute, raise_error, match_all)
+        item, names, is_class_attribute, raise_error, match_all
+    )
 
 
-def name_fields(
-    item: Any,
-    include_privates: bool | None = None) -> list[str]:
+def name_fields(item: Any, include_privates: bool | None = None) -> list[str]:
     """Returns names of the fields of the dataclass `item`.
 
     Args:
@@ -477,8 +498,8 @@ def name_fields(
 
 
 def collect_fields(
-    item: Any,
-    include_privates: bool | None = None) -> list[dataclasses.Field[Any]]:
+    item: Any, include_privates: bool | None = None
+) -> list[dataclasses.Field[Any]]:
     """Returns the `dataclasses.Field` objects of the dataclass `item`.
 
     Args:
@@ -498,8 +519,8 @@ def collect_fields(
 
 
 def catalog_fields(
-    item: Any,
-    include_privates: bool | None = None) -> dict[str, dataclasses.Field[Any]]:
+    item: Any, include_privates: bool | None = None
+) -> dict[str, dataclasses.Field[Any]]:
     """Returns dict of names and `dataclasses.Field` objects of `item`.
 
     Args:
@@ -516,21 +537,23 @@ def catalog_fields(
 
     """
     if not dataclasses.is_dataclass(item):
-        message = f'{item!r} is not a dataclass'
+        message = f"{item!r} is not a dataclass"
         raise TypeError(message)
     fields = {f.name: f for f in dataclasses.fields(item)}
     return base.catalog_where(
-        names = fields,
-        predicate = lambda _: True,
-        getter = fields.__getitem__,
-        include_privates = include_privates)
+        names=fields,
+        predicate=lambda _: True,
+        getter=fields.__getitem__,
+        include_privates=include_privates,
+    )
 
 
 def has_fields(
     item: Any,
     names: Any,
     raise_error: bool | None = None,
-    match_all: bool | None = None) -> bool:
+    match_all: bool | None = None,
+) -> bool:
     """Returns whether `names` are fields of the dataclass `item`.
 
     Args:
@@ -549,14 +572,14 @@ def has_fields(
 
     """
     if not dataclasses.is_dataclass(item):
-        message = f'{item!r} is not a dataclass'
+        message = f"{item!r} is not a dataclass"
         raise TypeError(message)
     return base.has_names(item, names, is_field, raise_error, match_all)
 
 
 def name_instance_attributes(
-    item: Any,
-    include_privates: bool | None = None) -> list[str]:
+    item: Any, include_privates: bool | None = None
+) -> list[str]:
     """Returns names of the attributes stored on the instance `item`.
 
     Args:
@@ -573,8 +596,8 @@ def name_instance_attributes(
 
 
 def collect_instance_attributes(
-    item: Any,
-    include_privates: bool | None = None) -> list[Any]:
+    item: Any, include_privates: bool | None = None
+) -> list[Any]:
     """Returns the values of the attributes stored on the instance `item`.
 
     Args:
@@ -591,8 +614,8 @@ def collect_instance_attributes(
 
 
 def catalog_instance_attributes(
-    item: Any,
-    include_privates: bool | None = None) -> dict[str, Any]:
+    item: Any, include_privates: bool | None = None
+) -> dict[str, Any]:
     """Returns dict of names and values of the instance attributes of `item`.
 
     Args:
@@ -612,7 +635,8 @@ def has_instance_attributes(
     item: Any,
     names: Any,
     raise_error: bool | None = None,
-    match_all: bool | None = None) -> bool:
+    match_all: bool | None = None,
+) -> bool:
     """Returns whether `names` are instance attributes of `item`.
 
     Args:
@@ -628,12 +652,11 @@ def has_instance_attributes(
 
     """
     return base.has_names(
-        item, names, is_instance_attribute, raise_error, match_all)
+        item, names, is_instance_attribute, raise_error, match_all
+    )
 
 
-def name_methods(
-    item: Any,
-    include_privates: bool | None = None) -> list[str]:
+def name_methods(item: Any, include_privates: bool | None = None) -> list[str]:
     """Returns names of the methods of `item`.
 
     Args:
@@ -650,8 +673,8 @@ def name_methods(
 
 
 def collect_methods(
-    item: Any,
-    include_privates: bool | None = None) -> list[Any]:
+    item: Any, include_privates: bool | None = None
+) -> list[Any]:
     """Returns the methods of `item`.
 
     Args:
@@ -668,8 +691,8 @@ def collect_methods(
 
 
 def catalog_methods(
-    item: Any,
-    include_privates: bool | None = None) -> dict[str, Any]:
+    item: Any, include_privates: bool | None = None
+) -> dict[str, Any]:
     """Returns a dict of the names and methods of `item`.
 
     Args:
@@ -689,7 +712,8 @@ def has_methods(
     item: Any,
     names: Any,
     raise_error: bool | None = None,
-    match_all: bool | None = None) -> bool:
+    match_all: bool | None = None,
+) -> bool:
     """Returns whether `names` are methods of `item`.
 
     Args:
@@ -708,8 +732,8 @@ def has_methods(
 
 
 def name_properties(
-    item: Any,
-    include_privates: bool | None = None) -> list[str]:
+    item: Any, include_privates: bool | None = None
+) -> list[str]:
     """Returns names of the properties of `item`.
 
     Args:
@@ -726,8 +750,8 @@ def name_properties(
 
 
 def collect_properties(
-    item: Any,
-    include_privates: bool | None = None) -> list[Any]:
+    item: Any, include_privates: bool | None = None
+) -> list[Any]:
     """Returns the values of the properties of `item`.
 
     Args:
@@ -745,8 +769,8 @@ def collect_properties(
 
 
 def catalog_properties(
-    item: Any,
-    include_privates: bool | None = None) -> dict[str, Any]:
+    item: Any, include_privates: bool | None = None
+) -> dict[str, Any]:
     """Returns a dict of the names and values of the properties of `item`.
 
     Args:
@@ -767,7 +791,8 @@ def has_properties(
     item: Any,
     names: Any,
     raise_error: bool | None = None,
-    match_all: bool | None = None) -> bool:
+    match_all: bool | None = None,
+) -> bool:
     """Returns whether `names` are properties of `item`.
 
     Args:
@@ -786,8 +811,8 @@ def has_properties(
 
 
 def name_variables(
-    item: Any,
-    include_privates: bool | None = None) -> list[str]:
+    item: Any, include_privates: bool | None = None
+) -> list[str]:
     """Returns names of the variables of `item`.
 
     Variables are attributes that are neither methods nor properties.
@@ -806,8 +831,8 @@ def name_variables(
 
 
 def collect_variables(
-    item: Any,
-    include_privates: bool | None = None) -> list[Any]:
+    item: Any, include_privates: bool | None = None
+) -> list[Any]:
     """Returns the values of the variables of `item`.
 
     Args:
@@ -824,8 +849,8 @@ def collect_variables(
 
 
 def catalog_variables(
-    item: Any,
-    include_privates: bool | None = None) -> dict[str, Any]:
+    item: Any, include_privates: bool | None = None
+) -> dict[str, Any]:
     """Returns a dict of the names and values of the variables of `item`.
 
     Args:
@@ -845,7 +870,8 @@ def has_variables(
     item: Any,
     names: Any,
     raise_error: bool | None = None,
-    match_all: bool | None = None) -> bool:
+    match_all: bool | None = None,
+) -> bool:
     """Returns whether `names` are variables of `item`.
 
     Args:
@@ -880,8 +906,8 @@ def _signatures(item: Any) -> dict[str, inspect.Signature]:
 
 
 def name_signatures(
-    item: Any,
-    include_privates: bool | None = None) -> list[str]:
+    item: Any, include_privates: bool | None = None
+) -> list[str]:
     """Returns names of the methods of `item` that have signatures.
 
     Args:
@@ -898,8 +924,8 @@ def name_signatures(
 
 
 def collect_signatures(
-    item: Any,
-    include_privates: bool | None = None) -> list[inspect.Signature]:
+    item: Any, include_privates: bool | None = None
+) -> list[inspect.Signature]:
     """Returns the signatures of the methods of `item`.
 
     Args:
@@ -916,8 +942,8 @@ def collect_signatures(
 
 
 def catalog_signatures(
-    item: Any,
-    include_privates: bool | None = None) -> dict[str, inspect.Signature]:
+    item: Any, include_privates: bool | None = None
+) -> dict[str, inspect.Signature]:
     """Returns a dict of the names and signatures of the methods of `item`.
 
     Args:
@@ -932,17 +958,19 @@ def catalog_signatures(
     """
     signatures = _signatures(item)
     return base.catalog_where(
-        names = signatures,
-        predicate = lambda _: True,
-        getter = signatures.__getitem__,
-        include_privates = include_privates)
+        names=signatures,
+        predicate=lambda _: True,
+        getter=signatures.__getitem__,
+        include_privates=include_privates,
+    )
 
 
 def has_signatures(
     item: Any,
     names: Any,
     raise_error: bool | None = None,
-    match_all: bool | None = None) -> bool:
+    match_all: bool | None = None,
+) -> bool:
     """Returns whether `names` are methods of `item` with signatures.
 
     Args:
@@ -958,8 +986,8 @@ def has_signatures(
 
     """
     return base.has_names(
-        item, names, base.membership(_signatures(item)), raise_error,
-        match_all)
+        item, names, base.membership(_signatures(item)), raise_error, match_all
+    )
 
 
 """ Annotations """
@@ -979,13 +1007,13 @@ def _annotations(item: Any) -> dict[str, Any]:
     if inspect.ismodule(item) or inspect.isroutine(item):
         return dict(inspect.get_annotations(item))
     annotations = _annotations(item.__class__)
-    annotations.update(getattr(item, '__annotations__', {}) or {})
+    annotations.update(getattr(item, "__annotations__", {}) or {})
     return annotations
 
 
 def name_annotations(
-    item: Any,
-    include_privates: bool | None = None) -> list[str]:
+    item: Any, include_privates: bool | None = None
+) -> list[str]:
     """Returns names of the annotated attributes or parameters of `item`.
 
     Args:
@@ -1002,8 +1030,8 @@ def name_annotations(
 
 
 def collect_annotations(
-    item: Any,
-    include_privates: bool | None = None) -> list[Any]:
+    item: Any, include_privates: bool | None = None
+) -> list[Any]:
     """Returns the type annotations of `item`.
 
     Args:
@@ -1021,8 +1049,8 @@ def collect_annotations(
 
 
 def catalog_annotations(
-    item: Any,
-    include_privates: bool | None = None) -> dict[str, Any]:
+    item: Any, include_privates: bool | None = None
+) -> dict[str, Any]:
     """Returns a dict of the names and type annotations of `item`.
 
     Args:
@@ -1037,17 +1065,19 @@ def catalog_annotations(
     """
     annotations = _annotations(item)
     return base.catalog_where(
-        names = annotations,
-        predicate = lambda _: True,
-        getter = annotations.__getitem__,
-        include_privates = include_privates)
+        names=annotations,
+        predicate=lambda _: True,
+        getter=annotations.__getitem__,
+        include_privates=include_privates,
+    )
 
 
 def has_annotations(
     item: Any,
     names: Any,
     raise_error: bool | None = None,
-    match_all: bool | None = None) -> bool:
+    match_all: bool | None = None,
+) -> bool:
     """Returns whether `names` have type annotations in `item`.
 
     Args:
@@ -1063,6 +1093,5 @@ def has_annotations(
 
     """
     return base.has_names(
-        item, names, base.membership(_annotations(item)), raise_error,
-        match_all)
-
+        item, names, base.membership(_annotations(item)), raise_error, match_all
+    )

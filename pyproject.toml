@@ -35,7 +35,7 @@ Changelog = "https://WithPrecedent.github.io/miller/changelog"
 [dependency-groups]
 dev = [
     "uv",
-    
+
     "markdown-callouts",
     "markdown-exec",
     "mkdocs",
@@ -113,6 +113,7 @@ lint.ignore = [
     "COM812",  # Recommended disable by Ruff
     "C901",  # Too complex
     "D105",  # Missing docstring in magic method
+    "D107",  # Missing docstring in `__init__` (documented in class docstring)
     "D400",  # First line must end in a period
     "D401",  # First line of docstring should be in imperative mood
     "D406",  # Section name should end with a newline - bugged for 'Attributes:'
