@@ -30,49 +30,49 @@ from typing import Any
 from . import base
 
 __all__: list[str] = [
-    "catalog_annotations",
-    "catalog_attributes",
-    "catalog_class_attributes",
-    "catalog_fields",
-    "catalog_instance_attributes",
-    "catalog_methods",
-    "catalog_properties",
-    "catalog_signatures",
-    "catalog_variables",
-    "collect_annotations",
-    "collect_attributes",
-    "collect_class_attributes",
-    "collect_fields",
-    "collect_instance_attributes",
-    "collect_methods",
-    "collect_properties",
-    "collect_signatures",
-    "collect_variables",
-    "has_annotations",
-    "has_attributes",
-    "has_class_attributes",
-    "has_fields",
-    "has_instance_attributes",
-    "has_methods",
-    "has_properties",
-    "has_signatures",
-    "has_variables",
-    "is_attribute",
-    "is_class_attribute",
-    "is_field",
-    "is_instance_attribute",
-    "is_method",
-    "is_property",
-    "is_variable",
-    "name_annotations",
-    "name_attributes",
-    "name_class_attributes",
-    "name_fields",
-    "name_instance_attributes",
-    "name_methods",
-    "name_properties",
-    "name_signatures",
-    "name_variables",
+    'catalog_annotations',
+    'catalog_attributes',
+    'catalog_class_attributes',
+    'catalog_fields',
+    'catalog_instance_attributes',
+    'catalog_methods',
+    'catalog_properties',
+    'catalog_signatures',
+    'catalog_variables',
+    'collect_annotations',
+    'collect_attributes',
+    'collect_class_attributes',
+    'collect_fields',
+    'collect_instance_attributes',
+    'collect_methods',
+    'collect_properties',
+    'collect_signatures',
+    'collect_variables',
+    'has_annotations',
+    'has_attributes',
+    'has_class_attributes',
+    'has_fields',
+    'has_instance_attributes',
+    'has_methods',
+    'has_properties',
+    'has_signatures',
+    'has_variables',
+    'is_attribute',
+    'is_class_attribute',
+    'is_field',
+    'is_instance_attribute',
+    'is_method',
+    'is_property',
+    'is_variable',
+    'name_annotations',
+    'name_attributes',
+    'name_class_attributes',
+    'name_fields',
+    'name_instance_attributes',
+    'name_methods',
+    'name_properties',
+    'name_signatures',
+    'name_variables',
 ]
 
 _MISSING: Any = object()
@@ -128,7 +128,7 @@ def is_attribute(item: Any, name: str, raise_error: bool | None = None) -> bool:
     return base.verdict(
         value,
         raise_error,
-        f"{name} is not an attribute of {item!r}",
+        f'{name} is not an attribute of {item!r}',
         AttributeError,
     )
 
@@ -153,7 +153,7 @@ def is_class_attribute(
     return base.verdict(
         _static(cls, name) is not _MISSING,
         raise_error,
-        f"{name} is not a class attribute of {item!r}",
+        f'{name} is not a class attribute of {item!r}',
         AttributeError,
     )
 
@@ -176,7 +176,7 @@ def is_field(item: Any, name: str, raise_error: bool | None = None) -> bool:
         f.name for f in dataclasses.fields(item)
     }
     return base.verdict(
-        value, raise_error, f"{name} is not a field of {item!r}", AttributeError
+        value, raise_error, f'{name} is not a field of {item!r}', AttributeError
     )
 
 
@@ -198,7 +198,7 @@ def is_instance_attribute(
     """
     value = False
     if not inspect.isclass(item):
-        if name in getattr(item, "__dict__", {}):
+        if name in getattr(item, '__dict__', {}):
             value = True
         else:
             raw = _static(item.__class__, name)
@@ -210,7 +210,7 @@ def is_instance_attribute(
     return base.verdict(
         value,
         raise_error,
-        f"{name} is not an instance attribute of {item!r}",
+        f'{name} is not an instance attribute of {item!r}',
         AttributeError,
     )
 
@@ -233,11 +233,11 @@ def is_method(item: Any, name: str, raise_error: bool | None = None) -> bool:
     raw = _static(item, name)
     value = _is_routine(raw)
     if value and not inspect.isclass(item) and not inspect.ismodule(item):
-        value = name not in getattr(item, "__dict__", {})
+        value = name not in getattr(item, '__dict__', {})
     return base.verdict(
         value,
         raise_error,
-        f"{name} is not a method of {item!r}",
+        f'{name} is not a method of {item!r}',
         AttributeError,
     )
 
@@ -258,7 +258,7 @@ def is_property(item: Any, name: str, raise_error: bool | None = None) -> bool:
     return base.verdict(
         isinstance(_static(item, name), _PROPERTY_TYPES),
         raise_error,
-        f"{name} is not a property of {item!r}",
+        f'{name} is not a property of {item!r}',
         AttributeError,
     )
 
@@ -285,7 +285,7 @@ def is_variable(item: Any, name: str, raise_error: bool | None = None) -> bool:
     return base.verdict(
         value,
         raise_error,
-        f"{name} is not a variable of {item!r}",
+        f'{name} is not a variable of {item!r}',
         AttributeError,
     )
 
@@ -537,7 +537,7 @@ def catalog_fields(
 
     """
     if not dataclasses.is_dataclass(item):
-        message = f"{item!r} is not a dataclass"
+        message = f'{item!r} is not a dataclass'
         raise TypeError(message)
     fields = {f.name: f for f in dataclasses.fields(item)}
     return base.catalog_where(
@@ -572,7 +572,7 @@ def has_fields(
 
     """
     if not dataclasses.is_dataclass(item):
-        message = f"{item!r} is not a dataclass"
+        message = f'{item!r} is not a dataclass'
         raise TypeError(message)
     return base.has_names(item, names, is_field, raise_error, match_all)
 
@@ -1007,7 +1007,7 @@ def _annotations(item: Any) -> dict[str, Any]:
     if inspect.ismodule(item) or inspect.isroutine(item):
         return dict(inspect.get_annotations(item))
     annotations = _annotations(item.__class__)
-    annotations.update(getattr(item, "__annotations__", {}) or {})
+    annotations.update(getattr(item, '__annotations__', {}) or {})
     return annotations
 
 

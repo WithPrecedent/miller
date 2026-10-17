@@ -49,30 +49,30 @@ from typing import Any
 from . import base, configuration, utilities
 
 __all__: list[str] = [
-    "is_class",
-    "is_container",
-    "is_dict",
-    "is_dunder",
-    "is_file",
-    "is_file_path",
-    "is_folder",
-    "is_folder_path",
-    "is_function",
-    "is_instance",
-    "is_iterable",
-    "is_list",
-    "is_module",
-    "is_nested",
-    "is_nested_dict",
-    "is_nested_list",
-    "is_nested_set",
-    "is_nested_tuple",
-    "is_object",
-    "is_path",
-    "is_private",
-    "is_sequence",
-    "is_set",
-    "is_tuple",
+    'is_class',
+    'is_container',
+    'is_dict',
+    'is_dunder',
+    'is_file',
+    'is_file_path',
+    'is_folder',
+    'is_folder_path',
+    'is_function',
+    'is_instance',
+    'is_iterable',
+    'is_list',
+    'is_module',
+    'is_nested',
+    'is_nested_dict',
+    'is_nested_list',
+    'is_nested_set',
+    'is_nested_tuple',
+    'is_object',
+    'is_path',
+    'is_private',
+    'is_sequence',
+    'is_set',
+    'is_tuple',
 ]
 
 _STR_LIKE: tuple[type, ...] = (str, bytes, bytearray)
@@ -108,7 +108,7 @@ def is_class(item: Any, raise_error: bool | None = None) -> bool:
 
     """
     return base.verdict(
-        inspect.isclass(item), raise_error, f"{item!r} is not a class"
+        inspect.isclass(item), raise_error, f'{item!r} is not a class'
     )
 
 
@@ -131,7 +131,7 @@ def is_container(
     return base.verdict(
         _is_type(item, Container, include_str),
         raise_error,
-        f"{item!r} is not a container",
+        f'{item!r} is not a container',
     )
 
 
@@ -153,7 +153,7 @@ def is_dict(
     """
     kind = MutableMapping if include_generic else dict
     return base.verdict(
-        issubclass(_kind_of(item), kind), raise_error, f"{item!r} is not a dict"
+        issubclass(_kind_of(item), kind), raise_error, f'{item!r} is not a dict'
     )
 
 
@@ -172,10 +172,10 @@ def is_dunder(item: Any, raise_error: bool | None = None) -> bool:
     name = configuration.KEYER(item)
     return base.verdict(
         len(name) > _MIN_DUNDER_LENGTH
-        and name.startswith("__")
-        and name.endswith("__"),
+        and name.startswith('__')
+        and name.endswith('__'),
         raise_error,
-        f"{name} is not a dunder name",
+        f'{name} is not a dunder name',
     )
 
 
@@ -196,7 +196,7 @@ def is_file_path(
     return base.verdict(
         _path_or_none(item, lambda p: p.is_file()),
         raise_error,
-        f"{item!r} is not a path to a file",
+        f'{item!r} is not a path to a file',
     )
 
 
@@ -217,7 +217,7 @@ def is_folder_path(
     return base.verdict(
         _path_or_none(item, lambda p: p.is_dir()),
         raise_error,
-        f"{item!r} is not a path to a folder",
+        f'{item!r} is not a path to a folder',
     )
 
 
@@ -236,7 +236,7 @@ def is_function(item: Any, raise_error: bool | None = None) -> bool:
     return base.verdict(
         isinstance(item, types.FunctionType),
         raise_error,
-        f"{item!r} is not a function",
+        f'{item!r} is not a function',
     )
 
 
@@ -261,7 +261,7 @@ def is_instance(
     value = not inspect.isclass(item)
     if kind is not None:
         value = value and isinstance(item, kind)
-    return base.verdict(value, raise_error, f"{item!r} is not an instance")
+    return base.verdict(value, raise_error, f'{item!r} is not an instance')
 
 
 def is_iterable(
@@ -283,7 +283,7 @@ def is_iterable(
     return base.verdict(
         _is_type(item, Iterable, include_str),
         raise_error,
-        f"{item!r} is not iterable",
+        f'{item!r} is not iterable',
     )
 
 
@@ -306,7 +306,7 @@ def is_list(
     """
     kind = MutableSequence if include_generic else list
     return base.verdict(
-        issubclass(_kind_of(item), kind), raise_error, f"{item!r} is not a list"
+        issubclass(_kind_of(item), kind), raise_error, f'{item!r} is not a list'
     )
 
 
@@ -332,7 +332,7 @@ def is_module(item: Any, raise_error: bool | None = None) -> bool:
                 p.is_file() and p.suffix in configuration.MODULE_EXTENSIONS
             ),
         )
-    return base.verdict(value, raise_error, f"{item!r} is not a module")
+    return base.verdict(value, raise_error, f'{item!r} is not a module')
 
 
 def is_object(item: Any, raise_error: bool | None = None) -> bool:
@@ -352,7 +352,7 @@ def is_object(item: Any, raise_error: bool | None = None) -> bool:
         or inspect.isroutine(item)
         or inspect.ismodule(item)
     )
-    return base.verdict(value, raise_error, f"{item!r} is not an object")
+    return base.verdict(value, raise_error, f'{item!r} is not an object')
 
 
 def is_path(
@@ -373,7 +373,7 @@ def is_path(
     return base.verdict(
         _path_or_none(item, lambda p: p.exists()),
         raise_error,
-        f"{item!r} is not an existing path",
+        f'{item!r} is not an existing path',
     )
 
 
@@ -393,7 +393,7 @@ def is_private(item: Any, raise_error: bool | None = None) -> bool:
     return base.verdict(
         utilities.is_private_name(name),
         raise_error,
-        f"{name} is not a private name",
+        f'{name} is not a private name',
     )
 
 
@@ -416,7 +416,7 @@ def is_sequence(
     return base.verdict(
         _is_type(item, Sequence, include_str),
         raise_error,
-        f"{item!r} is not a sequence",
+        f'{item!r} is not a sequence',
     )
 
 
@@ -438,7 +438,7 @@ def is_set(
     """
     kind = AbstractSet if include_generic else (set, frozenset)
     return base.verdict(
-        issubclass(_kind_of(item), kind), raise_error, f"{item!r} is not a set"
+        issubclass(_kind_of(item), kind), raise_error, f'{item!r} is not a set'
     )
 
 
@@ -457,7 +457,7 @@ def is_tuple(item: Any, raise_error: bool | None = None) -> bool:
     return base.verdict(
         issubclass(_kind_of(item), tuple),
         raise_error,
-        f"{item!r} is not a tuple",
+        f'{item!r} is not a tuple',
     )
 
 
@@ -489,7 +489,7 @@ def is_nested(item: Any, raise_error: bool | None = None) -> bool:
         value = any(_is_nested_container(i) for i in item)
     else:
         value = False
-    return base.verdict(value, raise_error, f"{item!r} is not nested")
+    return base.verdict(value, raise_error, f'{item!r} is not nested')
 
 
 def is_nested_dict(item: Any, raise_error: bool | None = None) -> bool:
@@ -505,7 +505,7 @@ def is_nested_dict(item: Any, raise_error: bool | None = None) -> bool:
 
     """
     value = isinstance(item, Mapping) and is_nested(item)
-    return base.verdict(value, raise_error, f"{item!r} is not a nested dict")
+    return base.verdict(value, raise_error, f'{item!r} is not a nested dict')
 
 
 def is_nested_list(item: Any, raise_error: bool | None = None) -> bool:
@@ -521,7 +521,7 @@ def is_nested_list(item: Any, raise_error: bool | None = None) -> bool:
 
     """
     value = isinstance(item, MutableSequence) and is_nested(item)
-    return base.verdict(value, raise_error, f"{item!r} is not a nested list")
+    return base.verdict(value, raise_error, f'{item!r} is not a nested list')
 
 
 def is_nested_set(item: Any, raise_error: bool | None = None) -> bool:
@@ -540,7 +540,7 @@ def is_nested_set(item: Any, raise_error: bool | None = None) -> bool:
 
     """
     value = isinstance(item, (MutableSet, frozenset)) and is_nested(item)
-    return base.verdict(value, raise_error, f"{item!r} is not a nested set")
+    return base.verdict(value, raise_error, f'{item!r} is not a nested set')
 
 
 def is_nested_tuple(item: Any, raise_error: bool | None = None) -> bool:
@@ -556,7 +556,7 @@ def is_nested_tuple(item: Any, raise_error: bool | None = None) -> bool:
 
     """
     value = isinstance(item, tuple) and is_nested(item)
-    return base.verdict(value, raise_error, f"{item!r} is not a nested tuple")
+    return base.verdict(value, raise_error, f'{item!r} is not a nested tuple')
 
 
 def _path_or_none(item: Any, check: Any) -> bool:

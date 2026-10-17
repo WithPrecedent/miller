@@ -14,7 +14,7 @@ from typing import Any
 
 from . import base, utilities
 
-__all__: list[str] = ["collect_key_types", "collect_types", "has_types"]
+__all__: list[str] = ['collect_key_types', 'collect_types', 'has_types']
 
 
 def _unique_types(items: Iterable[Any]) -> tuple[type, ...]:
@@ -44,7 +44,7 @@ def collect_types(item: Any) -> tuple[type, ...]:
         item, (str, bytes, bytearray)
     ):
         return _unique_types(item)
-    message = f"{item!r} is not a container"
+    message = f'{item!r} is not a container'
     raise TypeError(message)
 
 
@@ -62,7 +62,7 @@ def collect_key_types(item: Mapping[Any, Any]) -> tuple[type, ...]:
 
     """
     if not isinstance(item, Mapping):
-        message = f"{item!r} is not a mapping"
+        message = f'{item!r} is not a mapping'
         raise TypeError(message)
     return _unique_types(item.keys())
 

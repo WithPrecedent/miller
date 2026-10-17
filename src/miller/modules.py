@@ -20,14 +20,14 @@ from typing import Any
 from . import base
 
 __all__: list[str] = [
-    "catalog_classes",
-    "catalog_functions",
-    "collect_classes",
-    "collect_functions",
-    "has_classes",
-    "has_functions",
-    "name_classes",
-    "name_functions",
+    'catalog_classes',
+    'catalog_functions',
+    'collect_classes',
+    'collect_functions',
+    'has_classes',
+    'has_functions',
+    'name_classes',
+    'name_functions',
 ]
 
 
@@ -37,7 +37,7 @@ def _modulify(item: types.ModuleType | str) -> types.ModuleType:
         return item
     if isinstance(item, str):
         return importlib.import_module(item)
-    message = f"item must be a module or module name, not {type(item)}"
+    message = f'item must be a module or module name, not {type(item)}'
     raise TypeError(message)
 
 
@@ -51,7 +51,7 @@ def _members(
     members = {
         n: o
         for n, o in inspect.getmembers(module, predicate)
-        if getattr(o, "__module__", None) == module.__name__
+        if getattr(o, '__module__', None) == module.__name__
     }
     return base.catalog_where(
         names=members,

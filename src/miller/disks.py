@@ -25,22 +25,22 @@ from typing import Any
 from . import base, configuration, utilities
 
 __all__: list[str] = [
-    "catalog_file_paths",
-    "catalog_folder_paths",
-    "catalog_modules",
-    "catalog_paths",
-    "collect_file_paths",
-    "collect_folder_paths",
-    "collect_modules",
-    "collect_paths",
-    "has_file_paths",
-    "has_folder_paths",
-    "has_modules",
-    "has_paths",
-    "name_file_paths",
-    "name_folder_paths",
-    "name_modules",
-    "name_paths",
+    'catalog_file_paths',
+    'catalog_folder_paths',
+    'catalog_modules',
+    'catalog_paths',
+    'collect_file_paths',
+    'collect_folder_paths',
+    'collect_modules',
+    'collect_paths',
+    'has_file_paths',
+    'has_folder_paths',
+    'has_modules',
+    'has_paths',
+    'name_file_paths',
+    'name_folder_paths',
+    'name_modules',
+    'name_paths',
 ]
 
 
@@ -52,13 +52,13 @@ def _relative_paths(
     """Returns folder `item` and sorted relative paths of its contents."""
     folder = utilities.pathlibify(item)
     if not folder.is_dir():
-        message = f"{item} is not a path to a folder"
+        message = f'{item} is not a path to a folder'
         raise NotADirectoryError(message)
     recursive = base.resolve(recursive, configuration.RECURSIVE)
     include_privates = base.resolve(
         include_privates, configuration.INCLUDE_PRIVATES
     )
-    paths = folder.rglob("*") if recursive else folder.iterdir()
+    paths = folder.rglob('*') if recursive else folder.iterdir()
     relatives = sorted(p.relative_to(folder) for p in paths)
     if not include_privates:
         relatives = [
@@ -114,7 +114,7 @@ def _as_posix(path: pathlib.Path) -> str:
 
 def _as_module_name(path: pathlib.Path) -> str:
     """Returns the relative `path` as a dotted module name."""
-    return ".".join(path.with_suffix("").parts)
+    return '.'.join(path.with_suffix('').parts)
 
 
 def _is_module_file(path: pathlib.Path) -> bool:

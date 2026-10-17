@@ -17,7 +17,7 @@ from typing import Any, TypeVar
 
 from . import configuration, utilities
 
-_T = TypeVar("_T")
+_T = TypeVar('_T')
 
 
 def resolve(value: _T | None, default: _T) -> _T:
@@ -93,11 +93,11 @@ def has_names(
     match_all = resolve(match_all, configuration.MATCH_ALL)
     scope = all if match_all else any
     value = scope(checker(item, n, raise_error=False) for n in names)
-    quantifier = "Not all" if match_all else "None"
+    quantifier = 'Not all' if match_all else 'None'
     return verdict(
         value=value,
         raise_error=raise_error,
-        message=f"{quantifier} of {names} qualify in {item!r}",
+        message=f'{quantifier} of {names} qualify in {item!r}',
         error=AttributeError,
     )
 

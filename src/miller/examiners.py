@@ -26,11 +26,11 @@ from typing import Any
 from . import attributes, containers, disks, modules, utilities
 
 __all__: list[str] = [
-    "ClassInspector",
-    "Inspector",
-    "InstanceInspector",
-    "ModuleInspector",
-    "PackageInspector",
+    'ClassInspector',
+    'Inspector',
+    'InstanceInspector',
+    'ModuleInspector',
+    'PackageInspector',
 ]
 
 
@@ -66,7 +66,7 @@ class Inspector:
 
     def __repr__(self) -> str:
         """Returns a representation of the inspector."""
-        return f"{self.__class__.__name__}(item={self.item!r})"
+        return f'{self.__class__.__name__}(item={self.item!r})'
 
     @property
     def name(self) -> str:
