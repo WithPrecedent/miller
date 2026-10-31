@@ -14,8 +14,6 @@
 
 ## What is miller?
 
-*This package is under heavy construction. Use at your own risk*
-
 *"I'm a tool that finds things."* - Detective Josephus Miller
 
 <p align="center">
